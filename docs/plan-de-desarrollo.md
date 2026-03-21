@@ -13,6 +13,7 @@ Este plan permite retomar el desarrollo en cualquier punto. Se asume:
 - **Stack:** Django 4.2, Django REST Framework, PostgreSQL, drf-spectacular (OpenAPI)
 - **Estructura:** Configuración en `backend/` (settings, urls, wsgi, asgi en la raíz)
 - **Reglas:** Código fuente en inglés; cada entidad debe estar documentada en OpenAPI/Swagger
+- **Migraciones:** Generar con `manage.py makemigrations`. Si no es posible (ej. el asistente no puede ejecutar comandos), el desarrollador las genera.
 - **Referencia:** Entidades y atributos en `docs/analisis-entidades-reporte-academico.md`
 
 ---
@@ -26,6 +27,7 @@ Este plan permite retomar el desarrollo en cualquier punto. Se asume:
 | **OpenAPI por entidad** | Cada ViewSet/endpoint debe usar `@extend_schema` con descripción, tags y ejemplos |
 | **Checkpoints** | Commit y etiqueta git al completar cada fase |
 | **Orden de implementación** | Respetar dependencias (modelos base antes de modelos con FKs) |
+| **Migraciones** | Deben generarse con el CLI de Django (`manage.py makemigrations`). Si no es posible, el desarrollador las genera manualmente. |
 
 ---
 
@@ -89,22 +91,22 @@ Orden sugerido según FK.
 
 ### 2.1 Student
 
-- [ ] Modelo `Student` según análisis
-- [ ] Método `full_name` o `save()` para computar `full_name`
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `Student` según análisis
+- [x] Método `full_name` o `save()` para computar `full_name`
+- [x] Migración
+- [x] Admin
 
 ### 2.2 Teacher
 
-- [ ] Modelo `Teacher`
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `Teacher`
+- [x] Migración
+- [x] Admin
 
 ### 2.3 Parent
 
-- [ ] Modelo `Parent`
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `Parent`
+- [x] Migración
+- [x] Admin
 
 **Checkpoint:** `git commit -m "feat: add person models (Student, Teacher, Parent)"`
 
@@ -114,45 +116,45 @@ Orden sugerido según FK.
 
 ### 3.1 Group
 
-- [ ] Modelo `Group` (FK → GradeLevel, AcademicYear, Campus)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `Group` (FK → GradeLevel, AcademicYear, Campus)
+- [x] Migración
+- [x] Admin
 
 ### 3.2 Subject
 
-- [ ] Modelo `Subject` (FK → AcademicArea, Institution)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `Subject` (FK → AcademicArea, Institution)
+- [x] Migración
+- [x] Admin
 
 ### 3.3 AcademicPeriod
 
-- [ ] Modelo `AcademicPeriod` (FK → AcademicYear)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `AcademicPeriod` (FK → AcademicYear)
+- [x] Migración
+- [x] Admin
 
 ### 3.4 CourseAssignment
 
-- [ ] Modelo `CourseAssignment` (FK → Subject, Teacher, Group, AcademicYear)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `CourseAssignment` (FK → Subject, Teacher, Group, AcademicYear)
+- [x] Migración
+- [x] Admin
 
 ### 3.5 GradeDirector
 
-- [ ] Modelo `GradeDirector` (FK → Teacher, Group, AcademicYear)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `GradeDirector` (FK → Teacher, Group, AcademicYear)
+- [x] Migración
+- [x] Admin
 
 ### 3.6 Enrollment
 
-- [ ] Modelo `Enrollment` (FK → Student, Group, AcademicYear)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `Enrollment` (FK → Student, Group, AcademicYear)
+- [x] Migración
+- [x] Admin
 
 ### 3.7 StudentGuardian
 
-- [ ] Modelo `StudentGuardian` (FK → Student, Parent)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `StudentGuardian` (FK → Student, Parent)
+- [x] Migración
+- [x] Admin
 
 **Checkpoint:** `git commit -m "feat: add relational models (Group, Subject, CourseAssignment, etc.)"`
 
@@ -162,33 +164,33 @@ Orden sugerido según FK.
 
 ### 4.1 Grade
 
-- [ ] Modelo `Grade` (FK → Student, CourseAssignment, AcademicPeriod, GradingScale opcional)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `Grade` (FK → Student, CourseAssignment, AcademicPeriod, GradingScale opcional)
+- [x] Migración
+- [x] Admin
 
 ### 4.2 Attendance
 
-- [ ] Modelo `Attendance` (FK → Student, CourseAssignment, AcademicPeriod)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `Attendance` (FK → Student, CourseAssignment, AcademicPeriod)
+- [x] Migración
+- [x] Admin
 
 ### 4.3 AcademicIndicator
 
-- [ ] Modelo `AcademicIndicator` (FK → Student, CourseAssignment, AcademicPeriod)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `AcademicIndicator` (FK → Student, CourseAssignment, AcademicPeriod)
+- [x] Migración
+- [x] Admin
 
 ### 4.4 PerformanceSummary
 
-- [ ] Modelo `PerformanceSummary` (FK → Student, Group, AcademicPeriod)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `PerformanceSummary` (FK → Student, Group, AcademicPeriod)
+- [x] Migración
+- [x] Admin
 
 ### 4.5 DisciplinaryReport
 
-- [ ] Modelo `DisciplinaryReport` (FK → Student, AcademicPeriod, Teacher opcional)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `DisciplinaryReport` (FK → Student, AcademicPeriod, Teacher opcional)
+- [x] Migración
+- [x] Admin
 
 **Checkpoint:** `git commit -m "feat: add evaluation models (Grade, Attendance, AcademicIndicator, etc.)"`
 
@@ -198,22 +200,22 @@ Orden sugerido según FK.
 
 ### 5.1 SchoolRecord
 
-- [ ] Modelo `SchoolRecord` (FK → Student, Group, AcademicYear, Institution, Campus)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `SchoolRecord` (FK → Student, Group, AcademicYear, Institution, Campus)
+- [x] Migración
+- [x] Admin
 
 ### 5.2 AcademicIndicatorsReport
 
-- [ ] Modelo `AcademicIndicatorsReport` (FK → Student, Group, AcademicPeriod, grade_director)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `AcademicIndicatorsReport` (FK → Student, Group, AcademicPeriod, grade_director)
+- [x] Migración
+- [x] Admin
 
 ### 5.3 User / UserProfile (RBAC)
 
-- [ ] Modelo `UserProfile` (OneToOne User, role enum, FK → Teacher, Parent, Institution)
-- [ ] Choices para `role`: ADMIN, COORDINATOR, TEACHER, PARENT
-- [ ] Migración
-- [ ] Signal para crear UserProfile al crear User
+- [x] Modelo `UserProfile` (OneToOne User, role enum, FK → Teacher, Parent, Institution)
+- [x] Choices para `role`: ADMIN, COORDINATOR, TEACHER, PARENT
+- [x] Migración
+- [x] Signal para crear UserProfile al crear User
 
 **Checkpoint:** `git commit -m "feat: add report models and UserProfile for RBAC"`
 
@@ -223,18 +225,18 @@ Orden sugerido según FK.
 
 ### 6.1 Auth endpoints
 
-- [ ] `POST /api/auth/login/` — Login con username/password, retorna JWT
-- [ ] `POST /api/auth/refresh/` — Refresh token
-- [ ] `GET /api/auth/me/` — Perfil (incluye role, institution, teacher/parent si aplica)
-- [ ] `@extend_schema` en cada vista de auth
+- [x] `POST /api/auth/login/` — Login con username/password, retorna JWT
+- [x] `POST /api/auth/refresh/` — Refresh token
+- [x] `GET /api/auth/me/` — Perfil (incluye role, institution, teacher/parent si aplica)
+- [x] `@extend_schema` en cada vista de auth
 
 ### 6.2 Permisos RBAC
 
-- [ ] Clase `IsAdminUser`
-- [ ] Clase `IsCoordinator`
-- [ ] Clase `IsTeacher` (con filtro por CourseAssignment)
-- [ ] Clase `IsParent` (con filtro por StudentGuardian)
-- [ ] Mixin o helper para filtrar `get_queryset()` por rol
+- [x] Clase `IsAdminUser`
+- [x] Clase `IsCoordinator`
+- [x] Clase `IsTeacher` (con filtro por CourseAssignment)
+- [x] Clase `IsParent` (con filtro por StudentGuardian)
+- [x] Mixin o helper para filtrar `get_queryset()` por rol
 
 **Checkpoint:** `git commit -m "feat: implement auth endpoints and RBAC permissions"`
 

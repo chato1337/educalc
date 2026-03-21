@@ -12,8 +12,14 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+from core.auth_views import LoginView, MeView, RefreshTokenView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # Authentication
+    path("api/auth/login/", LoginView.as_view(), name="token_obtain_pair"),
+    path("api/auth/refresh/", RefreshTokenView.as_view(), name="token_refresh"),
+    path("api/auth/me/", MeView.as_view(), name="me"),
     # OpenAPI / Swagger
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
