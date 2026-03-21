@@ -47,39 +47,39 @@ Orden sugerido según FK.
 
 ### 1.1 Institution
 
-- [ ] Modelo `Institution` con campos del análisis (id UUID, name, legal_reference, dane_code, nit, timestamps)
-- [ ] Migración
-- [ ] Admin básico
+- [x] Modelo `Institution` con campos del análisis (id UUID, name, legal_reference, dane_code, nit, timestamps)
+- [x] Migración
+- [x] Admin básico
 
 ### 1.2 Campus
 
-- [ ] Modelo `Campus` (FK → Institution)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `Campus` (FK → Institution)
+- [x] Migración
+- [x] Admin
 
 ### 1.3 AcademicYear
 
-- [ ] Modelo `AcademicYear` (FK → Institution)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `AcademicYear` (FK → Institution)
+- [x] Migración
+- [x] Admin
 
 ### 1.4 GradeLevel
 
-- [ ] Modelo `GradeLevel` (FK → Institution)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `GradeLevel` (FK → Institution)
+- [x] Migración
+- [x] Admin
 
 ### 1.5 AcademicArea
 
-- [ ] Modelo `AcademicArea` (FK → Institution)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `AcademicArea` (FK → Institution)
+- [x] Migración
+- [x] Admin
 
 ### 1.6 GradingScale
 
-- [ ] Modelo `GradingScale` (FK → Institution)
-- [ ] Migración
-- [ ] Admin
+- [x] Modelo `GradingScale` (FK → Institution)
+- [x] Migración
+- [x] Admin
 
 **Checkpoint:** `git commit -m "feat: add base models (Institution, Campus, AcademicYear, GradeLevel, AcademicArea, GradingScale)"`
 
