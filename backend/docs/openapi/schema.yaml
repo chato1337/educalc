@@ -1,0 +1,8 @@
+openapi: 3.0.3
+info:
+  title: eduCalc API
+  version: 1.0.0
+  description: API REST para el sistema de reportes académicos - Registro Escolar
+    de Valoración e Indicadores Académicos
+paths: {}
+components: {}
