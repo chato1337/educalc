@@ -253,119 +253,119 @@ Cada entidad debe tener:
 
 ### 7.1 Institution
 
-- [ ] `InstitutionViewSet`
-- [ ] `InstitutionSerializer`
-- [ ] OpenAPI: tags `["Institutions"]`, descripción del recurso
+- [x] `InstitutionViewSet`
+- [x] `InstitutionSerializer`
+- [x] OpenAPI: tags `["Institutions"]`, descripción del recurso
 
 ### 7.2 Campus
 
-- [ ] `CampusViewSet`, `CampusSerializer`
-- [ ] OpenAPI: tags `["Campuses"]`
+- [x] `CampusViewSet`, `CampusSerializer`
+- [x] OpenAPI: tags `["Campuses"]`
 
 ### 7.3 AcademicYear
 
-- [ ] `AcademicYearViewSet`, `AcademicYearSerializer`
-- [ ] OpenAPI: tags `["Academic Years"]`
+- [x] `AcademicYearViewSet`, `AcademicYearSerializer`
+- [x] OpenAPI: tags `["Academic Years"]`
 
 ### 7.4 GradeLevel
 
-- [ ] `GradeLevelViewSet`, `GradeLevelSerializer`
-- [ ] OpenAPI: tags `["Grade Levels"]`
+- [x] `GradeLevelViewSet`, `GradeLevelSerializer`
+- [x] OpenAPI: tags `["Grade Levels"]`
 
 ### 7.5 Group
 
-- [ ] `GroupViewSet`, `GroupSerializer`
-- [ ] OpenAPI: tags `["Groups"]`
+- [x] `GroupViewSet`, `GroupSerializer`
+- [x] OpenAPI: tags `["Groups"]`
 
 ### 7.6 Student
 
-- [ ] `StudentViewSet`, `StudentSerializer`
-- [ ] OpenAPI: tags `["Students"]`
+- [x] `StudentViewSet`, `StudentSerializer`
+- [x] OpenAPI: tags `["Students"]`
 
 ### 7.7 Teacher
 
-- [ ] `TeacherViewSet`, `TeacherSerializer`
-- [ ] OpenAPI: tags `["Teachers"]`
+- [x] `TeacherViewSet`, `TeacherSerializer`
+- [x] OpenAPI: tags `["Teachers"]`
 
 ### 7.8 Parent
 
-- [ ] `ParentViewSet`, `ParentSerializer`
-- [ ] OpenAPI: tags `["Parents"]`
+- [x] `ParentViewSet`, `ParentSerializer`
+- [x] OpenAPI: tags `["Parents"]`
 
 ### 7.9 StudentGuardian
 
-- [ ] `StudentGuardianViewSet`, `StudentGuardianSerializer`
-- [ ] OpenAPI: tags `["Student Guardians"]`
+- [x] `StudentGuardianViewSet`, `StudentGuardianSerializer`
+- [x] OpenAPI: tags `["Student Guardians"]`
 
 ### 7.10 AcademicArea
 
-- [ ] `AcademicAreaViewSet`, `AcademicAreaSerializer`
-- [ ] OpenAPI: tags `["Academic Areas"]`
+- [x] `AcademicAreaViewSet`, `AcademicAreaSerializer`
+- [x] OpenAPI: tags `["Academic Areas"]`
 
 ### 7.11 Subject
 
-- [ ] `SubjectViewSet`, `SubjectSerializer`
-- [ ] OpenAPI: tags `["Subjects"]`
+- [x] `SubjectViewSet`, `SubjectSerializer`
+- [x] OpenAPI: tags `["Subjects"]`
 
 ### 7.12 CourseAssignment
 
-- [ ] `CourseAssignmentViewSet`, `CourseAssignmentSerializer`
-- [ ] OpenAPI: tags `["Course Assignments"]`
+- [x] `CourseAssignmentViewSet`, `CourseAssignmentSerializer`
+- [x] OpenAPI: tags `["Course Assignments"]`
 
 ### 7.13 AcademicPeriod
 
-- [ ] `AcademicPeriodViewSet`, `AcademicPeriodSerializer`
-- [ ] OpenAPI: tags `["Academic Periods"]`
+- [x] `AcademicPeriodViewSet`, `AcademicPeriodSerializer`
+- [x] OpenAPI: tags `["Academic Periods"]`
 
 ### 7.14 GradingScale
 
-- [ ] `GradingScaleViewSet`, `GradingScaleSerializer`
-- [ ] OpenAPI: tags `["Grading Scales"]`
+- [x] `GradingScaleViewSet`, `GradingScaleSerializer`
+- [x] OpenAPI: tags `["Grading Scales"]`
 
 ### 7.15 Grade
 
-- [ ] `GradeViewSet`, `GradeSerializer`
-- [ ] OpenAPI: tags `["Grades"]`
+- [x] `GradeViewSet`, `GradeSerializer`
+- [x] OpenAPI: tags `["Grades"]`
 
 ### 7.16 Attendance
 
-- [ ] `AttendanceViewSet`, `AttendanceSerializer`
-- [ ] OpenAPI: tags `["Attendance"]`
+- [x] `AttendanceViewSet`, `AttendanceSerializer`
+- [x] OpenAPI: tags `["Attendance"]`
 
 ### 7.17 AcademicIndicator
 
-- [ ] `AcademicIndicatorViewSet`, `AcademicIndicatorSerializer`
-- [ ] OpenAPI: tags `["Academic Indicators"]`
+- [x] `AcademicIndicatorViewSet`, `AcademicIndicatorSerializer`
+- [x] OpenAPI: tags `["Academic Indicators"]`
 
 ### 7.18 PerformanceSummary
 
-- [ ] `PerformanceSummaryViewSet`, `PerformanceSummarySerializer`
-- [ ] OpenAPI: tags `["Performance Summaries"]`
+- [x] `PerformanceSummaryViewSet`, `PerformanceSummarySerializer`
+- [x] OpenAPI: tags `["Performance Summaries"]`
 
 ### 7.19 DisciplinaryReport
 
-- [ ] `DisciplinaryReportViewSet`, `DisciplinaryReportSerializer`
-- [ ] OpenAPI: tags `["Disciplinary Reports"]`
+- [x] `DisciplinaryReportViewSet`, `DisciplinaryReportSerializer`
+- [x] OpenAPI: tags `["Disciplinary Reports"]`
 
 ### 7.20 SchoolRecord
 
-- [ ] `SchoolRecordViewSet` (GET, POST para generar)
-- [ ] OpenAPI: tags `["School Records"]`
+- [x] `SchoolRecordViewSet` (GET, POST para generar)
+- [x] OpenAPI: tags `["School Records"]`
 
 ### 7.21 AcademicIndicatorsReport
 
-- [ ] `AcademicIndicatorsReportViewSet` (GET, POST para generar)
-- [ ] OpenAPI: tags `["Academic Indicators Reports"]`
+- [x] `AcademicIndicatorsReportViewSet` (GET, POST para generar)
+- [x] OpenAPI: tags `["Academic Indicators Reports"]`
 
 ### 7.22 GradeDirector
 
-- [ ] `GradeDirectorViewSet`, `GradeDirectorSerializer`
-- [ ] OpenAPI: tags `["Grade Directors"]`
+- [x] `GradeDirectorViewSet`, `GradeDirectorSerializer`
+- [x] OpenAPI: tags `["Grade Directors"]`
 
 ### 7.23 User (admin)
 
-- [ ] `UserViewSet` (solo ADMIN), `UserSerializer`
-- [ ] OpenAPI: tags `["Users"]`
+- [x] `UserProfileViewSet` (solo ADMIN), `UserProfileSerializer`
+- [x] OpenAPI: tags `["Users"]`
 
 **Checkpoint:** `git commit -m "feat: implement CRUD API for all entities with OpenAPI docs"`
 
