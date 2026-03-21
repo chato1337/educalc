@@ -1,7 +1,8 @@
 """API ViewSets with OpenAPI documentation. All use IsAuthenticated; RBAC scope filtering can be applied per-view."""
 from django.utils import timezone
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -127,6 +128,49 @@ class StudentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     search_fields = ["full_name", "first_name", "first_last_name", "document_number"]
 
+    @extend_schema(
+        summary="Grades summary",
+        description="Summary of grades for this student: grades by period, course, and averages.",
+        tags=["Students"],
+    )
+    @action(detail=True, methods=["get"], url_path="grades-summary")
+    def grades_summary(self, request, pk=None):
+        student = self.get_object()
+        grades = (
+            Grade.objects.filter(student=student)
+            .select_related("course_assignment__subject", "academic_period", "performance_level")
+            .order_by("academic_period__number", "course_assignment__subject__name")
+        )
+        by_period = {}
+        for g in grades:
+            period_key = str(g.academic_period_id)
+            if period_key not in by_period:
+                by_period[period_key] = {
+                    "period": {
+                        "id": str(g.academic_period.id),
+                        "name": g.academic_period.name,
+                        "year": g.academic_period.academic_year.year,
+                    },
+                    "grades": [],
+                    "average": None,
+                }
+            by_period[period_key]["grades"].append(
+                {
+                    "subject": g.course_assignment.subject.name,
+                    "numerical_grade": float(g.numerical_grade),
+                    "performance_level": g.performance_level.name if g.performance_level else None,
+                }
+            )
+        for period_key, data in by_period.items():
+            vals = [x["numerical_grade"] for x in data["grades"]]
+            data["average"] = round(sum(vals) / len(vals), 2) if vals else None
+        return Response(
+            {
+                "student": StudentSerializer(student).data,
+                "grades_by_period": list(by_period.values()),
+            }
+        )
+
 
 @schema_viewset(["Teachers"], "Teacher/faculty information")
 class TeacherViewSet(viewsets.ModelViewSet):
@@ -152,6 +196,53 @@ class GroupViewSet(viewsets.ModelViewSet):
     serializer_class = GroupSerializer
     permission_classes = [IsAuthenticated]
     filterset_fields = ["grade_level", "academic_year", "campus"]
+
+    @extend_schema(
+        summary="Students rankings by period",
+        description="Rankings of students in this group by academic period. "
+        "Uses PerformanceSummary when available. Optional: filter by period_id.",
+        tags=["Groups"],
+        parameters=[
+            OpenApiParameter(name="period_id", type=str, location="query", required=False),
+        ],
+    )
+    @action(detail=True, methods=["get"], url_path="students-rankings")
+    def students_rankings(self, request, pk=None):
+        group = self.get_object()
+        period_id = request.query_params.get("period_id")
+        summaries = PerformanceSummary.objects.filter(group=group).select_related(
+            "student", "academic_period"
+        ).order_by("academic_period__number")
+        if period_id:
+            summaries = summaries.filter(academic_period_id=period_id)
+        by_period = {}
+        for s in summaries:
+            period_key = str(s.academic_period_id)
+            if period_key not in by_period:
+                by_period[period_key] = {
+                    "period": {
+                        "id": str(s.academic_period.id),
+                        "name": s.academic_period.name,
+                        "year": s.academic_period.academic_year.year,
+                    },
+                    "rankings": [],
+                }
+            by_period[period_key]["rankings"].append(
+                {
+                    "student_id": str(s.student_id),
+                    "student_name": s.student.full_name,
+                    "rank": s.rank,
+                    "period_average": float(s.period_average),
+                }
+            )
+        for data in by_period.values():
+            data["rankings"].sort(key=lambda x: (x["rank"] or 999, -x["period_average"]))
+        return Response(
+            {
+                "group": GroupSerializer(group).data,
+                "rankings_by_period": list(by_period.values()),
+            }
+        )
 
 
 @schema_viewset(["Subjects"], "Subject/course with optional emphasis")

@@ -350,6 +350,36 @@ paths:
               schema:
                 $ref: '#/components/schemas/AcademicIndicatorsReport'
           description: ''
+  /api/academic-indicators-reports/{student_id}/{period_id}/:
+    get:
+      operationId: academic_indicators_reports_retrieve_2
+      description: Get or create the Academic Indicators Report for a student in an
+        academic period. Requires enrollment and a grade director for the student's
+        group.
+      summary: Generate academic indicators report by student and period
+      parameters:
+      - in: path
+        name: period_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Academic Indicators Reports
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicIndicatorsReport'
+          description: ''
   /api/academic-indicators/{id}/:
     get:
       operationId: academic_indicators_retrieve
@@ -2731,6 +2761,36 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/groups/{id}/students-rankings/:
+    get:
+      operationId: groups_students_rankings_retrieve
+      description: 'Rankings of students in this group by academic period. Uses PerformanceSummary
+        when available. Optional: filter by period_id.'
+      summary: Students rankings by period
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Group.
+        required: true
+      - in: query
+        name: period_id
+        schema:
+          type: string
+      tags:
+      - Groups
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
   /api/institutions/:
     get:
       operationId: institutions_list
@@ -3359,6 +3419,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/SchoolRecord'
           description: ''
+  /api/school-records/{student_id}/{academic_year_id}/:
+    get:
+      operationId: school_records_retrieve_2
+      description: Get or create the School Assessment Record for a student in an
+        academic year. Requires an active enrollment for the student in that year.
+      summary: Generate school record by student and year
+      parameters:
+      - in: path
+        name: academic_year_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - School Records
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchoolRecord'
+          description: ''
   /api/student-guardians/:
     get:
       operationId: student_guardians_list
@@ -3715,6 +3804,32 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/students/{id}/grades-summary/:
+    get:
+      operationId: students_grades_summary_retrieve
+      description: 'Summary of grades for this student: grades by period, course,
+        and averages.'
+      summary: Grades summary
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Student.
+        required: true
+      tags:
+      - Students
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Student'
+          description: ''
   /api/subjects/:
     get:
       operationId: subjects_list

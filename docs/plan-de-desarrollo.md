@@ -373,11 +373,11 @@ Cada entidad debe tener:
 
 ## Fase 8: Endpoints compuestos y reportes
 
-- [ ] `GET /api/school-records/{student_id}/{academic_year_id}/` — Generar registro escolar
-- [ ] `GET /api/academic-indicators-reports/{student_id}/{period_id}/` — Generar indicadores
-- [ ] `GET /api/students/{id}/grades-summary/` — Resumen de calificaciones
-- [ ] `GET /api/groups/{id}/students-rankings/` — Rankings por periodo
-- [ ] Documentar cada endpoint con `@extend_schema`
+- [x] `GET /api/school-records/{student_id}/{academic_year_id}/` — Generar registro escolar
+- [x] `GET /api/academic-indicators-reports/{student_id}/{period_id}/` — Generar indicadores
+- [x] `GET /api/students/{id}/grades-summary/` — Resumen de calificaciones
+- [x] `GET /api/groups/{id}/students-rankings/` — Rankings por periodo (opcional: ?period_id=)
+- [x] Documentar cada endpoint con `@extend_schema`
 
 **Checkpoint:** `git commit -m "feat: add composite report endpoints"`
 
