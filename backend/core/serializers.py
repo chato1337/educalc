@@ -1,4 +1,5 @@
 """Serializers for core API. All entities use snake_case fields per plan conventions."""
+from drf_spectacular.utils import extend_schema_serializer
 from rest_framework import serializers
 
 from .models import (
@@ -156,8 +157,16 @@ class StudentSerializer(serializers.ModelSerializer):
         ]
 
 
+@extend_schema_serializer(component_name="BulkLoadCsvUpload")
+class BulkLoadFileSerializer(serializers.Serializer):
+    """Multipart CSV upload for bulk loaders (OpenAPI: multipart field ``file``)."""
+
+    file = serializers.FileField(help_text="UTF-8 CSV file (.csv)")
+
+
+@extend_schema_serializer(component_name="BulkLoadStudentsCsv")
 class BulkLoadStudentsSerializer(serializers.Serializer):
-    """Request serializer for bulk load (file upload)."""
+    """Request serializer for student bulk load (OpenAPI: multipart field ``file``)."""
 
     file = serializers.FileField(
         help_text="CSV file with columns: ANO, INSTITUCION, SEDE, GRADO_COD, GRADO, GRUPO, "

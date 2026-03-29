@@ -1,6 +1,12 @@
 """API ViewSets with OpenAPI documentation. All use IsAuthenticated; RBAC scope filtering can be applied per-view."""
 from django.utils import timezone
-from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    extend_schema,
+    extend_schema_view,
+    OpenApiParameter,
+    OpenApiResponse,
+)
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser
@@ -8,6 +14,22 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .bulk_load import bulk_load_students
+from .bulk_load_extended import (
+    bulk_load_academic_areas,
+    bulk_load_academic_indicators,
+    bulk_load_academic_periods,
+    bulk_load_attendance,
+    bulk_load_course_assignments,
+    bulk_load_disciplinary_reports,
+    bulk_load_grade_directors,
+    bulk_load_grades,
+    bulk_load_grading_scales,
+    bulk_load_parents,
+    bulk_load_performance_summaries,
+    bulk_load_student_guardians,
+    bulk_load_subjects,
+    bulk_load_teachers,
+)
 from .models import (
     AcademicArea,
     AcademicIndicator,
@@ -36,6 +58,7 @@ from .models import (
 )
 from .permissions import IsAdminUser
 from .serializers import (
+    BulkLoadFileSerializer,
     BulkLoadStudentsSerializer,
     AcademicAreaSerializer,
     AcademicIndicatorSerializer,
@@ -63,6 +86,51 @@ from .serializers import (
     TeacherSerializer,
     UserProfileSerializer,
 )
+
+
+def _bulk_csv_response(request, loader_fn):
+    """Run a bulk CSV loader; multipart field ``file``."""
+    serializer = BulkLoadFileSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    csv_file = serializer.validated_data["file"]
+    if not csv_file.name.lower().endswith(".csv"):
+        return Response(
+            {"error": "File must be a CSV (.csv)"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    try:
+        stats = loader_fn(csv_file)
+        return Response(stats, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+def bulk_csv_load_schema(*, summary: str, description: str, tags: list, request_serializer):
+    """
+    OpenAPI for POST ``bulk-load`` actions (multipart CSV).
+
+    ``methods=['POST']`` is required so drf-spectacular registers the operation on custom actions.
+    """
+    return extend_schema(
+        summary=summary,
+        description=description,
+        tags=tags,
+        methods=["POST"],
+        request={"multipart/form-data": request_serializer},
+        responses={
+            200: OpenApiResponse(
+                response=OpenApiTypes.OBJECT,
+                description="Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[].",
+            ),
+            400: OpenApiResponse(
+                response=OpenApiTypes.OBJECT,
+                description='Validation failure or {"error": "..."}.',
+            ),
+        },
+    )
 
 
 def schema_viewset(tags: list, description: str = ""):
@@ -115,6 +183,17 @@ class AcademicAreaViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filterset_fields = ["institution"]
 
+    @bulk_csv_load_schema(
+        summary="Bulk load academic areas from CSV",
+        description="Columns: DANE_COD, AREA_NOMBRE, AREA_COD, DESCRIPCION. "
+        "See docs/plan-implementacion-carga-masiva-csv.md",
+        tags=["Academic Areas"],
+        request_serializer=BulkLoadFileSerializer,
+    )
+    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    def bulk_load(self, request):
+        return _bulk_csv_response(request, bulk_load_academic_areas)
+
 
 @schema_viewset(["Grading Scales"], "Performance levels per Decreto 1290")
 class GradingScaleViewSet(viewsets.ModelViewSet):
@@ -122,6 +201,16 @@ class GradingScaleViewSet(viewsets.ModelViewSet):
     serializer_class = GradingScaleSerializer
     permission_classes = [IsAuthenticated]
     filterset_fields = ["institution"]
+
+    @bulk_csv_load_schema(
+        summary="Bulk load grading scales from CSV",
+        description="Columns: DANE_COD, COD_NIVEL, NOMBRE_NIVEL, NOTA_MIN, NOTA_MAX, DESCRIPCION.",
+        tags=["Grading Scales"],
+        request_serializer=BulkLoadFileSerializer,
+    )
+    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    def bulk_load(self, request):
+        return _bulk_csv_response(request, bulk_load_grading_scales)
 
 
 @schema_viewset(["Students"], "Student data")
@@ -131,7 +220,7 @@ class StudentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     search_fields = ["full_name", "first_name", "first_last_name", "document_number"]
 
-    @extend_schema(
+    @bulk_csv_load_schema(
         summary="Bulk load students from CSV",
         description="Upload a CSV file to create/update students, enrollments, institutions, "
         "campuses, academic years, grade levels, and groups. CSV format: ANO, INSTITUCION, "
@@ -139,8 +228,7 @@ class StudentViewSet(viewsets.ModelViewSet):
         "APELLIDO1, APELLIDO2, NOMBRE1, NOMBRE2, GENERO, FECHA_NACIMIENTO, BARRIO, EPS, "
         "TIPO DE SANGRE, DISCAPACIDAD, TELEFONO. Use multipart/form-data with field 'file'.",
         tags=["Students"],
-        request={"multipart/form-data": BulkLoadStudentsSerializer},
-        responses={200: {"description": "Bulk load statistics"}},
+        request_serializer=BulkLoadStudentsSerializer,
     )
     @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
     def bulk_load(self, request):
@@ -212,6 +300,16 @@ class TeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     search_fields = ["full_name", "email"]
 
+    @bulk_csv_load_schema(
+        summary="Bulk load teachers from CSV",
+        description="Columns: DOC, TIPODOC, NOMBRE1, NOMBRE2, APELLIDO1, APELLIDO2, EMAIL, TELEFONO, ESPECIALIDAD.",
+        tags=["Teachers"],
+        request_serializer=BulkLoadFileSerializer,
+    )
+    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    def bulk_load(self, request):
+        return _bulk_csv_response(request, bulk_load_teachers)
+
 
 @schema_viewset(["Parents"], "Parent or guardian of a student")
 class ParentViewSet(viewsets.ModelViewSet):
@@ -219,6 +317,17 @@ class ParentViewSet(viewsets.ModelViewSet):
     serializer_class = ParentSerializer
     permission_classes = [IsAuthenticated]
     search_fields = ["full_name", "email"]
+
+    @bulk_csv_load_schema(
+        summary="Bulk load parents/guardians from CSV",
+        description="Columns: DOC, TIPODOC, NOMBRE1, NOMBRE2, APELLIDO1, APELLIDO2, EMAIL, TELEFONO, PARENTESCO. "
+        "Empty EMAIL uses a synthetic address.",
+        tags=["Parents"],
+        request_serializer=BulkLoadFileSerializer,
+    )
+    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    def bulk_load(self, request):
+        return _bulk_csv_response(request, bulk_load_parents)
 
 
 @schema_viewset(["Groups"], "Student group within a grade")
@@ -285,6 +394,16 @@ class SubjectViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filterset_fields = ["academic_area", "institution"]
 
+    @bulk_csv_load_schema(
+        summary="Bulk load subjects from CSV",
+        description="Columns: DANE_COD, AREA_NOMBRE, ASIGNATURA_NOMBRE, ENFASIS, HORAS.",
+        tags=["Subjects"],
+        request_serializer=BulkLoadFileSerializer,
+    )
+    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    def bulk_load(self, request):
+        return _bulk_csv_response(request, bulk_load_subjects)
+
 
 @schema_viewset(["Academic Periods"], "Evaluation period (P1, P2, P3, P4)")
 class AcademicPeriodViewSet(viewsets.ModelViewSet):
@@ -292,6 +411,16 @@ class AcademicPeriodViewSet(viewsets.ModelViewSet):
     serializer_class = AcademicPeriodSerializer
     permission_classes = [IsAuthenticated]
     filterset_fields = ["academic_year"]
+
+    @bulk_csv_load_schema(
+        summary="Bulk load academic periods from CSV",
+        description="Columns: DANE_COD, ANO, PERIODO_NUM, PERIODO_NOMBRE, FECHA_INI, FECHA_FIN.",
+        tags=["Academic Periods"],
+        request_serializer=BulkLoadFileSerializer,
+    )
+    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    def bulk_load(self, request):
+        return _bulk_csv_response(request, bulk_load_academic_periods)
 
 
 @schema_viewset(
@@ -306,6 +435,16 @@ class CourseAssignmentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filterset_fields = ["subject", "teacher", "group", "academic_year"]
 
+    @bulk_csv_load_schema(
+        summary="Bulk load course assignments from CSV",
+        description="Columns: DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, ENFASIS, AREA_NOMBRE (optional), DOC_DOCENTE.",
+        tags=["Course Assignments"],
+        request_serializer=BulkLoadFileSerializer,
+    )
+    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    def bulk_load(self, request):
+        return _bulk_csv_response(request, bulk_load_course_assignments)
+
 
 @schema_viewset(["Grade Directors"], "Homeroom teacher for a group")
 class GradeDirectorViewSet(viewsets.ModelViewSet):
@@ -315,6 +454,16 @@ class GradeDirectorViewSet(viewsets.ModelViewSet):
     serializer_class = GradeDirectorSerializer
     permission_classes = [IsAuthenticated]
     filterset_fields = ["teacher", "group", "academic_year"]
+
+    @bulk_csv_load_schema(
+        summary="Bulk load grade directors from CSV",
+        description="Columns: DANE_COD, ANO, SEDE, GRADO, GRUPO, DOC_DOCENTE.",
+        tags=["Grade Directors"],
+        request_serializer=BulkLoadFileSerializer,
+    )
+    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    def bulk_load(self, request):
+        return _bulk_csv_response(request, bulk_load_grade_directors)
 
 
 @schema_viewset(["Enrollments"], "Student-group enrollment for an academic year")
@@ -334,6 +483,16 @@ class StudentGuardianViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filterset_fields = ["student", "parent", "is_primary"]
 
+    @bulk_csv_load_schema(
+        summary="Bulk load student–guardian links from CSV",
+        description="Columns: DOC_ESTUDIANTE, DOC_ACUDIENTE, ES_PRIMARIO.",
+        tags=["Student Guardians"],
+        request_serializer=BulkLoadFileSerializer,
+    )
+    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    def bulk_load(self, request):
+        return _bulk_csv_response(request, bulk_load_student_guardians)
+
 
 @schema_viewset(["Grades"], "Student grade in a subject for a period")
 class GradeViewSet(viewsets.ModelViewSet):
@@ -344,6 +503,17 @@ class GradeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filterset_fields = ["student", "course_assignment", "academic_period"]
 
+    @bulk_csv_load_schema(
+        summary="Bulk load grades from CSV",
+        description="Columns: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, ENFASIS, AREA_NOMBRE (optional), "
+        "PERIODO_NUM, NOTA, COD_NIVEL (optional), NOTA_DEFINITIVA (optional). Requires existing CourseAssignment.",
+        tags=["Grades"],
+        request_serializer=BulkLoadFileSerializer,
+    )
+    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    def bulk_load(self, request):
+        return _bulk_csv_response(request, bulk_load_grades)
+
 
 @schema_viewset(["Attendance"], "Absences per subject and period")
 class AttendanceViewSet(viewsets.ModelViewSet):
@@ -353,6 +523,16 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     serializer_class = AttendanceSerializer
     permission_classes = [IsAuthenticated]
     filterset_fields = ["student", "course_assignment", "academic_period"]
+
+    @bulk_csv_load_schema(
+        summary="Bulk load attendance from CSV",
+        description="Same context columns as grades plus INASISTENCIAS_SIN_JUSTIFICAR, INASISTENCIAS_JUSTIFICADAS.",
+        tags=["Attendance"],
+        request_serializer=BulkLoadFileSerializer,
+    )
+    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    def bulk_load(self, request):
+        return _bulk_csv_response(request, bulk_load_attendance)
 
 
 @schema_viewset(
@@ -367,6 +547,16 @@ class AcademicIndicatorViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filterset_fields = ["student", "course_assignment", "academic_period"]
 
+    @bulk_csv_load_schema(
+        summary="Bulk load academic indicators from CSV",
+        description="Context columns as grades; DESCRIPCION, NOTA (optional), NIVEL_DESEMPENO_TEXTO (optional). Appends rows.",
+        tags=["Academic Indicators"],
+        request_serializer=BulkLoadFileSerializer,
+    )
+    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    def bulk_load(self, request):
+        return _bulk_csv_response(request, bulk_load_academic_indicators)
+
 
 @schema_viewset(
     ["Performance Summaries"],
@@ -380,6 +570,16 @@ class PerformanceSummaryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filterset_fields = ["student", "group", "academic_period"]
 
+    @bulk_csv_load_schema(
+        summary="Bulk load performance summaries from CSV",
+        description="Columns: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, PERIODO_NUM, PROMEDIO_PERIODO, PUESTO, PROMEDIO_DEFINITIVO.",
+        tags=["Performance Summaries"],
+        request_serializer=BulkLoadFileSerializer,
+    )
+    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    def bulk_load(self, request):
+        return _bulk_csv_response(request, bulk_load_performance_summaries)
+
 
 @schema_viewset(
     ["Disciplinary Reports"],
@@ -392,6 +592,16 @@ class DisciplinaryReportViewSet(viewsets.ModelViewSet):
     serializer_class = DisciplinaryReportSerializer
     permission_classes = [IsAuthenticated]
     filterset_fields = ["student", "academic_period"]
+
+    @bulk_csv_load_schema(
+        summary="Bulk load disciplinary reports from CSV",
+        description="Columns: DOC_ESTUDIANTE, DANE_COD, ANO, PERIODO_NUM, TEXTO, DOC_DOCENTE_CREADOR (optional).",
+        tags=["Disciplinary Reports"],
+        request_serializer=BulkLoadFileSerializer,
+    )
+    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    def bulk_load(self, request):
+        return _bulk_csv_response(request, bulk_load_disciplinary_reports)
 
 
 @extend_schema_view(

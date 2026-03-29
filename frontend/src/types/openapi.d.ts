@@ -45,6 +45,26 @@ export interface paths {
         patch: operations["academic_areas_partial_update"];
         trace?: never;
     };
+    "/api/academic-areas/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load academic areas from CSV
+         * @description Columns: DANE_COD, AREA_NOMBRE, AREA_COD, DESCRIPCION. See docs/plan-implementacion-carga-masiva-csv.md
+         */
+        post: operations["academic_areas_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/academic-indicators/": {
         parameters: {
             query?: never;
@@ -150,6 +170,26 @@ export interface paths {
         patch: operations["academic_indicators_partial_update"];
         trace?: never;
     };
+    "/api/academic-indicators/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load academic indicators from CSV
+         * @description Context columns as grades; DESCRIPCION, NOTA (optional), NIVEL_DESEMPENO_TEXTO (optional). Appends rows.
+         */
+        post: operations["academic_indicators_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/academic-periods/": {
         parameters: {
             query?: never;
@@ -189,6 +229,26 @@ export interface paths {
         head?: never;
         /** Partial update Academic Periods */
         patch: operations["academic_periods_partial_update"];
+        trace?: never;
+    };
+    "/api/academic-periods/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load academic periods from CSV
+         * @description Columns: DANE_COD, ANO, PERIODO_NUM, PERIODO_NOMBRE, FECHA_INI, FECHA_FIN.
+         */
+        post: operations["academic_periods_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/academic-years/": {
@@ -271,6 +331,26 @@ export interface paths {
         head?: never;
         /** Partial update Attendance */
         patch: operations["attendances_partial_update"];
+        trace?: never;
+    };
+    "/api/attendances/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load attendance from CSV
+         * @description Same context columns as grades plus INASISTENCIAS_SIN_JUSTIFICAR, INASISTENCIAS_JUSTIFICADAS.
+         */
+        post: operations["attendances_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/auth/login/": {
@@ -415,6 +495,26 @@ export interface paths {
         patch: operations["course_assignments_partial_update"];
         trace?: never;
     };
+    "/api/course-assignments/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load course assignments from CSV
+         * @description Columns: DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, ENFASIS, AREA_NOMBRE (optional), DOC_DOCENTE.
+         */
+        post: operations["course_assignments_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/disciplinary-reports/": {
         parameters: {
             query?: never;
@@ -454,6 +554,26 @@ export interface paths {
         head?: never;
         /** Partial update Disciplinary Reports */
         patch: operations["disciplinary_reports_partial_update"];
+        trace?: never;
+    };
+    "/api/disciplinary-reports/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load disciplinary reports from CSV
+         * @description Columns: DOC_ESTUDIANTE, DANE_COD, ANO, PERIODO_NUM, TEXTO, DOC_DOCENTE_CREADOR (optional).
+         */
+        post: operations["disciplinary_reports_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/enrollments/": {
@@ -538,6 +658,26 @@ export interface paths {
         patch: operations["grade_directors_partial_update"];
         trace?: never;
     };
+    "/api/grade-directors/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load grade directors from CSV
+         * @description Columns: DANE_COD, ANO, SEDE, GRADO, GRUPO, DOC_DOCENTE.
+         */
+        post: operations["grade_directors_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/grade-levels/": {
         parameters: {
             query?: never;
@@ -620,6 +760,26 @@ export interface paths {
         patch: operations["grades_partial_update"];
         trace?: never;
     };
+    "/api/grades/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load grades from CSV
+         * @description Columns: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, ENFASIS, AREA_NOMBRE (optional), PERIODO_NUM, NOTA, COD_NIVEL (optional), NOTA_DEFINITIVA (optional). Requires existing CourseAssignment.
+         */
+        post: operations["grades_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/grading-scales/": {
         parameters: {
             query?: never;
@@ -659,6 +819,26 @@ export interface paths {
         head?: never;
         /** Partial update Grading Scales */
         patch: operations["grading_scales_partial_update"];
+        trace?: never;
+    };
+    "/api/grading-scales/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load grading scales from CSV
+         * @description Columns: DANE_COD, COD_NIVEL, NOMBRE_NIVEL, NOTA_MIN, NOTA_MAX, DESCRIPCION.
+         */
+        post: operations["grading_scales_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/groups/": {
@@ -804,6 +984,26 @@ export interface paths {
         patch: operations["parents_partial_update"];
         trace?: never;
     };
+    "/api/parents/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load parents/guardians from CSV
+         * @description Columns: DOC, TIPODOC, NOMBRE1, NOMBRE2, APELLIDO1, APELLIDO2, EMAIL, TELEFONO, PARENTESCO. Empty EMAIL uses a synthetic address.
+         */
+        post: operations["parents_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/performance-summaries/": {
         parameters: {
             query?: never;
@@ -843,6 +1043,26 @@ export interface paths {
         head?: never;
         /** Partial update Performance Summaries */
         patch: operations["performance_summaries_partial_update"];
+        trace?: never;
+    };
+    "/api/performance-summaries/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load performance summaries from CSV
+         * @description Columns: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, PERIODO_NUM, PROMEDIO_PERIODO, PUESTO, PROMEDIO_DEFINITIVO.
+         */
+        post: operations["performance_summaries_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/school-records/": {
@@ -948,6 +1168,26 @@ export interface paths {
         head?: never;
         /** Partial update Student Guardians */
         patch: operations["student_guardians_partial_update"];
+        trace?: never;
+    };
+    "/api/student-guardians/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load student–guardian links from CSV
+         * @description Columns: DOC_ESTUDIANTE, DOC_ACUDIENTE, ES_PRIMARIO.
+         */
+        post: operations["student_guardians_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/students/": {
@@ -1072,6 +1312,26 @@ export interface paths {
         patch: operations["subjects_partial_update"];
         trace?: never;
     };
+    "/api/subjects/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load subjects from CSV
+         * @description Columns: DANE_COD, AREA_NOMBRE, ASIGNATURA_NOMBRE, ENFASIS, HORAS.
+         */
+        post: operations["subjects_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/teachers/": {
         parameters: {
             query?: never;
@@ -1111,6 +1371,26 @@ export interface paths {
         head?: never;
         /** Partial update Teachers */
         patch: operations["teachers_partial_update"];
+        trace?: never;
+    };
+    "/api/teachers/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load teachers from CSV
+         * @description Columns: DOC, TIPODOC, NOMBRE1, NOMBRE2, APELLIDO1, APELLIDO2, EMAIL, TELEFONO, ESPECIALIDAD.
+         */
+        post: operations["teachers_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/users/": {
@@ -1326,8 +1606,16 @@ export interface components {
             unexcused_absences?: number;
             excused_absences?: number;
         };
-        /** @description Request serializer for bulk load (file upload). */
-        BulkLoadStudentsRequest: {
+        /** @description Multipart CSV upload for bulk loaders (OpenAPI: multipart field ``file``). */
+        BulkLoadCsvUploadRequest: {
+            /**
+             * Format: binary
+             * @description UTF-8 CSV file (.csv)
+             */
+            file: string;
+        };
+        /** @description Request serializer for student bulk load (OpenAPI: multipart field ``file``). */
+        BulkLoadStudentsCsvRequest: {
             /**
              * Format: binary
              * @description CSV file with columns: ANO, INSTITUCION, SEDE, GRADO_COD, GRADO, GRUPO, FECHAINI, ESTRATO, SISBEN IV, DOC, TIPODOC, APELLIDO1, APELLIDO2, NOMBRE1, NOMBRE2, GENERO, FECHA_NACIMIENTO, BARRIO, EPS, TIPO DE SANGRE, DISCAPACIDAD, TELEFONO
@@ -2280,6 +2568,43 @@ export interface operations {
             };
         };
     };
+    academic_areas_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     academic_indicators_list: {
         parameters: {
             query?: {
@@ -2526,6 +2851,43 @@ export interface operations {
             };
         };
     };
+    academic_indicators_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     academic_periods_list: {
         parameters: {
             query?: {
@@ -2671,6 +3033,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AcademicPeriod"];
+                };
+            };
+        };
+    };
+    academic_periods_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -2972,6 +3371,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Attendance"];
+                };
+            };
+        };
+    };
+    attendances_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -3348,6 +3784,43 @@ export interface operations {
             };
         };
     };
+    course_assignments_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     disciplinary_reports_list: {
         parameters: {
             query?: {
@@ -3494,6 +3967,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DisciplinaryReport"];
+                };
+            };
+        };
+    };
+    disciplinary_reports_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -3806,6 +4316,43 @@ export interface operations {
             };
         };
     };
+    grade_directors_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     grade_levels_list: {
         parameters: {
             query?: {
@@ -4106,6 +4653,43 @@ export interface operations {
             };
         };
     };
+    grades_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     grading_scales_list: {
         parameters: {
             query?: {
@@ -4251,6 +4835,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GradingScale"];
+                };
+            };
+        };
+    };
+    grading_scales_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -4726,6 +5347,43 @@ export interface operations {
             };
         };
     };
+    parents_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     performance_summaries_list: {
         parameters: {
             query?: {
@@ -4873,6 +5531,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PerformanceSummary"];
+                };
+            };
+        };
+    };
+    performance_summaries_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -5124,6 +5819,43 @@ export interface operations {
             };
         };
     };
+    student_guardians_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     students_list: {
         parameters: {
             query?: {
@@ -5303,16 +6035,30 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "multipart/form-data": components["schemas"]["BulkLoadStudentsRequest"];
+                "multipart/form-data": components["schemas"]["BulkLoadStudentsCsvRequest"];
             };
         };
         responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -5467,6 +6213,43 @@ export interface operations {
             };
         };
     };
+    subjects_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     teachers_list: {
         parameters: {
             query?: {
@@ -5611,6 +6394,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Teacher"];
+                };
+            };
+        };
+    };
+    teachers_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

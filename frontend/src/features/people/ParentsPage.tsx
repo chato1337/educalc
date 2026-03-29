@@ -28,11 +28,12 @@ import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
+import { DocumentTypeSelect } from '@/components/DocumentTypeSelect'
 import { PageHeader } from '@/components/PageHeader'
 import type { Parent } from '@/types/schemas'
 
 const schema = z.object({
-  document_type: z.string().max(10).optional(),
+  document_type: z.string().max(80).optional(),
   document_number: z.string().max(20).optional(),
   first_name: z.string().trim().min(1).max(100),
   second_name: z.string().max(100).optional(),
@@ -97,6 +98,7 @@ export function ParentsPage() {
     resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: defaults,
   })
+  const documentTypeValue = form.watch('document_type')
 
   const createMutation = useMutation({
     mutationFn: (body: ReturnType<typeof toApiBody>) =>
@@ -264,7 +266,10 @@ export function ParentsPage() {
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1 max-h-[70vh] overflow-auto">
             {formError ? <Alert severity="error">{formError}</Alert> : null}
-            <TextField label="Tipo documento" {...form.register('document_type')} fullWidth />
+            <DocumentTypeSelect
+              registerProps={form.register('document_type')}
+              currentValue={documentTypeValue}
+            />
             <TextField label="Número documento" {...form.register('document_number')} fullWidth />
             <TextField
               label="Nombre"

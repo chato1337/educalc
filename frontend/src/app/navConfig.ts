@@ -127,7 +127,7 @@ export const navSections: NavSection[] = [
       },
       {
         label: 'Carga masiva CSV',
-        path: '/students/bulk-load',
+        path: '/bulk-load',
         icon: SwapHoriz,
         rolesAllowed: ADMIN_COORDINATOR,
       },

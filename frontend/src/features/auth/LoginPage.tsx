@@ -10,6 +10,7 @@ import {
 import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 
+import { APP_NAME } from '@/app/appName'
 import { getErrorMessage } from '@/api/errors'
 import { useAuthStoreHydrated } from '@/hooks/useAuthStoreHydrated'
 import { useAuthStore } from '@/stores/authStore'
@@ -63,7 +64,7 @@ export function LoginPage() {
     <Box className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
       <Paper className="p-6 w-full max-w-md flex flex-col gap-4">
         <Typography variant="h5" component="h1">
-          eduCalc — Administración
+          {APP_NAME} — Administración
         </Typography>
         <Typography variant="body2" color="text.secondary">
           Ingresa con tu usuario del backend (JWT).

@@ -23,9 +23,9 @@ export const CampusesPage = lazy(() =>
   })),
 )
 
-export const BulkLoadPage = lazy(() =>
-  import('@/features/students/BulkLoadPage').then((m) => ({
-    default: m.BulkLoadPage,
+export const BulkLoadHubPage = lazy(() =>
+  import('@/features/bulk/BulkLoadHubPage').then((m) => ({
+    default: m.BulkLoadHubPage,
   })),
 )
 

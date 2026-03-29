@@ -9,6 +9,7 @@ import { z } from 'zod'
 import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
+import { DocumentTypeSelect } from '@/components/DocumentTypeSelect'
 import { PageHeader } from '@/components/PageHeader'
 import type { Student } from '@/types/schemas'
 
@@ -118,6 +119,7 @@ export function StudentFormPage() {
     resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: empty,
   })
+  const documentTypeValue = form.watch('document_type')
 
   useEffect(() => {
     if (existing) {
@@ -187,10 +189,9 @@ export function StudentFormPage() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex flex-col gap-2"
           >
-            <TextField
-              label="Tipo documento"
-              {...form.register('document_type')}
-              fullWidth
+            <DocumentTypeSelect
+              registerProps={form.register('document_type')}
+              currentValue={documentTypeValue}
             />
             <TextField
               label="Número documento"

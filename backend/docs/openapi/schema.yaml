@@ -181,6 +181,29 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/academic-areas/bulk-load/:
+    post:
+      operationId: academic_areas_bulk_load_create
+      description: 'Columns: DANE_COD, AREA_NOMBRE, AREA_COD, DESCRIPCION. See docs/plan-implementacion-carga-masiva-csv.md'
+      summary: Bulk load academic areas from CSV
+      tags:
+      - Academic Areas
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadFileRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bulk load statistics
+          description: ''
   /api/academic-indicators/:
     get:
       operationId: academic_indicators_list
@@ -492,6 +515,30 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/academic-indicators/bulk-load/:
+    post:
+      operationId: academic_indicators_bulk_load_create
+      description: Context columns as grades; DESCRIPCION, NOTA (optional), NIVEL_DESEMPENO_TEXTO
+        (optional). Appends rows.
+      summary: Bulk load academic indicators from CSV
+      tags:
+      - Academic Indicators
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadFileRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bulk load statistics
+          description: ''
   /api/academic-periods/:
     get:
       operationId: academic_periods_list
@@ -668,6 +715,30 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/academic-periods/bulk-load/:
+    post:
+      operationId: academic_periods_bulk_load_create
+      description: 'Columns: DANE_COD, ANO, PERIODO_NUM, PERIODO_NOMBRE, FECHA_INI,
+        FECHA_FIN.'
+      summary: Bulk load academic periods from CSV
+      tags:
+      - Academic Periods
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadFileRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bulk load statistics
+          description: ''
   /api/academic-years/:
     get:
       operationId: academic_years_list
@@ -1034,12 +1105,37 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/attendances/bulk-load/:
+    post:
+      operationId: attendances_bulk_load_create
+      description: Same context columns as grades plus INASISTENCIAS_SIN_JUSTIFICAR,
+        INASISTENCIAS_JUSTIFICADAS.
+      summary: Bulk load attendance from CSV
+      tags:
+      - Attendance
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadFileRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bulk load statistics
+          description: ''
   /api/auth/login/:
     post:
       operationId: auth_login_create
-      description: Login with username and password. Returns access and refresh tokens
-        plus user profile.
-      summary: Obtain JWT token pair
+      description: 'Authenticate with username and password. Returns JWT access and
+        refresh tokens plus user profile. Use the `access` token in the `Authorization:
+        Bearer <token>` header for protected endpoints.'
+      summary: Login
       tags:
       - Authentication
       requestBody:
@@ -1047,6 +1143,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CustomTokenObtainPairRequest'
+            examples:
+              LoginRequest:
+                value:
+                  username: admin
+                  password: your-password
+                summary: Request body
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/CustomTokenObtainPairRequest'
@@ -1058,7 +1160,23 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              examples:
+                LoginResponse:
+                  value:
+                    access: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+                    refresh: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+                    user:
+                      id: 1
+                      username: admin
+                      email: admin@example.com
+                      role: ADMIN
+                      institution_id: 550e8400-e29b-41d4-a716-446655440000
+                  summary: Response
+          description: ''
   /api/auth/me/:
     get:
       operationId: auth_me_retrieve
@@ -1472,6 +1590,30 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/course-assignments/bulk-load/:
+    post:
+      operationId: course_assignments_bulk_load_create
+      description: 'Columns: DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE,
+        ENFASIS, AREA_NOMBRE (optional), DOC_DOCENTE.'
+      summary: Bulk load course assignments from CSV
+      tags:
+      - Course Assignments
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadFileRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bulk load statistics
+          description: ''
   /api/disciplinary-reports/:
     get:
       operationId: disciplinary_reports_list
@@ -1653,6 +1795,30 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/disciplinary-reports/bulk-load/:
+    post:
+      operationId: disciplinary_reports_bulk_load_create
+      description: 'Columns: DOC_ESTUDIANTE, DANE_COD, ANO, PERIODO_NUM, TEXTO, DOC_DOCENTE_CREADOR
+        (optional).'
+      summary: Bulk load disciplinary reports from CSV
+      tags:
+      - Disciplinary Reports
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadFileRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bulk load statistics
+          description: ''
   /api/enrollments/:
     get:
       operationId: enrollments_list
@@ -2037,6 +2203,29 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/grade-directors/bulk-load/:
+    post:
+      operationId: grade_directors_bulk_load_create
+      description: 'Columns: DANE_COD, ANO, SEDE, GRADO, GRUPO, DOC_DOCENTE.'
+      summary: Bulk load grade directors from CSV
+      tags:
+      - Grade Directors
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadFileRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bulk load statistics
+          description: ''
   /api/grade-levels/:
     get:
       operationId: grade_levels_list
@@ -2399,6 +2588,31 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/grades/bulk-load/:
+    post:
+      operationId: grades_bulk_load_create
+      description: 'Columns: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE,
+        ENFASIS, AREA_NOMBRE (optional), PERIODO_NUM, NOTA, COD_NIVEL (optional),
+        NOTA_DEFINITIVA (optional). Requires existing CourseAssignment.'
+      summary: Bulk load grades from CSV
+      tags:
+      - Grades
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadFileRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bulk load statistics
+          description: ''
   /api/grading-scales/:
     get:
       operationId: grading_scales_list
@@ -2575,6 +2789,30 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/grading-scales/bulk-load/:
+    post:
+      operationId: grading_scales_bulk_load_create
+      description: 'Columns: DANE_COD, COD_NIVEL, NOMBRE_NIVEL, NOTA_MIN, NOTA_MAX,
+        DESCRIPCION.'
+      summary: Bulk load grading scales from CSV
+      tags:
+      - Grading Scales
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadFileRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bulk load statistics
+          description: ''
   /api/groups/:
     get:
       operationId: groups_list
@@ -3133,6 +3371,30 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/parents/bulk-load/:
+    post:
+      operationId: parents_bulk_load_create
+      description: 'Columns: DOC, TIPODOC, NOMBRE1, NOMBRE2, APELLIDO1, APELLIDO2,
+        EMAIL, TELEFONO, PARENTESCO. Empty EMAIL uses a synthetic address.'
+      summary: Bulk load parents/guardians from CSV
+      tags:
+      - Parents
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadFileRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bulk load statistics
+          description: ''
   /api/performance-summaries/:
     get:
       operationId: performance_summaries_list
@@ -3319,6 +3581,30 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/performance-summaries/bulk-load/:
+    post:
+      operationId: performance_summaries_bulk_load_create
+      description: 'Columns: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, PERIODO_NUM,
+        PROMEDIO_PERIODO, PUESTO, PROMEDIO_DEFINITIVO.'
+      summary: Bulk load performance summaries from CSV
+      tags:
+      - Performance Summaries
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadFileRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bulk load statistics
+          description: ''
   /api/school-records/:
     get:
       operationId: school_records_list
@@ -3633,6 +3919,29 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/student-guardians/bulk-load/:
+    post:
+      operationId: student_guardians_bulk_load_create
+      description: 'Columns: DOC_ESTUDIANTE, DOC_ACUDIENTE, ES_PRIMARIO.'
+      summary: Bulk load student–guardian links from CSV
+      tags:
+      - Student Guardians
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadFileRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bulk load statistics
+          description: ''
   /api/students/:
     get:
       operationId: students_list
@@ -3830,6 +4139,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/Student'
           description: ''
+  /api/students/bulk-load/:
+    post:
+      operationId: students_bulk_load_create
+      description: 'Upload a CSV file to create/update students, enrollments, institutions,
+        campuses, academic years, grade levels, and groups. CSV format: ANO, INSTITUCION,
+        SEDE, GRADO_COD, GRADO, GRUPO, FECHAINI, ESTRATO, SISBEN IV, DOC, TIPODOC,
+        APELLIDO1, APELLIDO2, NOMBRE1, NOMBRE2, GENERO, FECHA_NACIMIENTO, BARRIO,
+        EPS, TIPO DE SANGRE, DISCAPACIDAD, TELEFONO. Use multipart/form-data with
+        field ''file''.'
+      summary: Bulk load students from CSV
+      tags:
+      - Students
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadStudentsRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bulk load statistics
+          description: ''
   /api/subjects/:
     get:
       operationId: subjects_list
@@ -4011,6 +4348,29 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/subjects/bulk-load/:
+    post:
+      operationId: subjects_bulk_load_create
+      description: 'Columns: DANE_COD, AREA_NOMBRE, ASIGNATURA_NOMBRE, ENFASIS, HORAS.'
+      summary: Bulk load subjects from CSV
+      tags:
+      - Subjects
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadFileRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bulk load statistics
+          description: ''
   /api/teachers/:
     get:
       operationId: teachers_list
@@ -4182,6 +4542,30 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/teachers/bulk-load/:
+    post:
+      operationId: teachers_bulk_load_create
+      description: 'Columns: DOC, TIPODOC, NOMBRE1, NOMBRE2, APELLIDO1, APELLIDO2,
+        EMAIL, TELEFONO, ESPECIALIDAD.'
+      summary: Bulk load teachers from CSV
+      tags:
+      - Teachers
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadFileRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bulk load statistics
+          description: ''
   /api/users/:
     get:
       operationId: users_list
@@ -4783,6 +5167,29 @@ components:
       - academic_period
       - course_assignment
       - student
+    BulkLoadFileRequest:
+      type: object
+      description: Multipart CSV upload for bulk loaders.
+      properties:
+        file:
+          type: string
+          format: binary
+          description: UTF-8 CSV file (.csv)
+      required:
+      - file
+    BulkLoadStudentsRequest:
+      type: object
+      description: Request serializer for bulk load (file upload).
+      properties:
+        file:
+          type: string
+          format: binary
+          description: 'CSV file with columns: ANO, INSTITUCION, SEDE, GRADO_COD,
+            GRADO, GRUPO, FECHAINI, ESTRATO, SISBEN IV, DOC, TIPODOC, APELLIDO1, APELLIDO2,
+            NOMBRE1, NOMBRE2, GENERO, FECHA_NACIMIENTO, BARRIO, EPS, TIPO DE SANGRE,
+            DISCAPACIDAD, TELEFONO'
+      required:
+      - file
     Campus:
       type: object
       properties:
@@ -5445,6 +5852,45 @@ components:
       required:
       - dane_code
       - name
+    LoginResponse:
+      type: object
+      properties:
+        access:
+          type: string
+          description: 'JWT access token. Use in Authorization: Bearer <token>'
+        refresh:
+          type: string
+          description: JWT refresh token. Use to obtain a new access token.
+        user:
+          $ref: '#/components/schemas/LoginUser'
+      required:
+      - access
+      - refresh
+      - user
+    LoginUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: User primary key
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          nullable: true
+          description: 'User role: ADMIN, COORDINADOR, DOCENTE, PADRE_FAMILIA'
+        institution_id:
+          type: string
+          nullable: true
+          description: UUID of the institution the user belongs to (if any)
+      required:
+      - email
+      - id
+      - institution_id
+      - role
+      - username
     Parent:
       type: object
       properties:
@@ -5892,7 +6338,7 @@ components:
       properties:
         document_type:
           type: string
-          maxLength: 10
+          maxLength: 80
         document_number:
           type: string
           maxLength: 20
@@ -5920,11 +6366,32 @@ components:
           nullable: true
         gender:
           type: string
-          maxLength: 20
+          maxLength: 30
         enrollment_date:
           type: string
           format: date
           nullable: true
+        stratum:
+          type: string
+          maxLength: 50
+        sisben:
+          type: string
+          maxLength: 20
+        neighborhood:
+          type: string
+          maxLength: 150
+        health_insurer:
+          type: string
+          maxLength: 150
+        blood_type:
+          type: string
+          maxLength: 10
+        disability:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 30
     PatchedSubjectRequest:
       type: object
       properties:
@@ -6205,7 +6672,7 @@ components:
           readOnly: true
         document_type:
           type: string
-          maxLength: 10
+          maxLength: 80
         document_number:
           type: string
           maxLength: 20
@@ -6230,11 +6697,32 @@ components:
           nullable: true
         gender:
           type: string
-          maxLength: 20
+          maxLength: 30
         enrollment_date:
           type: string
           format: date
           nullable: true
+        stratum:
+          type: string
+          maxLength: 50
+        sisben:
+          type: string
+          maxLength: 20
+        neighborhood:
+          type: string
+          maxLength: 150
+        health_insurer:
+          type: string
+          maxLength: 150
+        blood_type:
+          type: string
+          maxLength: 10
+        disability:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 30
         created_at:
           type: string
           format: date-time
@@ -6306,7 +6794,7 @@ components:
       properties:
         document_type:
           type: string
-          maxLength: 10
+          maxLength: 80
         document_number:
           type: string
           maxLength: 20
@@ -6334,11 +6822,32 @@ components:
           nullable: true
         gender:
           type: string
-          maxLength: 20
+          maxLength: 30
         enrollment_date:
           type: string
           format: date
           nullable: true
+        stratum:
+          type: string
+          maxLength: 50
+        sisben:
+          type: string
+          maxLength: 20
+        neighborhood:
+          type: string
+          maxLength: 150
+        health_insurer:
+          type: string
+          maxLength: 150
+        blood_type:
+          type: string
+          maxLength: 10
+        disability:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 30
       required:
       - first_last_name
       - first_name

@@ -9,11 +9,15 @@ BARRIO, EPS, TIPO DE SANGRE, DISCAPACIDAD, TELEFONO
 import csv
 import io
 import uuid
-from datetime import datetime
-from decimal import Decimal
 
 from django.utils import timezone
 
+from .bulk_load_utils import (
+    clean_str as _clean_str,
+    parse_date as _parse_date,
+    parse_int as _parse_int,
+    row_col as _row_col,
+)
 from .models import (
     AcademicYear,
     Campus,
@@ -23,51 +27,6 @@ from .models import (
     Institution,
     Student,
 )
-
-
-def _parse_date(value):
-    """Parse date from formats: DD/MM/YYYY, DD/MM/YY, MM/DD/YYYY, MM/DD/YY HH:MM."""
-    if not value or not str(value).strip():
-        return None
-    value = str(value).strip()
-    # Take date part if time is present (e.g. "11/29/25 21:06")
-    if " " in value:
-        value = value.split()[0]
-    for fmt in ("%d/%m/%Y", "%d/%m/%y", "%m/%d/%Y", "%m/%d/%y", "%Y-%m-%d"):
-        try:
-            return datetime.strptime(value, fmt).date()
-        except ValueError:
-            continue
-    return None
-
-
-def _parse_int(value, default=None):
-    if value is None or str(value).strip() == "":
-        return default
-    try:
-        return int(Decimal(str(value).replace(",", ".")))
-    except (ValueError, TypeError):
-        return default
-
-
-def _clean_str(value, default=""):
-    if value is None:
-        return default
-    s = str(value).strip()
-    return s if s else default
-
-
-def _row_col(row, keys, default=""):
-    """Get value from row by key (case-insensitive). Tries each key in order."""
-    row_lower = {str(k).strip().lower(): k for k in row.keys() if k}
-    for key in keys:
-        k_lower = str(key).strip().lower()
-        if k_lower in row_lower:
-            orig_key = row_lower[k_lower]
-            val = row.get(orig_key)
-            if val is not None and str(val).strip():
-                return str(val).strip()
-    return default
 
 
 def bulk_load_students(csv_file, created_by_institution_id=None):

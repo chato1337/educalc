@@ -31,6 +31,7 @@ import {
 
 import { apiClient } from '@/api/client'
 import { queryKeys } from '@/api/queryKeys'
+import { APP_NAME } from '@/app/appName'
 import { filterNavSectionsForRole, navSections } from '@/app/navConfig'
 import { requiredRolesForPathname } from '@/app/routeAccess'
 import {
@@ -108,7 +109,7 @@ export function AdminLayout() {
     <Box className="flex flex-col h-full">
       <Toolbar className="justify-center">
         <Typography variant="h6" noWrap>
-          eduCalc Admin
+          {APP_NAME} Admin
         </Typography>
       </Toolbar>
       <Divider />

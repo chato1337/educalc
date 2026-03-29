@@ -41,6 +41,7 @@ function staffPrefixes(): PathRule[] {
  */
 const PATH_RULES: PathRule[] = [
   { prefix: '/students/bulk-load', roles: ADMIN_COORDINATOR },
+  { prefix: '/bulk-load', roles: ADMIN_COORDINATOR },
   { prefix: '/institutions', roles: ADMIN_ONLY },
   { prefix: '/users', roles: ADMIN_ONLY },
   { prefix: '/dashboard', roles: ALL_APP_ROLES },

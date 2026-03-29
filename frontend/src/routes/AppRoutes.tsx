@@ -14,7 +14,7 @@ import {
   AcademicPeriodsPage,
   AcademicYearsPage,
   AttendancesPage,
-  BulkLoadPage,
+  BulkLoadHubPage,
   CampusesPage,
   CourseAssignmentsPage,
   DashboardPage,
@@ -59,7 +59,11 @@ export function AppRoutes() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="institutions" element={<InstitutionsPage />} />
           <Route path="campuses" element={<CampusesPage />} />
-          <Route path="students/bulk-load" element={<BulkLoadPage />} />
+          <Route
+            path="students/bulk-load"
+            element={<Navigate to="/bulk-load" replace />}
+          />
+          <Route path="bulk-load" element={<BulkLoadHubPage />} />
           <Route path="students/new" element={<StudentFormPage />} />
           <Route
             path="students/:id/grades-summary"

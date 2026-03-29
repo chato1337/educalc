@@ -12,4 +12,5 @@ User = get_user_model()
 def create_user_profile(sender, instance, created, **kwargs):
     """Create UserProfile when a new User is created."""
     if created:
-        UserProfile.objects.get_or_create(user=instance, defaults={"role": "TEACHER"})
+        default_role = "ADMIN" if instance.is_superuser else "TEACHER"
+        UserProfile.objects.get_or_create(user=instance, defaults={"role": default_role})

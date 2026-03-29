@@ -304,6 +304,58 @@
                 }
             }
         },
+        "/api/academic-areas/bulk-load/": {
+            "post": {
+                "operationId": "academic_areas_bulk_load_create",
+                "description": "Columns: DANE_COD, AREA_NOMBRE, AREA_COD, DESCRIPCION. See docs/plan-implementacion-carga-masiva-csv.md",
+                "summary": "Bulk load academic areas from CSV",
+                "tags": [
+                    "Academic Areas"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
+                    }
+                }
+            }
+        },
         "/api/academic-indicators/": {
             "get": {
                 "operationId": "academic_indicators_list",
@@ -825,6 +877,58 @@
                 }
             }
         },
+        "/api/academic-indicators/bulk-load/": {
+            "post": {
+                "operationId": "academic_indicators_bulk_load_create",
+                "description": "Context columns as grades; DESCRIPCION, NOTA (optional), NIVEL_DESEMPENO_TEXTO (optional). Appends rows.",
+                "summary": "Bulk load academic indicators from CSV",
+                "tags": [
+                    "Academic Indicators"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
+                    }
+                }
+            }
+        },
         "/api/academic-periods/": {
             "get": {
                 "operationId": "academic_periods_list",
@@ -1119,6 +1223,58 @@
                 "responses": {
                     "204": {
                         "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/academic-periods/bulk-load/": {
+            "post": {
+                "operationId": "academic_periods_bulk_load_create",
+                "description": "Columns: DANE_COD, ANO, PERIODO_NUM, PERIODO_NOMBRE, FECHA_INI, FECHA_FIN.",
+                "summary": "Bulk load academic periods from CSV",
+                "tags": [
+                    "Academic Periods"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
                     }
                 }
             }
@@ -1738,6 +1894,58 @@
                 "responses": {
                     "204": {
                         "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/attendances/bulk-load/": {
+            "post": {
+                "operationId": "attendances_bulk_load_create",
+                "description": "Same context columns as grades plus INASISTENCIAS_SIN_JUSTIFICAR, INASISTENCIAS_JUSTIFICADAS.",
+                "summary": "Bulk load attendance from CSV",
+                "tags": [
+                    "Attendance"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
                     }
                 }
             }
@@ -2508,6 +2716,58 @@
                 }
             }
         },
+        "/api/course-assignments/bulk-load/": {
+            "post": {
+                "operationId": "course_assignments_bulk_load_create",
+                "description": "Columns: DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, ENFASIS, AREA_NOMBRE (optional), DOC_DOCENTE.",
+                "summary": "Bulk load course assignments from CSV",
+                "tags": [
+                    "Course Assignments"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
+                    }
+                }
+            }
+        },
         "/api/disciplinary-reports/": {
             "get": {
                 "operationId": "disciplinary_reports_list",
@@ -2810,6 +3070,58 @@
                 "responses": {
                     "204": {
                         "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/disciplinary-reports/bulk-load/": {
+            "post": {
+                "operationId": "disciplinary_reports_bulk_load_create",
+                "description": "Columns: DOC_ESTUDIANTE, DANE_COD, ANO, PERIODO_NUM, TEXTO, DOC_DOCENTE_CREADOR (optional).",
+                "summary": "Bulk load disciplinary reports from CSV",
+                "tags": [
+                    "Disciplinary Reports"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
                     }
                 }
             }
@@ -3455,6 +3767,58 @@
                 }
             }
         },
+        "/api/grade-directors/bulk-load/": {
+            "post": {
+                "operationId": "grade_directors_bulk_load_create",
+                "description": "Columns: DANE_COD, ANO, SEDE, GRADO, GRUPO, DOC_DOCENTE.",
+                "summary": "Bulk load grade directors from CSV",
+                "tags": [
+                    "Grade Directors"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
+                    }
+                }
+            }
+        },
         "/api/grade-levels/": {
             "get": {
                 "operationId": "grade_levels_list",
@@ -4067,6 +4431,58 @@
                 }
             }
         },
+        "/api/grades/bulk-load/": {
+            "post": {
+                "operationId": "grades_bulk_load_create",
+                "description": "Columns: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, ENFASIS, AREA_NOMBRE (optional), PERIODO_NUM, NOTA, COD_NIVEL (optional), NOTA_DEFINITIVA (optional). Requires existing CourseAssignment.",
+                "summary": "Bulk load grades from CSV",
+                "tags": [
+                    "Grades"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
+                    }
+                }
+            }
+        },
         "/api/grading-scales/": {
             "get": {
                 "operationId": "grading_scales_list",
@@ -4361,6 +4777,58 @@
                 "responses": {
                     "204": {
                         "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/grading-scales/bulk-load/": {
+            "post": {
+                "operationId": "grading_scales_bulk_load_create",
+                "description": "Columns: DANE_COD, COD_NIVEL, NOMBRE_NIVEL, NOTA_MIN, NOTA_MAX, DESCRIPCION.",
+                "summary": "Bulk load grading scales from CSV",
+                "tags": [
+                    "Grading Scales"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
                     }
                 }
             }
@@ -5308,6 +5776,58 @@
                 }
             }
         },
+        "/api/parents/bulk-load/": {
+            "post": {
+                "operationId": "parents_bulk_load_create",
+                "description": "Columns: DOC, TIPODOC, NOMBRE1, NOMBRE2, APELLIDO1, APELLIDO2, EMAIL, TELEFONO, PARENTESCO. Empty EMAIL uses a synthetic address.",
+                "summary": "Bulk load parents/guardians from CSV",
+                "tags": [
+                    "Parents"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
+                    }
+                }
+            }
+        },
         "/api/performance-summaries/": {
             "get": {
                 "operationId": "performance_summaries_list",
@@ -5618,6 +6138,58 @@
                 "responses": {
                     "204": {
                         "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/performance-summaries/bulk-load/": {
+            "post": {
+                "operationId": "performance_summaries_bulk_load_create",
+                "description": "Columns: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, PERIODO_NUM, PROMEDIO_PERIODO, PUESTO, PROMEDIO_DEFINITIVO.",
+                "summary": "Bulk load performance summaries from CSV",
+                "tags": [
+                    "Performance Summaries"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
                     }
                 }
             }
@@ -6150,6 +6722,58 @@
                 }
             }
         },
+        "/api/student-guardians/bulk-load/": {
+            "post": {
+                "operationId": "student_guardians_bulk_load_create",
+                "description": "Columns: DOC_ESTUDIANTE, DOC_ACUDIENTE, ES_PRIMARIO.",
+                "summary": "Bulk load student–guardian links from CSV",
+                "tags": [
+                    "Student Guardians"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
+                    }
+                }
+            }
+        },
         "/api/students/": {
             "get": {
                 "operationId": "students_list",
@@ -6494,7 +7118,7 @@
                     "content": {
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/BulkLoadStudentsRequest"
+                                "$ref": "#/components/schemas/BulkLoadStudentsCsvRequest"
                             }
                         }
                     },
@@ -6513,11 +7137,23 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "description": "Bulk load statistics"
+                                    "type": "object",
+                                    "additionalProperties": {}
                                 }
                             }
                         },
-                        "description": ""
+                        "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
                     }
                 }
             }
@@ -6828,6 +7464,58 @@
                 }
             }
         },
+        "/api/subjects/bulk-load/": {
+            "post": {
+                "operationId": "subjects_bulk_load_create",
+                "description": "Columns: DANE_COD, AREA_NOMBRE, ASIGNATURA_NOMBRE, ENFASIS, HORAS.",
+                "summary": "Bulk load subjects from CSV",
+                "tags": [
+                    "Subjects"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
+                    }
+                }
+            }
+        },
         "/api/teachers/": {
             "get": {
                 "operationId": "teachers_list",
@@ -7114,6 +7802,58 @@
                 "responses": {
                     "204": {
                         "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/teachers/bulk-load/": {
+            "post": {
+                "operationId": "teachers_bulk_load_create",
+                "description": "Columns: DOC, TIPODOC, NOMBRE1, NOMBRE2, APELLIDO1, APELLIDO2, EMAIL, TELEFONO, ESPECIALIDAD.",
+                "summary": "Bulk load teachers from CSV",
+                "tags": [
+                    "Teachers"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
                     }
                 }
             }
@@ -7966,9 +8706,23 @@
                     "student"
                 ]
             },
-            "BulkLoadStudentsRequest": {
+            "BulkLoadCsvUploadRequest": {
                 "type": "object",
-                "description": "Request serializer for bulk load (file upload).",
+                "description": "Multipart CSV upload for bulk loaders (OpenAPI: multipart field ``file``).",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "format": "binary",
+                        "description": "UTF-8 CSV file (.csv)"
+                    }
+                },
+                "required": [
+                    "file"
+                ]
+            },
+            "BulkLoadStudentsCsvRequest": {
+                "type": "object",
+                "description": "Request serializer for student bulk load (OpenAPI: multipart field ``file``).",
                 "properties": {
                     "file": {
                         "type": "string",
