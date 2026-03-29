@@ -144,9 +144,26 @@ class StudentSerializer(serializers.ModelSerializer):
             "date_of_birth",
             "gender",
             "enrollment_date",
+            "stratum",
+            "sisben",
+            "neighborhood",
+            "health_insurer",
+            "blood_type",
+            "disability",
+            "phone",
             "created_at",
             "updated_at",
         ]
+
+
+class BulkLoadStudentsSerializer(serializers.Serializer):
+    """Request serializer for bulk load (file upload)."""
+
+    file = serializers.FileField(
+        help_text="CSV file with columns: ANO, INSTITUCION, SEDE, GRADO_COD, GRADO, GRUPO, "
+        "FECHAINI, ESTRATO, SISBEN IV, DOC, TIPODOC, APELLIDO1, APELLIDO2, NOMBRE1, NOMBRE2, "
+        "GENERO, FECHA_NACIMIENTO, BARRIO, EPS, TIPO DE SANGRE, DISCAPACIDAD, TELEFONO"
+    )
 
 
 class TeacherSerializer(serializers.ModelSerializer):

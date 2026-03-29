@@ -1,6 +1,13 @@
 """Authentication views with OpenAPI documentation."""
+from rest_framework import serializers
+
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import (
+    OpenApiExample,
+    extend_schema,
+    extend_schema_view,
+    inline_serializer,
+)
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -10,11 +17,63 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .auth_serializers import CustomTokenObtainPairSerializer
 
 
+LoginResponseSerializer = inline_serializer(
+    name="LoginResponse",
+    fields={
+        "access": serializers.CharField(help_text="JWT access token. Use in Authorization: Bearer <token>"),
+        "refresh": serializers.CharField(help_text="JWT refresh token. Use to obtain a new access token."),
+        "user": inline_serializer(
+            name="LoginUser",
+            fields={
+                "id": serializers.IntegerField(help_text="User primary key"),
+                "username": serializers.CharField(),
+                "email": serializers.CharField(),
+                "role": serializers.CharField(
+                    allow_null=True,
+                    help_text="User role: ADMIN, COORDINADOR, DOCENTE, PADRE_FAMILIA",
+                ),
+                "institution_id": serializers.CharField(
+                    allow_null=True,
+                    help_text="UUID of the institution the user belongs to (if any)",
+                ),
+            },
+        ),
+    },
+)
+
+
 @extend_schema_view(
     post=extend_schema(
-        summary="Obtain JWT token pair",
-        description="Login with username and password. Returns access and refresh tokens plus user profile.",
+        summary="Login",
+        description="Authenticate with username and password. Returns JWT access and refresh tokens plus user profile. "
+        "Use the `access` token in the `Authorization: Bearer <token>` header for protected endpoints.",
         tags=["Authentication"],
+        request=CustomTokenObtainPairSerializer,
+        responses={200: LoginResponseSerializer},
+        examples=[
+            OpenApiExample(
+                "Login request",
+                value={"username": "admin", "password": "your-password"},
+                request_only=True,
+                summary="Request body",
+            ),
+            OpenApiExample(
+                "Login response",
+                value={
+                    "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+                    "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+                    "user": {
+                        "id": 1,
+                        "username": "admin",
+                        "email": "admin@example.com",
+                        "role": "ADMIN",
+                        "institution_id": "550e8400-e29b-41d4-a716-446655440000",
+                    },
+                },
+                response_only=True,
+                summary="Response",
+            ),
+        ],
     )
 )
 class LoginView(TokenObtainPairView):

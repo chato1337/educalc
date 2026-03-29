@@ -86,7 +86,7 @@ Nivel educativo (ej: SEXTO, PRIMERO, SEGUNDO).
 
 ### 2.5 Grupo / Curso (`Group`)
 
-Grupo específico de estudiantes dentro de un grado (ej: 601, 602).
+Grupo específico de estudiantes dentro de un grado (ej: 601, 602). Un grupo es único por grado, año lectivo, sede y nombre.
 
 | Atributo | Tipo | Descripción | Obligatorio |
 |----------|------|-------------|-------------|
@@ -117,10 +117,17 @@ Datos del estudiante.
 | `date_of_birth` | date | Fecha de nacimiento | No |
 | `gender` | string | Género | No |
 | `enrollment_date` | date | Fecha de matrícula | No |
+| `stratum` | string | Estrato socioeconómico (ej: ESTRATO 1, NO APLICA) | No |
+| `sisben` | string | Nivel SISBEN IV (ej: A5, NO APLICA) | No |
+| `neighborhood` | string | Barrio o vereda | No |
+| `health_insurer` | string | EPS o aseguradora | No |
+| `blood_type` | string | Tipo de sangre (ej: O +) | No |
+| `disability` | string | Discapacidad (ej: NO APLICA, DISCAPACIDAD MÚLTIPLE) | No |
+| `phone` | string | Teléfono de contacto | No |
 | `created_at` | datetime | Fecha de creación | Sí |
 | `updated_at` | datetime | Última actualización | Sí |
 
-**Nota:** En el documento aparece el nombre en formato "APELLIDO NOMBRE NOMBRE" (ej: IPIA CAMPO MICHEL MARIANA).
+**Nota:** En el documento aparece el nombre en formato "APELLIDO NOMBRE NOMBRE" (ej: IPIA CAMPO MICHEL MARIANA). Los campos `stratum`, `sisben`, `neighborhood`, `health_insurer`, `blood_type`, `disability` y `phone` se usan en la carga masiva desde CSV.
 
 ---
 
@@ -554,6 +561,14 @@ Parent
 - `GET /api/academic-indicators-reports/{student_id}/{period_id}/` — Generar indicadores académicos
 - `GET /api/students/{id}/grades-summary/` — Resumen de calificaciones
 - `GET /api/groups/{id}/students-rankings/` — Rankings por periodo
+
+### 4.2.1 Carga masiva de estudiantes
+
+- `POST /api/students/bulk-load/` — Carga masiva desde CSV (multipart/form-data, campo `file`).
+
+**Columnas del CSV:** ANO, INSTITUCION, SEDE, GRADO_COD, GRADO, GRUPO, FECHAINI, ESTRATO, SISBEN IV, DOC, TIPODOC, APELLIDO1, APELLIDO2, NOMBRE1, NOMBRE2, GENERO, FECHA_NACIMIENTO, BARRIO, EPS, TIPO DE SANGRE, DISCAPACIDAD, TELEFONO.
+
+**Comportamiento:** Crea o actualiza Institution, Campus, AcademicYear, GradeLevel, Group, Student y Enrollment según los datos del CSV. Los estudiantes se identifican por `document_number`; si existe se actualiza, si no se crea.
 
 ### 4.3 Framework identificado
 

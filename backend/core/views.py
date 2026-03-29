@@ -1,11 +1,13 @@
 """API ViewSets with OpenAPI documentation. All use IsAuthenticated; RBAC scope filtering can be applied per-view."""
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from .bulk_load import bulk_load_students
 from .models import (
     AcademicArea,
     AcademicIndicator,
@@ -34,6 +36,7 @@ from .models import (
 )
 from .permissions import IsAdminUser
 from .serializers import (
+    BulkLoadStudentsSerializer,
     AcademicAreaSerializer,
     AcademicIndicatorSerializer,
     AcademicIndicatorsReportSerializer,
@@ -127,6 +130,36 @@ class StudentViewSet(viewsets.ModelViewSet):
     serializer_class = StudentSerializer
     permission_classes = [IsAuthenticated]
     search_fields = ["full_name", "first_name", "first_last_name", "document_number"]
+
+    @extend_schema(
+        summary="Bulk load students from CSV",
+        description="Upload a CSV file to create/update students, enrollments, institutions, "
+        "campuses, academic years, grade levels, and groups. CSV format: ANO, INSTITUCION, "
+        "SEDE, GRADO_COD, GRADO, GRUPO, FECHAINI, ESTRATO, SISBEN IV, DOC, TIPODOC, "
+        "APELLIDO1, APELLIDO2, NOMBRE1, NOMBRE2, GENERO, FECHA_NACIMIENTO, BARRIO, EPS, "
+        "TIPO DE SANGRE, DISCAPACIDAD, TELEFONO. Use multipart/form-data with field 'file'.",
+        tags=["Students"],
+        request={"multipart/form-data": BulkLoadStudentsSerializer},
+        responses={200: {"description": "Bulk load statistics"}},
+    )
+    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    def bulk_load(self, request):
+        serializer = BulkLoadStudentsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        csv_file = serializer.validated_data["file"]
+        if not csv_file.name.lower().endswith(".csv"):
+            return Response(
+                {"error": "File must be a CSV (.csv)"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            stats = bulk_load_students(csv_file)
+            return Response(stats, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     @extend_schema(
         summary="Grades summary",

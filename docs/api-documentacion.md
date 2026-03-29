@@ -40,6 +40,15 @@ cd backend
 
 Los archivos se guardan en `backend/docs/openapi/` (crear la carpeta si no existe).
 
+### Datos de prueba (seed)
+
+```bash
+cd backend
+python manage.py seed_data
+```
+
+Crea: institución de referencia (I.E. Agropecuaria Carrizales), campus, año lectivo, grados (PRIMERO–ONCE), escala de valoración (Decreto 1290) y áreas académicas.
+
 ### Uso del schema exportado
 
 - **OpenAPI Generator**: Generar cliente TypeScript/JavaScript a partir del schema

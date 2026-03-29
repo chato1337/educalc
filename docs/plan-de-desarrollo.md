@@ -93,6 +93,7 @@ Orden sugerido según FK.
 
 - [x] Modelo `Student` según análisis
 - [x] Método `full_name` o `save()` para computar `full_name`
+- [x] Campos adicionales para carga masiva: stratum, sisben, neighborhood, health_insurer, blood_type, disability, phone
 - [x] Migración
 - [x] Admin
 
@@ -117,6 +118,7 @@ Orden sugerido según FK.
 ### 3.1 Group
 
 - [x] Modelo `Group` (FK → GradeLevel, AcademicYear, Campus)
+- [x] unique_together incluye campus: (grade_level, academic_year, campus, name)
 - [x] Migración
 - [x] Admin
 
@@ -281,6 +283,7 @@ Cada entidad debe tener:
 
 - [x] `StudentViewSet`, `StudentSerializer`
 - [x] OpenAPI: tags `["Students"]`
+- [x] Endpoint `POST /api/students/bulk-load/` para carga masiva desde CSV
 
 ### 7.7 Teacher
 
@@ -385,11 +388,13 @@ Cada entidad debe tener:
 
 ## Fase 9: Exportación de schema y datos de prueba
 
-- [ ] Ejecutar `./scripts/export-openapi-schema.sh` y verificar `docs/openapi/schema.yaml`
-- [ ] Crear management command o fixtures para datos de prueba (institución, grados, escalas)
-- [ ] Verificar que Swagger UI muestre todas las entidades documentadas
+- [x] Ejecutar `./scripts/export-openapi-schema.sh` y verificar `docs/openapi/schema.yaml`
+- [x] Crear management command o fixtures para datos de prueba (institución, grados, escalas)
+- [x] Verificar que Swagger UI muestre todas las entidades documentadas
 
 **Checkpoint:** `git commit -m "chore: export OpenAPI schema and add seed data"`
+
+**Comando seed:** `python manage.py seed_data` — Crea institución de referencia, campus, año lectivo, grados (PRIMERO-ONCE), escala de valoración (Decreto 1290), áreas académicas.
 
 ---
 

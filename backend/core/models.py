@@ -144,16 +144,24 @@ class GradingScale(TimeStampedModel):
 class Student(TimeStampedModel):
     """Student data."""
 
-    document_type = models.CharField(max_length=10, blank=True)  # CC, TI, RC
-    document_number = models.CharField(max_length=20, blank=True)
+    document_type = models.CharField(max_length=80, blank=True, default="")  # CC, TI, RC, RC:REGISTRO CIVIL...
+    document_number = models.CharField(max_length=20, blank=True, default="")
     first_name = models.CharField(max_length=100)
-    second_name = models.CharField(max_length=100, blank=True)
+    second_name = models.CharField(max_length=100, blank=True, default="")
     first_last_name = models.CharField(max_length=100)
-    second_last_name = models.CharField(max_length=100, blank=True)
+    second_last_name = models.CharField(max_length=100, blank=True, default="")
     full_name = models.CharField(max_length=400)  # Computed or stored
     date_of_birth = models.DateField(null=True, blank=True)
-    gender = models.CharField(max_length=20, blank=True)
+    gender = models.CharField(max_length=30, blank=True, default="")
     enrollment_date = models.DateField(null=True, blank=True)
+    # Additional fields from bulk load (Colombian context)
+    stratum = models.CharField(max_length=50, blank=True, default="")  # ESTRATO
+    sisben = models.CharField(max_length=20, blank=True, default="")  # SISBEN IV level
+    neighborhood = models.CharField(max_length=150, blank=True, default="")  # BARRIO
+    health_insurer = models.CharField(max_length=150, blank=True, default="")  # EPS
+    blood_type = models.CharField(max_length=10, blank=True, default="")  # TIPO DE SANGRE
+    disability = models.CharField(max_length=100, blank=True, default="")  # DISCAPACIDAD
+    phone = models.CharField(max_length=30, blank=True, default="")
 
     class Meta:
         ordering = ["full_name"]
@@ -253,7 +261,7 @@ class Group(TimeStampedModel):
         ordering = ["name"]
         verbose_name = "Group"
         verbose_name_plural = "Groups"
-        unique_together = [["grade_level", "academic_year", "name"]]
+        unique_together = [["grade_level", "academic_year", "campus", "name"]]
 
     def __str__(self):
         return f"{self.name} ({self.academic_year.year})"
