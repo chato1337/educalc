@@ -32,8 +32,28 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-change-me-in-produc
 DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() in ("true", "1", "yes")
 
 ALLOWED_HOSTS = [
-    host.strip() for host in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    host.strip()
+    for host in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    if host.strip()
 ]
+
+
+def _split_csv_urls(env_key: str, default: str) -> list[str]:
+    """Comma-separated URLs/origins; strips whitespace and trailing slashes."""
+    raw = os.getenv(env_key, default)
+    return [p.strip().rstrip("/") for p in raw.split(",") if p.strip()]
+
+
+# Detrás de nginx/Traefik con TLS: Django debe confiar en X-Forwarded-Proto / X-Forwarded-Host
+if os.getenv("TRUST_X_FORWARDED_PROTO", "").lower() in ("true", "1", "yes"):
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+if os.getenv("USE_X_FORWARDED_HOST", "").lower() in ("true", "1", "yes"):
+    USE_X_FORWARDED_HOST = True
+
+_csrf_origins = _split_csv_urls("CSRF_TRUSTED_ORIGINS", "")
+if _csrf_origins:
+    CSRF_TRUSTED_ORIGINS = _csrf_origins
 
 
 # Application definition
@@ -157,9 +177,20 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # CORS
 # https://pypi.org/project/django-cors-headers/
 CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "False").lower() in ("true", "1", "yes")
-CORS_ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+CORS_ALLOWED_ORIGINS = _split_csv_urls(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173",
+)
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
 ]
 
 # Django REST Framework

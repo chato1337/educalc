@@ -81,7 +81,10 @@ Notas:
 
 - El archivo de variables para Docker es el `.env` de la raiz (basado en `.env.example`).
 - El frontend llama al API con URL absoluta (`VITE_API_BASE_URL`). En Docker Compose el valor por defecto es `http://localhost:8000` (visto **desde el navegador** en tu máquina, no el hostname interno `backend`).
-- Asegura en el backend `CORS_ALLOWED_ORIGINS` con el origen del front (p. ej. `http://localhost:5173`) cuando front y API son distintos orígenes.
+- Asegura en el backend `CORS_ALLOWED_ORIGINS` con el origen del front (p. ej. `https://tu-dominio.com`) cuando front y API son distintos orígenes. Sin barra final; si usas `www`, debe coincidir exactamente con el `Origin` del navegador.
+- En `DJANGO_ALLOWED_HOSTS` incluye el **hostname del API** (p. ej. `api.tudominio.com`), no solo el del front. Si falta, Django puede responder 400 sin cabeceras CORS y el navegador mostrará error de CORS en el preflight.
+- Tras nginx/Traefik con HTTPS, suele hacer falta `TRUST_X_FORWARDED_PROTO=true` (y a veces `USE_X_FORWARDED_HOST=true`) en el backend. El proxy debe **reenviar OPTIONS** al upstream (Django), no responder solo 404/405 sin CORS.
+- Si usas el admin o sesión con HTTPS, define `CSRF_TRUSTED_ORIGINS` con los orígenes HTTPS del front y del API.
 - Si ya tienes `bun dev` o `python manage.py runserver` corriendo localmente, detenlos para evitar conflictos de puertos.
 
 ### Backend
