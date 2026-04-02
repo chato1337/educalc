@@ -61,6 +61,22 @@ docker compose down
 docker compose down -v
 ```
 
+Si ves **No such image: sha256:...** al subir cambios o recrear `backend` / `frontend`, suele ser porque la imagen anterior **ya no existe** (p. ej. `docker image prune`, limpieza en el servidor o otro host). Compose intenta recrear el contenedor apuntando a ese digest y falla.
+
+```bash
+docker compose down
+docker compose build --no-cache backend frontend
+docker compose up -d
+```
+
+En el mismo arranque puedes forzar imagen nueva y contenedores nuevos:
+
+```bash
+docker compose up -d --build --force-recreate
+```
+
+Si aparece el aviso de Docker sobre continuar con la imagen nueva, en modo interactivo puedes confirmar; en scripts usa el flujo de arriba tras un `down` para evitar el estado inconsistente.
+
 Notas:
 
 - El archivo de variables para Docker es el `.env` de la raiz (basado en `.env.example`).
