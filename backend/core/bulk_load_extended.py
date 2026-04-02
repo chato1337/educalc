@@ -1,6 +1,8 @@
 """
 Extended bulk CSV loaders. Column names align with docs/plan-implementacion-carga-masiva-csv.md.
 """
+import logging
+
 from .bulk_load_utils import (
     bool_from_cell,
     clean_str,
@@ -33,6 +35,8 @@ from .models import (
     Subject,
     Teacher,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _empty_stats(keys):
@@ -463,33 +467,74 @@ def bulk_load_grade_directors(csv_file):
             grado = clean_str(col(row, ["GRADO", "grado"]))
             grupo = clean_str(col(row, ["GRUPO", "grupo"]))
             teacher_doc = clean_str(col(row, ["DOC_DOCENTE", "doc_docente"]))
-            if not teacher_doc or not all([dane, ano is not None, sede, grado, grupo]):
+            missing = []
+            if not dane:
+                missing.append("DANE_COD")
+            if ano is None:
+                missing.append("ANO")
+            if not sede:
+                missing.append("SEDE")
+            if not grado:
+                missing.append("GRADO")
+            if not grupo:
+                missing.append("GRUPO")
+            if not teacher_doc:
+                missing.append("DOC_DOCENTE")
+            if missing:
+                msg = (
+                    "Validación inicial: faltan columnas o valores vacíos tras leer el CSV: "
+                    + ", ".join(missing)
+                    + ". Revisa nombres de cabecera (DANE_COD, ANO, SEDE, GRADO, GRUPO, DOC_DOCENTE)."
+                )
+                logger.warning(
+                    "bulk_load_grade_directors row %s: %s valores_leídos DANE_COD=%r ANO=%r "
+                    "SEDE=%r GRADO=%r GRUPO=%r DOC_DOCENTE=%r keys_fila=%s",
+                    row_num,
+                    msg,
+                    dane,
+                    ano,
+                    sede,
+                    grado,
+                    grupo,
+                    teacher_doc,
+                    list(row.keys()) if row else [],
+                )
+                stats["errors"].append({"row": row_num, "error": msg})
                 stats["rows_skipped"] += 1
                 continue
             institution = get_institution_by_dane(dane)
             if not institution:
-                stats["errors"].append(
-                    {"row": row_num, "error": f"Institution not found DANE={dane}"}
-                )
+                err = f"Institution not found DANE_COD={dane!r}"
+                logger.warning("bulk_load_grade_directors row %s: %s", row_num, err)
+                stats["errors"].append({"row": row_num, "error": err})
                 stats["rows_skipped"] += 1
                 continue
             ay = get_academic_year(institution, ano)
             if not ay:
-                stats["errors"].append(
-                    {"row": row_num, "error": f"AcademicYear not found ANO={ano}"}
+                err = (
+                    f"AcademicYear not found for institution id={institution.id} "
+                    f"name={institution.name!r} ANO={ano}"
                 )
+                logger.warning("bulk_load_grade_directors row %s: %s", row_num, err)
+                stats["errors"].append({"row": row_num, "error": err})
                 stats["rows_skipped"] += 1
                 continue
             group = get_group_by_context(institution, ano, sede, grado, grupo)
             if not group:
-                stats["errors"].append({"row": row_num, "error": "Group not found"})
+                err = (
+                    f"Group not found: SEDE={sede!r} GRADO={grado!r} GRUPO={grupo!r} "
+                    f"ANO={ano} (deben existir Campus, GradeLevel y Group coincidentes "
+                    f"para esa institución)"
+                )
+                logger.warning("bulk_load_grade_directors row %s: %s", row_num, err)
+                stats["errors"].append({"row": row_num, "error": err})
                 stats["rows_skipped"] += 1
                 continue
             teacher = Teacher.objects.filter(document_number=teacher_doc).first()
             if not teacher:
-                stats["errors"].append(
-                    {"row": row_num, "error": f"Teacher not found DOC={teacher_doc}"}
-                )
+                err = f"Teacher not found DOC_DOCENTE={teacher_doc!r}"
+                logger.warning("bulk_load_grade_directors row %s: %s", row_num, err)
+                stats["errors"].append({"row": row_num, "error": err})
                 stats["rows_skipped"] += 1
                 continue
             obj, created = GradeDirector.objects.get_or_create(
@@ -505,6 +550,9 @@ def bulk_load_grade_directors(csv_file):
                 stats["updated"] += 1
             stats["rows_processed"] += 1
         except Exception as e:
+            logger.exception(
+                "bulk_load_grade_directors row %s: error inesperado", row_num
+            )
             stats["errors"].append({"row": row_num, "error": str(e)})
     return stats
 

@@ -186,7 +186,7 @@ class Student(TimeStampedModel):
 class Teacher(TimeStampedModel):
     """Teacher/faculty information."""
 
-    document_type = models.CharField(max_length=10, blank=True)
+    document_type = models.CharField(max_length=80, blank=True, default="")
     document_number = models.CharField(max_length=20, blank=True)
     first_name = models.CharField(max_length=100)
     second_name = models.CharField(max_length=100, blank=True)
@@ -220,7 +220,7 @@ class Teacher(TimeStampedModel):
 class Parent(TimeStampedModel):
     """Parent or guardian of a student."""
 
-    document_type = models.CharField(max_length=10, blank=True)
+    document_type = models.CharField(max_length=80, blank=True, default="")
     document_number = models.CharField(max_length=20, blank=True)
     first_name = models.CharField(max_length=100)
     second_name = models.CharField(max_length=100, blank=True)

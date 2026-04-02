@@ -76,6 +76,12 @@ def bool_from_cell(value):
 
 
 def open_csv_dict_reader(csv_file):
+    # El archivo multipart puede haberse leído antes de llegar al loader; rebobinar.
+    if hasattr(csv_file, "seek"):
+        try:
+            csv_file.seek(0)
+        except (OSError, io.UnsupportedOperation):
+            pass
     reader = csv.DictReader(io.TextIOWrapper(csv_file, encoding="utf-8-sig"))
     if reader.fieldnames:
         reader.fieldnames = [f.strip() for f in reader.fieldnames]
