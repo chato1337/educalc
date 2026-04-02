@@ -4,6 +4,9 @@ import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 import { defineConfig } from 'vite'
 
+const backendProxyTarget =
+  process.env.VITE_BACKEND_PROXY_TARGET || 'http://127.0.0.1:8000'
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -19,7 +22,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        target: backendProxyTarget,
         changeOrigin: true,
       },
     },

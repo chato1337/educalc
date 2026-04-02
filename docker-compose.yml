@@ -1,0 +1,62 @@
+services:
+  db:
+    image: ${DB_IMAGE:-postgres:16-alpine}
+    container_name: ${DB_CONTAINER_NAME:-educalc_db}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-educalc}
+      POSTGRES_USER: ${POSTGRES_USER:-educalc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-educalc}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-educalc} -d ${POSTGRES_DB:-educalc}"]
+      interval: ${DB_HEALTHCHECK_INTERVAL:-5s}
+      timeout: ${DB_HEALTHCHECK_TIMEOUT:-3s}
+      retries: ${DB_HEALTHCHECK_RETRIES:-20}
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ${BACKEND_CONTAINER_NAME:-educalc_backend}
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-me}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-True}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
+      DB_ENGINE: ${DB_ENGINE:-postgresql}
+      POSTGRES_DB: ${POSTGRES_DB:-educalc}
+      POSTGRES_USER: ${POSTGRES_USER:-educalc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-educalc}
+      POSTGRES_HOST: ${POSTGRES_HOST:-db}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      CORS_ALLOW_ALL_ORIGINS: ${CORS_ALLOW_ALL_ORIGINS:-False}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ${FRONTEND_CONTAINER_NAME:-educalc_frontend}
+    depends_on:
+      - backend
+    environment:
+      CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING:-true}
+      VITE_BACKEND_PROXY_TARGET: ${VITE_BACKEND_PROXY_TARGET:-http://backend:8000}
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+
+volumes:
+  postgres_data:
+  frontend_node_modules:

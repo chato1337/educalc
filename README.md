@@ -30,6 +30,43 @@ El repositorio es un **monorepo** con backend, frontend y documentación en la c
 
 ## Puesta en marcha
 
+### Docker (frontend + backend + PostgreSQL)
+
+El proyecto incluye `docker-compose.yml` para desarrollo con hot reload en frontend/backend y base de datos PostgreSQL.
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Servicios disponibles:
+
+- `http://localhost:5173` — Frontend (Vite)
+- `http://localhost:8000` — Backend (Django API)
+- `http://localhost:8000/api/docs/` — Swagger UI
+
+Comandos utiles:
+
+```bash
+# Levantar en segundo plano
+docker compose up -d --build
+
+# Ver logs de todos los servicios
+docker compose logs -f
+
+# Bajar servicios
+docker compose down
+
+# Bajar y eliminar volumenes (reinicia DB)
+docker compose down -v
+```
+
+Notas:
+
+- El archivo de variables para Docker es el `.env` de la raiz (basado en `.env.example`).
+- `frontend/vite.config.ts` usa `VITE_BACKEND_PROXY_TARGET` (por defecto `http://backend:8000` en Docker).
+- Si ya tienes `bun dev` o `python manage.py runserver` corriendo localmente, detenlos para evitar conflictos de puertos.
+
 ### Backend
 
 ```bash
@@ -95,6 +132,7 @@ bun run build
 
 | Ámbito | Archivo | Variables destacadas |
 |--------|---------|----------------------|
+| Docker Compose | `.env` (raiz) | Puertos, nombres de contenedor, Postgres, Django y proxy de Vite (`VITE_BACKEND_PROXY_TARGET`) |
 | Backend | `backend/.env` | `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DB_ENGINE`, credenciales PostgreSQL o `SQLITE_PATH`, JWT, `CORS_ALLOWED_ORIGINS` |
 | Frontend | `frontend/.env` | `VITE_APP_NAME`, `VITE_API_BASE_URL` (opcional si usas proxy en dev) |
 
