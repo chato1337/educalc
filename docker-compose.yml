@@ -2,6 +2,7 @@ services:
   db:
     image: ${DB_IMAGE:-postgres:16-alpine}
     container_name: ${DB_CONTAINER_NAME:-educalc_db}
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-educalc}
       POSTGRES_USER: ${POSTGRES_USER:-educalc}
@@ -21,6 +22,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: ${BACKEND_CONTAINER_NAME:-educalc_backend}
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
@@ -46,6 +48,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: ${FRONTEND_CONTAINER_NAME:-educalc_frontend}
+    restart: unless-stopped
     depends_on:
       - backend
     environment:

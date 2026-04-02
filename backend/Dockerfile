@@ -11,8 +11,8 @@ RUN apt-get update \
 
 COPY Pipfile Pipfile.lock ./
 
-RUN pip install --no-cache-dir pipenv \
-    && pipenv sync --system --deploy
+RUN pip install --no-cache-dir --upgrade pip pipenv \
+    && pipenv install --deploy --system
 
 COPY . .
 
