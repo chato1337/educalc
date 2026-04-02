@@ -4,9 +4,6 @@ import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 import { defineConfig } from 'vite'
 
-const backendProxyTarget =
-  process.env.VITE_BACKEND_PROXY_TARGET || 'http://127.0.0.1:8000'
-
 const allowedHostsFromEnv = (process.env.VITE_ALLOWED_HOSTS ?? '')
   .split(',')
   .map((h) => h.trim())
@@ -29,11 +26,5 @@ export default defineConfig({
   },
   server: {
     allowedHosts: [...defaultAllowedHosts, ...allowedHostsFromEnv],
-    proxy: {
-      '/api': {
-        target: backendProxyTarget,
-        changeOrigin: true,
-      },
-    },
   },
 })

@@ -80,7 +80,8 @@ Si aparece el aviso de Docker sobre continuar con la imagen nueva, en modo inter
 Notas:
 
 - El archivo de variables para Docker es el `.env` de la raiz (basado en `.env.example`).
-- `frontend/vite.config.ts` usa `VITE_BACKEND_PROXY_TARGET` (por defecto `http://backend:8000` en Docker).
+- El frontend llama al API con URL absoluta (`VITE_API_BASE_URL`). En Docker Compose el valor por defecto es `http://localhost:8000` (visto **desde el navegador** en tu máquina, no el hostname interno `backend`).
+- Asegura en el backend `CORS_ALLOWED_ORIGINS` con el origen del front (p. ej. `http://localhost:5173`) cuando front y API son distintos orígenes.
 - Si ya tienes `bun dev` o `python manage.py runserver` corriendo localmente, detenlos para evitar conflictos de puertos.
 
 ### Backend
@@ -116,13 +117,13 @@ cd backend
 ```bash
 cd frontend
 cp .env.example .env
-# Opcional: VITE_APP_NAME, VITE_API_BASE_URL (si no usas el proxy de Vite)
+# Ajusta VITE_API_BASE_URL si el backend no está en http://127.0.0.1:8000
 
 bun install
 bun dev
 ```
 
-En desarrollo, Vite suele servir en `http://localhost:5173` y **proxifica** `/api` al backend (`vite.config.ts`), de modo que puedes dejar `VITE_API_BASE_URL` vacío.
+En desarrollo, Vite suele servir en `http://localhost:5173`. Las peticiones van a `VITE_API_BASE_URL` (por defecto `http://127.0.0.1:8000`); el backend debe permitir CORS para el origen del front.
 
 Generar tipos TypeScript a partir del OpenAPI del backend:
 
@@ -148,8 +149,8 @@ bun run build
 
 | Ámbito | Archivo | Variables destacadas |
 |--------|---------|----------------------|
-| Docker Compose | `.env` (raiz) | Puertos, nombres de contenedor, Postgres, Django y proxy de Vite (`VITE_BACKEND_PROXY_TARGET`) |
+| Docker Compose | `.env` (raiz) | Puertos, Postgres, Django, `VITE_API_BASE_URL` (URL del API desde el navegador) |
 | Backend | `backend/.env` | `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DB_ENGINE`, credenciales PostgreSQL o `SQLITE_PATH`, JWT, `CORS_ALLOWED_ORIGINS` |
-| Frontend | `frontend/.env` | `VITE_APP_NAME`, `VITE_API_BASE_URL` (opcional si usas proxy en dev) |
+| Frontend | `frontend/.env` | `VITE_APP_NAME`, `VITE_API_BASE_URL` (URL del backend) |
 
 Copia siempre desde los `.env.example` correspondientes y **no subas** `.env` con secretos reales al control de versiones.
