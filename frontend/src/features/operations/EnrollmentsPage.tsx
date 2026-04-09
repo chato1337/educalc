@@ -53,6 +53,10 @@ import type {
 
 const statusOptions: StatusEnum[] = ['active', 'withdrawn', 'graduated']
 
+function groupOptionLabel(g: Group): string {
+  return g.campus_name ? `${g.name} — ${g.campus_name}` : g.name
+}
+
 const schema = z.object({
   student: z.string().uuid('Selecciona estudiante'),
   group: z.string().uuid('Selecciona grupo'),
@@ -435,10 +439,21 @@ export function EnrollmentsPage() {
               render={({ field, fieldState }) => (
                 <Autocomplete
                   options={groupsForFormYear}
-                  getOptionLabel={(g: Group) => g.name}
+                  getOptionLabel={(g: Group) => groupOptionLabel(g)}
+                  isOptionEqualToValue={(a, b) => a.id === b.id}
                   value={groupsForFormYear.find((g) => g.id === field.value) ?? null}
                   onChange={(_, v) => field.onChange(v?.id ?? '')}
                   disabled={!watchedFormYear}
+                  renderOption={(props, option) => {
+                    // Quitar `key` de MUI (índice); usar id del grupo para listas estables.
+                    const { key, ...rest } = props
+                    void key
+                    return (
+                      <li key={option.id} {...rest}>
+                        {groupOptionLabel(option)}
+                      </li>
+                    )
+                  }}
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
