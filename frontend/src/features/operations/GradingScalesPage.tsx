@@ -26,10 +26,17 @@ import { useForm, type Resolver } from 'react-hook-form'
 import { useState } from 'react'
 import { z } from 'zod'
 
-import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
 import { PageHeader } from '@/components/PageHeader'
+import {
+  createGradingScale,
+  deleteGradingScale,
+  fetchGradingScalesList,
+  patchGradingScale,
+  type GradingScaleRequest,
+  type PatchedGradingScaleRequest,
+} from '@/features/operations/gradingScalesApi'
 import { useUiStore } from '@/stores/uiStore'
 import type { GradingScale } from '@/types/schemas'
 
@@ -49,6 +56,32 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
+function toGradingScaleRequest(values: FormValues): GradingScaleRequest {
+  return {
+    institution: values.institution,
+    code: values.code,
+    name: values.name,
+    min_score: values.min_score,
+    max_score: values.max_score,
+    ...(values.description?.trim()
+      ? { description: values.description.trim() }
+      : {}),
+  }
+}
+
+function toPatchedGradingScaleRequest(
+  values: FormValues,
+): PatchedGradingScaleRequest {
+  return {
+    institution: values.institution,
+    code: values.code,
+    name: values.name,
+    min_score: values.min_score,
+    max_score: values.max_score,
+    description: values.description?.trim() || undefined,
+  }
+}
+
 export function GradingScalesPage() {
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
@@ -59,21 +92,20 @@ export function GradingScalesPage() {
   const [deleteTarget, setDeleteTarget] = useState<GradingScale | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
 
+  const listParams =
+    selectedInstitutionId != null
+      ? {
+          institution: selectedInstitutionId,
+          search: appliedSearch.trim() || undefined,
+        }
+      : { search: appliedSearch.trim() || undefined }
+
   const { data: rows = [], isLoading, error } = useQuery({
-    queryKey: queryKeys.gradingScales(selectedInstitutionId),
-    queryFn: async () => {
-      const { data } = await apiClient.get<GradingScale[]>(
-        '/api/grading-scales/',
-        {
-          params: {
-            institution: selectedInstitutionId ?? undefined,
-            search: appliedSearch || undefined,
-          },
-        },
-      )
-      return data
-    },
-    enabled: !!selectedInstitutionId,
+    queryKey: queryKeys.gradingScales(
+      selectedInstitutionId,
+      appliedSearch || undefined,
+    ),
+    queryFn: () => fetchGradingScalesList(listParams),
   })
 
   const form = useForm<FormValues>({
@@ -90,10 +122,7 @@ export function GradingScalesPage() {
 
   const createMutation = useMutation({
     mutationFn: (body: FormValues) =>
-      apiClient.post<GradingScale>('/api/grading-scales/', {
-        ...body,
-        description: body.description || undefined,
-      }),
+      createGradingScale(toGradingScaleRequest(body)),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['grading-scales'] })
       closeDialog()
@@ -108,11 +137,7 @@ export function GradingScalesPage() {
     }: {
       id: string
       body: FormValues
-    }) =>
-      apiClient.patch<GradingScale>(`/api/grading-scales/${id}/`, {
-        ...body,
-        description: body.description || undefined,
-      }),
+    }) => patchGradingScale(id, toPatchedGradingScaleRequest(body)),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['grading-scales'] })
       closeDialog()
@@ -121,7 +146,7 @@ export function GradingScalesPage() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiClient.delete(`/api/grading-scales/${id}/`),
+    mutationFn: (id: string) => deleteGradingScale(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['grading-scales'] })
       setDeleteTarget(null)
@@ -177,15 +202,6 @@ export function GradingScalesPage() {
     updateMutation.isPending ||
     form.formState.isSubmitting
 
-  const displayRows =
-    appliedSearch.trim() === ''
-      ? rows
-      : rows.filter(
-          (r) =>
-            r.name.toLowerCase().includes(appliedSearch.toLowerCase()) ||
-            r.code.toLowerCase().includes(appliedSearch.toLowerCase()),
-        )
-
   return (
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
@@ -205,7 +221,8 @@ export function GradingScalesPage() {
 
       {!selectedInstitutionId ? (
         <Alert severity="info">
-          Selecciona una institución para ver y crear escalas.
+          Sin institución seleccionada se listan todas las escalas. Elige una en la barra
+          superior para filtrar y para usar «Nueva escala».
         </Alert>
       ) : null}
 
@@ -250,12 +267,12 @@ export function GradingScalesPage() {
               <TableRow>
                 <TableCell colSpan={5}>Cargando…</TableCell>
               </TableRow>
-            ) : displayRows.length === 0 ? (
+            ) : rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5}>Sin registros.</TableCell>
               </TableRow>
             ) : (
-              displayRows.map((row) => (
+              rows.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>{row.code}</TableCell>
                   <TableCell>{row.name}</TableCell>

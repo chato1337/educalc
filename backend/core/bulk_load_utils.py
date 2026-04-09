@@ -153,6 +153,63 @@ def find_subject(institution, area_name, subject_name, emphasis=""):
     return subs[0]
 
 
+def get_or_create_subject_for_course_assignment(
+    institution, area_name, subject_name, emphasis=""
+):
+    """
+    Resolve or create Subject for course-assignment bulk load.
+    When AREA_NOMBRE is set, creates AcademicArea if missing, then Subject if missing.
+    Without area, only returns an existing Subject (by name/emphasis); does not create.
+    """
+    subject_name = clean_str(subject_name)
+    emphasis = clean_str(emphasis)
+    if not subject_name:
+        return None
+
+    area_name = clean_str(area_name)
+
+    if area_name:
+        aa = AcademicArea.objects.filter(
+            institution=institution, name__iexact=area_name
+        ).first()
+        if not aa:
+            aa = AcademicArea.objects.create(
+                institution=institution, name=area_name
+            )
+
+        qs = Subject.objects.filter(
+            institution=institution, academic_area=aa, name__iexact=subject_name
+        )
+        if emphasis:
+            qs = qs.filter(emphasis__iexact=emphasis)
+        else:
+            qs = qs.filter(emphasis="")
+        existing = qs.first()
+        if existing:
+            return existing
+        return Subject.objects.create(
+            academic_area=aa,
+            institution=institution,
+            name=subject_name,
+            emphasis=emphasis,
+        )
+
+    subject = Subject.objects.filter(
+        institution=institution, name__iexact=subject_name
+    ).first()
+    if subject and emphasis:
+        em = (subject.emphasis or "").strip().lower()
+        if em != emphasis.lower():
+            alt = Subject.objects.filter(
+                institution=institution,
+                name__iexact=subject_name,
+                emphasis__iexact=emphasis,
+            ).first()
+            if alt:
+                subject = alt
+    return subject
+
+
 def parent_synthetic_email(doc):
     d = clean_str(doc).replace("@", "_")
     return f"sin-correo-{d}@bulk.local"

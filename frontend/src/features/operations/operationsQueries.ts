@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { apiClient } from '@/api/client'
 import { queryKeys } from '@/api/queryKeys'
+import { fetchGradingScalesList } from '@/features/operations/gradingScalesApi'
 import {
   useAcademicYearsQuery,
   useCampusesForInstitution,
@@ -11,7 +12,6 @@ import type {
   AcademicPeriod,
   CourseAssignment,
   GradeDirector,
-  GradingScale,
   Group,
   Student,
   Subject,
@@ -118,11 +118,7 @@ export function useGradingScalesForInstitution(institutionId: string | null) {
         institutionId != null && institutionId !== ''
           ? { institution: institutionId }
           : undefined
-      const { data } = await apiClient.get<GradingScale[]>(
-        '/api/grading-scales/',
-        { params: p },
-      )
-      return data
+      return fetchGradingScalesList(p)
     },
     enabled: institutionId != null && institutionId !== '',
   })

@@ -27,7 +27,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -124,12 +124,6 @@ export function SchoolRecordsPage() {
     },
     enabled: !!compRequest,
   })
-
-  useEffect(() => {
-    if (compositeRecord && compRequest) {
-      void queryClient.invalidateQueries({ queryKey: ['school-records'] })
-    }
-  }, [compositeRecord, compRequest, queryClient])
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,

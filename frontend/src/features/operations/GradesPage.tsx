@@ -28,8 +28,13 @@ import {
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Controller, useForm, type Resolver } from 'react-hook-form'
-import { useEffect, useState } from 'react'
+import {
+  Controller,
+  useForm,
+  useWatch,
+  type Resolver,
+} from 'react-hook-form'
+import { useEffect, useMemo, useState } from 'react'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -48,6 +53,7 @@ import type {
   AcademicPeriod,
   AcademicYear,
   CourseAssignment,
+  Enrollment,
   Grade,
   GradingScale,
   Student,
@@ -86,6 +92,58 @@ function bodyFromValues(v: FormValues) {
   if (v.definitive_grade && v.definitive_grade !== '')
     body.definitive_grade = v.definitive_grade
   return body
+}
+
+function parseScaleBound(s: string): number | null {
+  const n = Number(String(s).trim().replace(',', '.'))
+  return Number.isFinite(n) ? n : null
+}
+
+/** Nivel de desempeño cuyo rango [min_score, max_score] contiene la nota. */
+function matchGradingScaleId(
+  grade: number,
+  scales: GradingScale[],
+): string | null {
+  const matches: GradingScale[] = []
+  for (const s of scales) {
+    const min = parseScaleBound(s.min_score)
+    const max = parseScaleBound(s.max_score)
+    if (min === null || max === null) continue
+    if (grade >= min && grade <= max) matches.push(s)
+  }
+  if (matches.length === 0) return null
+  if (matches.length === 1) return matches[0].id
+  matches.sort((a, b) => {
+    const aw = parseScaleBound(a.max_score)! - parseScaleBound(a.min_score)!
+    const bw = parseScaleBound(b.max_score)! - parseScaleBound(b.min_score)!
+    if (aw !== bw) return aw - bw
+    return a.name.localeCompare(b.name)
+  })
+  return matches[0].id
+}
+
+/** Asignaciones cuyo `group` coincide con la matrícula activa; en edición incluye la actual si hiciera falta. */
+function courseAssignmentsForStudentGroups(
+  all: CourseAssignment[],
+  enrollments: Enrollment[],
+  editingAssignmentId: string | null | undefined,
+): CourseAssignment[] {
+  const groups = new Set(enrollments.map((e) => e.group))
+  if (groups.size === 0) {
+    if (editingAssignmentId) {
+      const only = all.find((a) => a.id === editingAssignmentId)
+      return only ? [only] : []
+    }
+    return []
+  }
+  const base = all.filter((a) => groups.has(a.group))
+  if (editingAssignmentId) {
+    const cur = all.find((a) => a.id === editingAssignmentId)
+    if (cur && !base.some((a) => a.id === cur.id)) {
+      return [cur, ...base]
+    }
+  }
+  return base
 }
 
 export function GradesPage() {
@@ -171,6 +229,101 @@ export function GradesPage() {
       definitive_grade: '',
     },
   })
+
+  const watchedStudent = useWatch({ control: form.control, name: 'student' })
+  const dialogStudentId =
+    editing?.student ??
+    (typeof watchedStudent === 'string' ? watchedStudent : '')
+
+  const needStudentEnrollments =
+    dialogOpen && !!dialogYearId && !!dialogStudentId
+
+  const { data: enrollmentsRaw, isLoading: enrollmentsLoading } = useQuery({
+    queryKey: queryKeys.enrollments({
+      student: dialogStudentId || undefined,
+      academic_year: dialogYearId ?? undefined,
+      status: 'active',
+    }),
+    queryFn: async () => {
+      const { data } = await apiClient.get<Enrollment[]>('/api/enrollments/', {
+        params: {
+          student: dialogStudentId,
+          academic_year: dialogYearId!,
+          status: 'active',
+        },
+      })
+      return data
+    },
+    enabled: needStudentEnrollments,
+  })
+  const enrollmentsForDialog = enrollmentsRaw ?? []
+
+  const assignmentsForDialogScoped = useMemo(() => {
+    if (!dialogOpen || !dialogYearId) return []
+    if (!dialogStudentId) return []
+    if (enrollmentsLoading) return []
+    return courseAssignmentsForStudentGroups(
+      assignmentsForDialog,
+      enrollmentsForDialog,
+      editing?.course_assignment,
+    )
+  }, [
+    dialogOpen,
+    dialogYearId,
+    dialogStudentId,
+    enrollmentsLoading,
+    assignmentsForDialog,
+    enrollmentsForDialog,
+    editing?.course_assignment,
+  ])
+
+  useEffect(() => {
+    if (!dialogOpen || editing) return
+    if (!dialogStudentId) {
+      if (form.getValues('course_assignment')) {
+        form.setValue('course_assignment', '')
+      }
+      return
+    }
+    if (enrollmentsLoading) return
+    const ca = form.getValues('course_assignment')
+    if (!ca) return
+    if (!assignmentsForDialogScoped.some((a) => a.id === ca)) {
+      form.setValue('course_assignment', '')
+    }
+  }, [
+    dialogOpen,
+    editing,
+    dialogStudentId,
+    enrollmentsLoading,
+    assignmentsForDialogScoped,
+    form.getValues,
+    form.setValue,
+  ])
+
+  const watchedNumericalGrade = useWatch({
+    control: form.control,
+    name: 'numerical_grade',
+  })
+
+  useEffect(() => {
+    if (!dialogOpen || gradingScales.length === 0) return
+    const parsed = dec.safeParse(watchedNumericalGrade ?? '')
+    if (!parsed.success) return
+    const grade = Number(parsed.data.replace(',', '.'))
+    if (!Number.isFinite(grade)) return
+    const scaleId = matchGradingScaleId(grade, gradingScales)
+    const next = scaleId ?? ''
+    if (form.getValues('performance_level') !== next) {
+      form.setValue('performance_level', next, { shouldDirty: true })
+    }
+  }, [
+    dialogOpen,
+    watchedNumericalGrade,
+    gradingScales,
+    form.getValues,
+    form.setValue,
+  ])
 
   const createMutation = useMutation({
     mutationFn: (body: Record<string, unknown>) =>
@@ -481,6 +634,7 @@ export function GradesPage() {
                   render={({ field, fieldState }) => (
                     <Autocomplete
                       options={studentOptions}
+                      getOptionKey={(o: Student) => o.id}
                       getOptionLabel={(o: Student) => o.full_name}
                       value={
                         studentOptions.find((s) => s.id === field.value) ??
@@ -511,29 +665,76 @@ export function GradesPage() {
             <Controller
               name="course_assignment"
               control={form.control}
-              render={({ field, fieldState }) => (
-                <Autocomplete
-                  options={assignmentsForDialog}
-                  getOptionLabel={(a: CourseAssignment) =>
-                    `${a.subject_name} — ${a.group_name}`
+              render={({ field, fieldState }) => {
+                const assignmentHint = (() => {
+                  if (!dialogYearId) return undefined
+                  if (!editing && !dialogStudentId) {
+                    return 'Selecciona un estudiante para ver las asignaturas de su grupo matriculado.'
                   }
-                  value={
-                    assignmentsForDialog.find((a) => a.id === field.value) ??
-                    null
+                  if (dialogStudentId && enrollmentsLoading) {
+                    return 'Cargando matrícula…'
                   }
-                  onChange={(_, v) => field.onChange(v?.id ?? '')}
-                  disabled={!dialogYearId || assignmentsForDialog.length === 0}
-                  renderInput={(params: AutocompleteRenderInputParams) => (
-                    <TextField
-                      {...params}
-                      label="Asignación docente–curso"
-                      error={!!fieldState.error}
-                      helperText={fieldState.error?.message}
-                      required
-                    />
-                  )}
-                />
-              )}
+                  if (
+                    !enrollmentsLoading &&
+                    dialogStudentId &&
+                    enrollmentsForDialog.length === 0
+                  ) {
+                    return 'No hay matrícula activa en este año lectivo.'
+                  }
+                  if (
+                    !enrollmentsLoading &&
+                    dialogStudentId &&
+                    enrollmentsForDialog.length > 0 &&
+                    assignmentsForDialogScoped.length === 0
+                  ) {
+                    return 'No hay asignaciones docentes para el grupo del estudiante.'
+                  }
+                  return undefined
+                })()
+                const assignmentDisabled = !!(
+                  !dialogYearId ||
+                  enrollmentsLoading ||
+                  (!editing && !dialogStudentId) ||
+                  (dialogStudentId &&
+                    !enrollmentsLoading &&
+                    assignmentsForDialogScoped.length === 0)
+                )
+                const helperParts = [
+                  fieldState.error?.message,
+                  assignmentHint,
+                ].filter(Boolean)
+                return (
+                  <Autocomplete
+                    options={assignmentsForDialogScoped}
+                    getOptionKey={(a: CourseAssignment) => a.id}
+                    getOptionLabel={(a: CourseAssignment) =>
+                      `${a.subject_name} — ${a.group_name}`
+                    }
+                    value={
+                      assignmentsForDialogScoped.find(
+                        (a) => a.id === field.value,
+                      ) ??
+                      assignmentsForDialog.find((a) => a.id === field.value) ??
+                      null
+                    }
+                    onChange={(_, v) => field.onChange(v?.id ?? '')}
+                    disabled={assignmentDisabled}
+                    renderInput={(params: AutocompleteRenderInputParams) => (
+                      <TextField
+                        {...params}
+                        label="Asignación docente–curso"
+                        error={!!fieldState.error}
+                        helperText={
+                          helperParts.length > 0
+                            ? helperParts.join(' ')
+                            : undefined
+                        }
+                        required
+                      />
+                    )}
+                  />
+                )
+              }}
             />
             <Controller
               name="academic_period"
@@ -585,10 +786,19 @@ export function GradesPage() {
                     <MenuItem value="">(ninguna)</MenuItem>
                     {gradingScales.map((s: GradingScale) => (
                       <MenuItem key={s.id} value={s.id}>
-                        {s.name}
+                        {s.name}{' '}
+                        <span className="text-gray-500 text-xs">
+                          ({s.min_score}–{s.max_score})
+                        </span>
                       </MenuItem>
                     ))}
                   </Select>
+                  {gradingScales.length > 0 ? (
+                    <span className="text-xs text-gray-500 px-3.5 pt-0.5 block">
+                      Se elige automáticamente según la nota y los rangos de cada
+                      nivel; puedes cambiarla manualmente.
+                    </span>
+                  ) : null}
                 </FormControl>
               )}
             />

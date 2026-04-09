@@ -33,8 +33,8 @@ export const queryKeys = {
     ['course-assignments', params] as const,
   grades: (params: Record<string, string | undefined>) =>
     ['grades', params] as const,
-  gradingScales: (institutionId?: string | null) =>
-    ['grading-scales', { institutionId }] as const,
+  gradingScales: (institutionId?: string | null, search?: string) =>
+    ['grading-scales', { institutionId, search: search ?? '' }] as const,
   academicIndicators: (params: Record<string, string | undefined>) =>
     ['academic-indicators', params] as const,
   performanceSummaries: (params: Record<string, string | undefined>) =>

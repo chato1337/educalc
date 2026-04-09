@@ -11,6 +11,7 @@ from .bulk_load_utils import (
     get_academic_year,
     get_group_by_context,
     get_institution_by_dane,
+    get_or_create_subject_for_course_assignment,
     open_csv_dict_reader,
     parent_synthetic_email,
     parse_date,
@@ -416,16 +417,18 @@ def bulk_load_course_assignments(csv_file):
                 stats["rows_skipped"] += 1
                 continue
             area_name = clean_str(col(row, ["AREA_NOMBRE", "area_nombre"]))
-            subject = None
-            if area_name:
-                subject = find_subject(institution, area_name, subj_name, emphasis)
-            if not subject:
-                subject = Subject.objects.filter(
-                    institution=institution, name__iexact=subj_name
-                ).first()
+            subject = get_or_create_subject_for_course_assignment(
+                institution, area_name, subj_name, emphasis
+            )
             if not subject:
                 stats["errors"].append(
-                    {"row": row_num, "error": f"Subject not found: {subj_name}"}
+                    {
+                        "row": row_num,
+                        "error": (
+                            f"Subject not found: {subj_name} "
+                            "(include AREA_NOMBRE to create the subject)"
+                        ),
+                    }
                 )
                 stats["rows_skipped"] += 1
                 continue
