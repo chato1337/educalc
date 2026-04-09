@@ -731,6 +731,7 @@
     "subject": "Área",
     "teacher": "Docente",
     "group": "Grupo",
+    "groupWithCampus": "Grupo (sede)",
     "year": "Año",
     "edit": "Editar",
     "delete": "Eliminar",

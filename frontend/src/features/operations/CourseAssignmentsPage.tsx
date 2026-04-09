@@ -390,7 +390,12 @@ export function CourseAssignmentsPage() {
               render={({ field, fieldState }) => (
                 <Autocomplete
                   options={groupsForFormYear}
-                  getOptionLabel={(g: Group) => g.name}
+                  getOptionKey={(g: Group) => g.id}
+                  getOptionLabel={(g: Group) =>
+                    g.campus_name
+                      ? `${g.name} (${g.campus_name})`
+                      : g.name
+                  }
                   value={
                     groupsForFormYear.find((g) => g.id === field.value) ?? null
                   }
@@ -399,7 +404,7 @@ export function CourseAssignmentsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label={t('courseAssignments.group')}
+                      label={t('courseAssignments.groupWithCampus')}
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
                       required

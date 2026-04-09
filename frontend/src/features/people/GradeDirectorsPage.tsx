@@ -275,6 +275,7 @@ export function GradeDirectorsPage() {
             className="min-w-[200px] flex-1"
             size="small"
             options={groups}
+            getOptionKey={(g: Group) => g.id}
             getOptionLabel={(g: Group) => g.name}
             value={filterGroup}
             onChange={(_, v) => setFilterGroupId(v?.id ?? null)}
@@ -493,6 +494,7 @@ export function GradeDirectorsPage() {
               render={({ field, fieldState }) => (
                 <Autocomplete
                   options={groupsFiltered}
+                  getOptionKey={(g: Group) => g.id}
                   getOptionLabel={(g: Group) =>
                     `${g.name} (${g.campus_name})`
                   }
