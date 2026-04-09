@@ -8,6 +8,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 
 import type { BulkLoadRowError, BulkLoadStats } from '@/api/bulkLoad'
 
@@ -27,6 +28,7 @@ function isRowError(x: unknown): x is BulkLoadRowError {
 }
 
 export function BulkLoadResultSummary({ data }: { data: BulkLoadStats }) {
+  const { t } = useTranslation()
   const rawErrors = data.errors
   const errors: BulkLoadRowError[] = Array.isArray(rawErrors)
     ? rawErrors.filter(isRowError)
@@ -44,12 +46,17 @@ export function BulkLoadResultSummary({ data }: { data: BulkLoadStats }) {
       {statEntries.length > 0 ? (
         <Paper variant="outlined" className="p-3">
           <Typography variant="subtitle2" className="mb-2">
-            Resumen (respuesta API)
+            {t('bulkLoadResultSummary.apiSummary')}
           </Typography>
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 m-0 text-sm">
             {statEntries.map(([key, value]) => (
               <div key={key} className="flex justify-between gap-2">
-                <dt className="text-gray-600 capitalize">{formatStatKey(key)}</dt>
+                <dt
+                  className="capitalize"
+                  style={{ color: 'var(--mui-palette-text-secondary)' }}
+                >
+                  {formatStatKey(key)}
+                </dt>
                 <dd className="m-0 font-medium tabular-nums">{String(value)}</dd>
               </div>
             ))}
@@ -60,14 +67,14 @@ export function BulkLoadResultSummary({ data }: { data: BulkLoadStats }) {
       {errors.length > 0 ? (
         <Paper variant="outlined" className="p-0 overflow-hidden">
           <Typography variant="subtitle2" className="px-3 pt-3 pb-1">
-            Errores por fila ({errors.length})
+            {t('bulkLoadResultSummary.rowErrors', { count: errors.length })}
           </Typography>
           <TableContainer sx={{ maxHeight: 280 }}>
             <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell>Fila</TableCell>
-                  <TableCell>Mensaje</TableCell>
+                  <TableCell>{t('bulkLoadResultSummary.row')}</TableCell>
+                  <TableCell>{t('bulkLoadResultSummary.message')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -82,7 +89,9 @@ export function BulkLoadResultSummary({ data }: { data: BulkLoadStats }) {
           </TableContainer>
           {errors.length > 100 ? (
             <Typography variant="caption" color="text.secondary" className="px-3 pb-2 block">
-              Mostrando 100 de {errors.length} errores. El JSON completo está abajo.
+              {t('bulkLoadResultSummary.showingLimitedErrors', {
+                count: errors.length,
+              })}
             </Typography>
           ) : null}
         </Paper>
@@ -90,7 +99,7 @@ export function BulkLoadResultSummary({ data }: { data: BulkLoadStats }) {
 
       <Paper variant="outlined" className="p-4 overflow-auto">
         <Typography variant="caption" color="text.secondary" className="block mb-2">
-          JSON completo
+          {t('bulkLoadResultSummary.fullJson')}
         </Typography>
         <pre className="text-sm whitespace-pre-wrap break-words m-0">
           {JSON.stringify(data, null, 2)}

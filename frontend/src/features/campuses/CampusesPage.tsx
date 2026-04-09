@@ -25,6 +25,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm } from 'react-hook-form'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -50,6 +51,7 @@ const emptyForm: CampusForm = {
 }
 
 export function CampusesPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -165,11 +167,11 @@ export function CampusesPage() {
     <Box className="p-4 md:p-6 max-w-5xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
         <PageHeader
-          title="Sedes (campus)"
-          subtitle="Filtra por la institución seleccionada en la barra superior (opcional)."
+          title={t('campuses.title')}
+          subtitle={t('campuses.subtitle')}
         />
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-          Nueva sede
+          {t('campuses.new')}
         </Button>
       </Box>
 
@@ -186,38 +188,38 @@ export function CampusesPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Código</TableCell>
-              <TableCell>Institución</TableCell>
-              <TableCell align="right">Acciones</TableCell>
+              <TableCell>{t('campuses.name')}</TableCell>
+              <TableCell>{t('campuses.code')}</TableCell>
+              <TableCell>{t('campuses.institution')}</TableCell>
+              <TableCell align="right">{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4}>Cargando…</TableCell>
+                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : null}
             {!isLoading && rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4}>Sin registros.</TableCell>
+                <TableCell colSpan={4}>{t('common.none')}</TableCell>
               </TableRow>
             ) : null}
             {rows.map((row) => (
               <TableRow key={row.id}>
                 <TableCell>{row.name}</TableCell>
-                <TableCell>{row.code || '—'}</TableCell>
+                <TableCell>{row.code || '-'}</TableCell>
                 <TableCell>{row.institution_name}</TableCell>
                 <TableCell align="right">
                   <IconButton
-                    aria-label="Editar"
+                    aria-label={t('campuses.edit')}
                     onClick={() => openEdit(row)}
                     size="small"
                   >
                     <EditIcon fontSize="small" />
                   </IconButton>
                   <IconButton
-                    aria-label="Eliminar"
+                    aria-label={t('campuses.delete')}
                     onClick={() => setDeleteTarget(row)}
                     size="small"
                     color="error"
@@ -232,7 +234,7 @@ export function CampusesPage() {
       </TableContainer>
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
-        <DialogTitle>{editing ? 'Editar sede' : 'Nueva sede'}</DialogTitle>
+        <DialogTitle>{editing ? t('campuses.editDialog') : t('campuses.newDialog')}</DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1">
             {formError ? <Alert severity="error">{formError}</Alert> : null}
@@ -250,13 +252,18 @@ export function CampusesPage() {
                   isOptionEqualToValue={(a, b) => a.id === b.id}
                   disabled={!!editing}
                   renderInput={(params) =>
-                    campusInstitutionField(params, fieldState.error?.message)
+                    campusInstitutionField(
+                      params,
+                      fieldState.error?.message,
+                      t('campuses.institution'),
+                      t('campuses.institutionAria'),
+                    )
                   }
                 />
               )}
             />
             <TextField
-              label="Nombre"
+              label={t('campuses.name')}
               {...form.register('name')}
               error={!!form.formState.errors.name}
               helperText={form.formState.errors.name?.message}
@@ -264,7 +271,7 @@ export function CampusesPage() {
               required
             />
             <TextField
-              label="Código"
+              label={t('campuses.code')}
               {...form.register('code')}
               error={!!form.formState.errors.code}
               helperText={form.formState.errors.code?.message}
@@ -273,10 +280,10 @@ export function CampusesPage() {
           </DialogContent>
           <DialogActions>
             <Button type="button" onClick={closeDialog}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
@@ -286,19 +293,19 @@ export function CampusesPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
       >
-        <DialogTitle>Eliminar sede</DialogTitle>
+        <DialogTitle>{t('campuses.deleteDialog')}</DialogTitle>
         <DialogContent>
-          ¿Eliminar «{deleteTarget?.name}»?
+          {t('campuses.deletePrompt', { name: deleteTarget?.name ?? '' })}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
             disabled={deleteMutation.isPending}
             onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -309,18 +316,20 @@ export function CampusesPage() {
 function campusInstitutionField(
   params: AutocompleteRenderInputParams,
   error?: string,
+  label?: string,
+  ariaLabel?: string,
 ) {
   return (
     <TextField
       {...params}
-      label="Institución"
+      label={label ?? 'Institucion'}
       required
       error={!!error}
       helperText={error}
       slotProps={{
         htmlInput: {
           ...params.inputProps,
-          'aria-label': 'Institución de la sede',
+          'aria-label': ariaLabel ?? 'Institucion de la sede',
         },
       }}
     />

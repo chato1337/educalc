@@ -359,6 +359,33 @@ class StudentGuardianSerializer(serializers.ModelSerializer):
 
 class GradeSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source="student.full_name", read_only=True)
+    student_document_number = serializers.CharField(
+        source="student.document_number", read_only=True
+    )
+    student_document_type = serializers.CharField(
+        source="student.document_type", read_only=True
+    )
+    course_assignment_subject_name = serializers.CharField(
+        source="course_assignment.subject.name", read_only=True
+    )
+    course_assignment_subject_emphasis = serializers.CharField(
+        source="course_assignment.subject.emphasis", read_only=True
+    )
+    course_assignment_teacher_name = serializers.CharField(
+        source="course_assignment.teacher.full_name", read_only=True
+    )
+    course_assignment_group_name = serializers.CharField(
+        source="course_assignment.group.name", read_only=True
+    )
+    course_assignment_academic_year_year = serializers.IntegerField(
+        source="course_assignment.academic_year.year", read_only=True
+    )
+    academic_period_name = serializers.CharField(
+        source="academic_period.name", read_only=True
+    )
+    academic_period_number = serializers.IntegerField(
+        source="academic_period.number", read_only=True
+    )
     performance_level_name = serializers.CharField(
         source="performance_level.name", read_only=True
     )
@@ -369,8 +396,17 @@ class GradeSerializer(serializers.ModelSerializer):
             "id",
             "student",
             "student_name",
+            "student_document_number",
+            "student_document_type",
             "course_assignment",
+            "course_assignment_subject_name",
+            "course_assignment_subject_emphasis",
+            "course_assignment_teacher_name",
+            "course_assignment_group_name",
+            "course_assignment_academic_year_year",
             "academic_period",
+            "academic_period_name",
+            "academic_period_number",
             "numerical_grade",
             "performance_level",
             "performance_level_name",

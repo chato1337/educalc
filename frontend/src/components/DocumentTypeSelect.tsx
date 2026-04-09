@@ -1,4 +1,5 @@
 import { MenuItem, TextField, type TextFieldProps } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import type { UseFormRegisterReturn } from 'react-hook-form'
 
 import { BULK_STUDENT_DOCUMENT_TYPE_OPTIONS } from '@/constants/documentTypes'
@@ -18,6 +19,7 @@ export function DocumentTypeSelect({
   disabled,
   size,
 }: Props) {
+  const { t } = useTranslation()
   const legacy =
     currentValue.trim() &&
     !BULK_STUDENT_DOCUMENT_TYPE_OPTIONS.some((o) => o.value === currentValue)
@@ -27,7 +29,7 @@ export function DocumentTypeSelect({
   return (
     <TextField
       select
-      label="Tipo documento"
+      label={t('documentTypeSelect.label')}
       fullWidth
       error={error}
       helperText={helperText}
@@ -38,7 +40,7 @@ export function DocumentTypeSelect({
       {...registerProps}
     >
       <MenuItem value="">
-        <em>Sin especificar</em>
+        <em>{t('documentTypeSelect.unspecified')}</em>
       </MenuItem>
       {legacy ? (
         <MenuItem value={legacy}>{legacy}</MenuItem>

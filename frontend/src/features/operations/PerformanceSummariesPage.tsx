@@ -30,6 +30,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -74,6 +75,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function PerformanceSummariesPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
@@ -259,8 +261,8 @@ export function PerformanceSummariesPage() {
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
         <PageHeader
-          title="Resúmenes de desempeño"
-          subtitle="Promedio y puesto por estudiante, grupo y período."
+          title={t('performanceSummaries.title')}
+          subtitle={t('performanceSummaries.subtitle')}
         />
         <Button
           variant="contained"
@@ -268,20 +270,20 @@ export function PerformanceSummariesPage() {
           onClick={openCreate}
           disabled={!selectedInstitutionId || academicYears.length === 0}
         >
-          Nuevo resumen
+          {t('performanceSummaries.new')}
         </Button>
       </Box>
 
       {!selectedInstitutionId ? (
         <Alert severity="info">
-          Selecciona una institución para filtrar años y grupos.
+          {t('performanceSummaries.selectInstitution')}
         </Alert>
       ) : null}
 
       <Paper className="p-3 flex flex-wrap gap-2 items-end">
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -293,12 +295,12 @@ export function PerformanceSummariesPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Buscar
+          {t('common.search')}
         </Button>
         <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Año</InputLabel>
+          <InputLabel>{t('performanceSummaries.year')}</InputLabel>
           <Select
-            label="Año"
+            label={t('performanceSummaries.year')}
             value={filterYearId ?? ''}
             onChange={(e) => {
               const v = e.target.value === '' ? null : e.target.value
@@ -306,7 +308,7 @@ export function PerformanceSummariesPage() {
               setFilterPeriodId(null)
             }}
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('performanceSummaries.all')}</MenuItem>
             {academicYears.map((y) => (
               <MenuItem key={y.id} value={y.id}>
                 {yearLabel(y)}
@@ -315,15 +317,15 @@ export function PerformanceSummariesPage() {
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 160 }} disabled={!filterYearId}>
-          <InputLabel>Período</InputLabel>
+          <InputLabel>{t('performanceSummaries.period')}</InputLabel>
           <Select
-            label="Período"
+            label={t('performanceSummaries.period')}
             value={filterPeriodId ?? ''}
             onChange={(e) =>
               setFilterPeriodId(e.target.value === '' ? null : e.target.value)
             }
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('performanceSummaries.all')}</MenuItem>
             {periodsForFilter.map((p) => (
               <MenuItem key={p.id} value={p.id}>
                 {p.name}
@@ -341,21 +343,21 @@ export function PerformanceSummariesPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Estudiante</TableCell>
-              <TableCell>Grupo</TableCell>
-              <TableCell>Promedio</TableCell>
-              <TableCell>Puesto</TableCell>
+              <TableCell>{t('performanceSummaries.student')}</TableCell>
+              <TableCell>{t('performanceSummaries.group')}</TableCell>
+              <TableCell>{t('performanceSummaries.average')}</TableCell>
+              <TableCell>{t('performanceSummaries.rank')}</TableCell>
               <TableCell align="right" width={100} />
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5}>Cargando…</TableCell>
+                <TableCell colSpan={5}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5}>Sin registros.</TableCell>
+                <TableCell colSpan={5}>{t('common.none')}</TableCell>
               </TableRow>
             ) : (
               rows.map((row) => (
@@ -363,19 +365,19 @@ export function PerformanceSummariesPage() {
                   <TableCell>{row.student_name}</TableCell>
                   <TableCell>{row.group_name}</TableCell>
                   <TableCell>{row.period_average}</TableCell>
-                  <TableCell>{row.rank ?? '—'}</TableCell>
+                  <TableCell>{row.rank ?? '-'}</TableCell>
                   <TableCell align="right">
                     <IconButton
                       size="small"
                       onClick={() => openEdit(row)}
-                      aria-label="editar"
+                      aria-label={t('performanceSummaries.edit')}
                     >
                       <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton
                       size="small"
                       onClick={() => setDeleteTarget(row)}
-                      aria-label="eliminar"
+                      aria-label={t('performanceSummaries.delete')}
                     >
                       <DeleteOutlineIcon fontSize="small" />
                     </IconButton>
@@ -389,7 +391,7 @@ export function PerformanceSummariesPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar resumen' : 'Nuevo resumen'}
+          {editing ? t('performanceSummaries.editDialog') : t('performanceSummaries.newDialog')}
         </DialogTitle>
         <form
           onSubmit={form.handleSubmit((v) => {
@@ -406,9 +408,9 @@ export function PerformanceSummariesPage() {
             {formError ? <Alert severity="error">{formError}</Alert> : null}
             {!editing ? (
               <FormControl fullWidth required>
-                <InputLabel>Año lectivo</InputLabel>
+                <InputLabel>{t('performanceSummaries.academicYear')}</InputLabel>
                 <Select
-                  label="Año lectivo"
+                  label={t('performanceSummaries.academicYear')}
                   value={dialogYearId ?? ''}
                   onChange={(e) => {
                     const v = e.target.value
@@ -430,7 +432,7 @@ export function PerformanceSummariesPage() {
                 <Box className="flex gap-2 items-end">
                   <TextField
                     size="small"
-                    label="Buscar estudiante"
+                    label={t('performanceSummaries.searchStudent')}
                     fullWidth
                     value={studentSearchInput}
                     onChange={(e) => setStudentSearchInput(e.target.value)}
@@ -447,7 +449,7 @@ export function PerformanceSummariesPage() {
                       setAppliedStudentSearch(studentSearchInput)
                     }
                   >
-                    Buscar
+                    {t('common.search')}
                   </Button>
                 </Box>
                 <Controller
@@ -465,7 +467,7 @@ export function PerformanceSummariesPage() {
                       renderInput={(params: AutocompleteRenderInputParams) => (
                         <TextField
                           {...params}
-                          label="Estudiante"
+                          label={t('performanceSummaries.student')}
                           error={!!fieldState.error}
                           helperText={fieldState.error?.message}
                           required
@@ -477,7 +479,7 @@ export function PerformanceSummariesPage() {
               </Box>
             ) : (
               <TextField
-                label="Estudiante"
+                label={t('performanceSummaries.student')}
                 value={editing.student_name}
                 disabled
                 fullWidth
@@ -498,7 +500,7 @@ export function PerformanceSummariesPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Grupo"
+                      label={t('performanceSummaries.group')}
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
                       required
@@ -512,9 +514,9 @@ export function PerformanceSummariesPage() {
               control={form.control}
               render={({ field }) => (
                 <FormControl fullWidth required disabled={!dialogYearId}>
-                  <InputLabel>Período</InputLabel>
+                  <InputLabel>{t('performanceSummaries.period')}</InputLabel>
                   <Select
-                    label="Período"
+                    label={t('performanceSummaries.period')}
                     value={field.value}
                     onChange={field.onChange}
                   >
@@ -528,28 +530,28 @@ export function PerformanceSummariesPage() {
               )}
             />
             <TextField
-              label="Promedio del período"
+              label={t('performanceSummaries.periodAverage')}
               fullWidth
               required
               {...form.register('period_average')}
             />
             <TextField
-              label="Puesto (opcional)"
+              label={t('performanceSummaries.rankOptional')}
               type="number"
               fullWidth
               inputProps={{ min: 0 }}
               {...form.register('rank')}
             />
             <TextField
-              label="Promedio definitivo (opcional)"
+              label={t('performanceSummaries.definitiveAverageOptional')}
               fullWidth
               {...form.register('definitive_average')}
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={closeDialog}>Cancelar</Button>
+            <Button onClick={closeDialog}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
@@ -559,10 +561,10 @@ export function PerformanceSummariesPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
       >
-        <DialogTitle>Eliminar resumen</DialogTitle>
-        <DialogContent>¿Eliminar este resumen de desempeño?</DialogContent>
+        <DialogTitle>{t('performanceSummaries.deleteDialog')}</DialogTitle>
+        <DialogContent>{t('performanceSummaries.deletePrompt')}</DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -571,7 +573,7 @@ export function PerformanceSummariesPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

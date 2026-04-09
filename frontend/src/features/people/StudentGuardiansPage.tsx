@@ -1,6 +1,7 @@
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import EditIcon from '@mui/icons-material/Edit'
+import FilterAltOffIcon from '@mui/icons-material/FilterAltOff'
 import SearchIcon from '@mui/icons-material/Search'
 import type { AutocompleteRenderInputParams } from '@mui/material/Autocomplete'
 import {
@@ -13,9 +14,13 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
   FormControlLabel,
   IconButton,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -23,11 +28,13 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Typography,
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -44,21 +51,34 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function StudentGuardiansPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [searchInput, setSearchInput] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
+  const [studentDocFilter, setStudentDocFilter] = useState('')
+  const [parentDocFilter, setParentDocFilter] = useState('')
+  const [isPrimaryFilter, setIsPrimaryFilter] = useState('')
+  const [ordering, setOrdering] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<StudentGuardian | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<StudentGuardian | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
 
+  const listParams = {
+    search: appliedSearch || undefined,
+    student__document_number: studentDocFilter.trim() || undefined,
+    parent__document_number: parentDocFilter.trim() || undefined,
+    is_primary: isPrimaryFilter || undefined,
+    ordering: ordering || undefined,
+  }
+
   const { data: rows = [], isLoading, error } = useQuery({
-    queryKey: ['student-guardians', 'list', appliedSearch],
+    queryKey: ['student-guardians', 'list', listParams],
     queryFn: async () => {
       const { data } = await apiClient.get<StudentGuardian[]>(
         '/api/student-guardians/',
         {
-          params: appliedSearch ? { search: appliedSearch } : undefined,
+          params: listParams,
         },
       )
       return data
@@ -166,16 +186,16 @@ export function StudentGuardiansPage() {
   return (
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
-        <PageHeader title="Estudiante — acudiente" />
+        <PageHeader title={t('studentGuardians.title')} />
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-          Nueva relación
+          {t('studentGuardians.newRelation')}
         </Button>
       </Box>
 
-      <Paper className="p-3 flex flex-wrap gap-2 items-center">
+      <Paper className="p-3 flex flex-wrap gap-2 items-end">
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -187,8 +207,63 @@ export function StudentGuardiansPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Aplicar
+          {t('common.apply')}
         </Button>
+        <TextField
+          size="small"
+          label={t('studentGuardians.studentDocExact')}
+          value={studentDocFilter}
+          onChange={(e) => setStudentDocFilter(e.target.value)}
+        />
+        <TextField
+          size="small"
+          label={t('studentGuardians.parentDocExact')}
+          value={parentDocFilter}
+          onChange={(e) => setParentDocFilter(e.target.value)}
+        />
+        <FormControl size="small" sx={{ minWidth: 190 }}>
+          <InputLabel>{t('studentGuardians.isPrimary')}</InputLabel>
+          <Select
+            label={t('studentGuardians.isPrimary')}
+            value={isPrimaryFilter}
+            onChange={(e) => setIsPrimaryFilter(String(e.target.value))}
+          >
+            <MenuItem value="">{t('studentGuardians.all')}</MenuItem>
+            <MenuItem value="true">{t('studentGuardians.yes')}</MenuItem>
+            <MenuItem value="false">{t('studentGuardians.no')}</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 210 }}>
+          <InputLabel>{t('studentGuardians.order')}</InputLabel>
+          <Select
+            label={t('studentGuardians.order')}
+            value={ordering}
+            onChange={(e) => setOrdering(String(e.target.value))}
+          >
+            <MenuItem value="">{t('studentGuardians.defaultOrder')}</MenuItem>
+            <MenuItem value="student__full_name">{t('studentGuardians.studentAsc')}</MenuItem>
+            <MenuItem value="-student__full_name">{t('studentGuardians.studentDesc')}</MenuItem>
+            <MenuItem value="parent__full_name">{t('studentGuardians.parentAsc')}</MenuItem>
+            <MenuItem value="-parent__full_name">{t('studentGuardians.parentDesc')}</MenuItem>
+          </Select>
+        </FormControl>
+        <Button
+          variant="text"
+          startIcon={<FilterAltOffIcon />}
+          onClick={() => {
+            setSearchInput('')
+            setAppliedSearch('')
+            setStudentDocFilter('')
+            setParentDocFilter('')
+            setIsPrimaryFilter('')
+            setOrdering('')
+          }}
+        >
+          {t('common.clear')}
+        </Button>
+        <Typography variant="caption" color="text.secondary" sx={{ width: '100%' }}>
+          {t('studentGuardians.globalSearchHint')}
+        </Typography>
       </Paper>
 
       {error ? <Alert severity="error">{getErrorMessage(error)}</Alert> : null}
@@ -197,32 +272,32 @@ export function StudentGuardiansPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Estudiante</TableCell>
-              <TableCell>Acudiente</TableCell>
-              <TableCell>Principal</TableCell>
-              <TableCell align="right">Acciones</TableCell>
+              <TableCell>{t('studentGuardians.student')}</TableCell>
+              <TableCell>{t('studentGuardians.parent')}</TableCell>
+              <TableCell>{t('studentGuardians.primary')}</TableCell>
+              <TableCell align="right">{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4}>Cargando…</TableCell>
+                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : null}
             {!isLoading && rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4}>Sin registros.</TableCell>
+                <TableCell colSpan={4}>{t('common.none')}</TableCell>
               </TableRow>
             ) : null}
             {rows.map((row) => (
               <TableRow key={row.id}>
                 <TableCell>{row.student_name}</TableCell>
                 <TableCell>{row.parent_name}</TableCell>
-                <TableCell>{row.is_primary ? 'Sí' : 'No'}</TableCell>
+                <TableCell>{row.is_primary ? t('studentGuardians.yes') : t('studentGuardians.no')}</TableCell>
                 <TableCell align="right">
                   <IconButton
                     size="small"
-                    aria-label="Editar"
+                    aria-label={t('studentGuardians.edit')}
                     onClick={() => openEdit(row)}
                   >
                     <EditIcon fontSize="small" />
@@ -230,7 +305,7 @@ export function StudentGuardiansPage() {
                   <IconButton
                     size="small"
                     color="error"
-                    aria-label="Eliminar"
+                    aria-label={t('studentGuardians.delete')}
                     onClick={() => setDeleteTarget(row)}
                   >
                     <DeleteOutlineIcon fontSize="small" />
@@ -244,7 +319,7 @@ export function StudentGuardiansPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar relación' : 'Nueva relación'}
+          {editing ? t('studentGuardians.editRelation') : t('studentGuardians.newRelation')}
         </DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1">
@@ -263,7 +338,7 @@ export function StudentGuardiansPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Estudiante"
+                      label={t('studentGuardians.student')}
                       required
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
@@ -286,7 +361,7 @@ export function StudentGuardiansPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Acudiente"
+                      label={t('studentGuardians.parent')}
                       required
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
@@ -306,30 +381,32 @@ export function StudentGuardiansPage() {
                       onChange={(_, c) => field.onChange(c)}
                     />
                   }
-                  label="Acudiente principal"
+                  label={t('studentGuardians.primaryGuardian')}
                 />
               )}
             />
           </DialogContent>
           <DialogActions>
             <Button type="button" onClick={closeDialog}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
       </Dialog>
 
       <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
-        <DialogTitle>Eliminar relación</DialogTitle>
+        <DialogTitle>{t('studentGuardians.deleteRelation')}</DialogTitle>
         <DialogContent>
-          ¿Eliminar vínculo {deleteTarget?.student_name} —{' '}
-          {deleteTarget?.parent_name}?
+          {t('studentGuardians.deleteRelationPrompt', {
+            student: deleteTarget?.student_name ?? '',
+            parent: deleteTarget?.parent_name ?? '',
+          })}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -338,7 +415,7 @@ export function StudentGuardiansPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -17,6 +17,7 @@ export const BULK_LOAD_API_PATHS = [
   '/api/students/bulk-load/',
   '/api/subjects/bulk-load/',
   '/api/teachers/bulk-load/',
+  '/api/teachers/bulk-load-users/',
 ] as const
 
 export type BulkLoadApiPath = (typeof BULK_LOAD_API_PATHS)[number]

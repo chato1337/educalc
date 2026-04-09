@@ -29,6 +29,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { z } from 'zod'
 
@@ -61,6 +62,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function CourseAssignmentsPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
@@ -221,8 +223,8 @@ export function CourseAssignmentsPage() {
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
         <PageHeader
-          title="Asignación docente–curso"
-          subtitle="Materia impartida por docente en un grupo y año lectivo."
+          title={t('courseAssignments.title')}
+          subtitle={t('courseAssignments.subtitle')}
         />
         <Button
           variant="contained"
@@ -234,20 +236,20 @@ export function CourseAssignmentsPage() {
             subjects.length === 0
           }
         >
-          Nueva asignación
+          {t('courseAssignments.new')}
         </Button>
       </Box>
 
       {!selectedInstitutionId ? (
         <Alert severity="info">
-          Selecciona una institución para cargar materias y años lectivos.
+          {t('courseAssignments.selectInstitution')}
         </Alert>
       ) : null}
 
       <Paper className="p-3 flex flex-wrap gap-2 items-end">
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -259,18 +261,18 @@ export function CourseAssignmentsPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Buscar
+          {t('common.search')}
         </Button>
         <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Año lectivo</InputLabel>
+          <InputLabel>{t('courseAssignments.academicYear')}</InputLabel>
           <Select
-            label="Año lectivo"
+            label={t('courseAssignments.academicYear')}
             value={filterYearId ?? ''}
             onChange={(e) =>
               setFilterYearId(e.target.value === '' ? null : e.target.value)
             }
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('courseAssignments.all')}</MenuItem>
             {academicYears.map((y) => (
               <MenuItem key={y.id} value={y.id}>
                 {yearLabel(y)}
@@ -280,7 +282,7 @@ export function CourseAssignmentsPage() {
         </FormControl>
         <TextField
           size="small"
-          label="Filtrar docente (buscar)"
+          label={t('courseAssignments.filterTeacher')}
           value={teacherSearchInput}
           onChange={(e) => setTeacherSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -292,7 +294,7 @@ export function CourseAssignmentsPage() {
           variant="outlined"
           onClick={() => setAppliedTeacherSearch(teacherSearchInput)}
         >
-          Aplicar docente
+          {t('courseAssignments.applyTeacher')}
         </Button>
       </Paper>
 
@@ -304,23 +306,23 @@ export function CourseAssignmentsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Materia</TableCell>
-              <TableCell>Docente</TableCell>
-              <TableCell>Grupo</TableCell>
-              <TableCell>Año</TableCell>
+              <TableCell>{t('courseAssignments.subject')}</TableCell>
+              <TableCell>{t('courseAssignments.teacher')}</TableCell>
+              <TableCell>{t('courseAssignments.group')}</TableCell>
+              <TableCell>{t('courseAssignments.year')}</TableCell>
               <TableCell align="right" width={100}>
-                Acciones
+                {t('common.actions')}
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5}>Cargando…</TableCell>
+                <TableCell colSpan={5}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : rowsFiltered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5}>Sin registros.</TableCell>
+                <TableCell colSpan={5}>{t('common.none')}</TableCell>
               </TableRow>
             ) : (
               rowsFiltered.map((row) => (
@@ -331,14 +333,14 @@ export function CourseAssignmentsPage() {
                   <TableCell>{row.academic_year_year}</TableCell>
                   <TableCell align="right">
                     <IconButton
-                      aria-label="editar"
+                      aria-label={t('courseAssignments.edit')}
                       size="small"
                       onClick={() => openEdit(row)}
                     >
                       <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton
-                      aria-label="eliminar"
+                      aria-label={t('courseAssignments.delete')}
                       size="small"
                       onClick={() => setDeleteTarget(row)}
                     >
@@ -354,7 +356,7 @@ export function CourseAssignmentsPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar asignación' : 'Nueva asignación'}
+          {editing ? t('courseAssignments.editDialog') : t('courseAssignments.newDialog')}
         </DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1">
@@ -364,9 +366,9 @@ export function CourseAssignmentsPage() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <FormControl fullWidth error={!!fieldState.error} required>
-                  <InputLabel>Año lectivo</InputLabel>
+                  <InputLabel>{t('courseAssignments.academicYear')}</InputLabel>
                   <Select
-                    label="Año lectivo"
+                    label={t('courseAssignments.academicYear')}
                     value={field.value}
                     onChange={(e) => {
                       field.onChange(e.target.value)
@@ -397,7 +399,7 @@ export function CourseAssignmentsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Grupo"
+                      label={t('courseAssignments.group')}
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
                       required
@@ -418,7 +420,7 @@ export function CourseAssignmentsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Materia"
+                      label={t('courseAssignments.subject')}
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
                       required
@@ -430,7 +432,7 @@ export function CourseAssignmentsPage() {
             <Box className="flex gap-2 items-end">
               <TextField
                 size="small"
-                label="Buscar docente"
+                label={t('courseAssignments.searchTeacher')}
                 fullWidth
                 value={formTeacherSearch}
                 onChange={(e) => setFormTeacherSearch(e.target.value)}
@@ -447,7 +449,7 @@ export function CourseAssignmentsPage() {
                   setAppliedFormTeacherSearch(formTeacherSearch)
                 }
               >
-                Buscar
+                {t('common.search')}
               </Button>
             </Box>
             <Controller
@@ -465,7 +467,7 @@ export function CourseAssignmentsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Docente"
+                      label={t('courseAssignments.teacher')}
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
                       required
@@ -476,9 +478,9 @@ export function CourseAssignmentsPage() {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={closeDialog}>Cancelar</Button>
+            <Button onClick={closeDialog}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
@@ -488,13 +490,16 @@ export function CourseAssignmentsPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
       >
-        <DialogTitle>Eliminar asignación</DialogTitle>
+        <DialogTitle>{t('courseAssignments.deleteDialog')}</DialogTitle>
         <DialogContent>
-          ¿Eliminar {deleteTarget?.subject_name} — {deleteTarget?.teacher_name}{' '}
-          en {deleteTarget?.group_name}?
+          {t('courseAssignments.deletePrompt', {
+            subject: deleteTarget?.subject_name ?? '',
+            teacher: deleteTarget?.teacher_name ?? '',
+            group: deleteTarget?.group_name ?? '',
+          })}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -503,7 +508,7 @@ export function CourseAssignmentsPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

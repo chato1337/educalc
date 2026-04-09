@@ -2,6 +2,7 @@ import { Alert, Box, Button, Paper, TextField, Typography } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm, type Resolver } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
@@ -100,6 +101,7 @@ function studentToForm(s: Student): FormValues {
 }
 
 export function StudentFormPage() {
+  const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -163,17 +165,17 @@ export function StudentFormPage() {
   return (
     <Box className="p-4 md:p-6 max-w-2xl mx-auto w-full flex flex-col gap-4">
       <PageHeader
-        title={isEdit ? 'Editar estudiante' : 'Nuevo estudiante'}
+        title={isEdit ? t('studentForm.editTitle') : t('studentForm.newTitle')}
       />
       <Typography variant="body2">
         <Link to="/students" className="text-blue-600 underline">
-          ← Volver al listado
+          {t('studentForm.backToList')}
         </Link>
         {isEdit && id ? (
           <>
             {' · '}
             <Link to={`/students/${id}`} className="text-blue-600 underline">
-              Ver ficha
+              {t('studentForm.viewCard')}
             </Link>
           </>
         ) : null}
@@ -182,7 +184,7 @@ export function StudentFormPage() {
       {errorMsg ? <Alert severity="error">{errorMsg}</Alert> : null}
 
       {isEdit && isLoading ? (
-        <Typography>Cargando…</Typography>
+        <Typography>{t('common.loading')}</Typography>
       ) : (
         <Paper className="p-4">
           <form
@@ -194,86 +196,86 @@ export function StudentFormPage() {
               currentValue={documentTypeValue}
             />
             <TextField
-              label="Número documento"
+              label={t('studentForm.documentNumber')}
               {...form.register('document_number')}
               fullWidth
             />
             <TextField
-              label="Nombre"
+              label={t('studentForm.firstName')}
               {...form.register('first_name')}
               required
               fullWidth
             />
             <TextField
-              label="Segundo nombre"
+              label={t('studentForm.secondName')}
               {...form.register('second_name')}
               fullWidth
             />
             <TextField
-              label="Primer apellido"
+              label={t('studentForm.firstLastName')}
               {...form.register('first_last_name')}
               required
               fullWidth
             />
             <TextField
-              label="Segundo apellido"
+              label={t('studentForm.secondLastName')}
               {...form.register('second_last_name')}
               fullWidth
             />
             <TextField
-              label="Nombre completo"
+              label={t('studentForm.fullName')}
               {...form.register('full_name')}
               required
               fullWidth
             />
             <TextField
-              label="Fecha nacimiento"
+              label={t('studentForm.birthDate')}
               type="date"
               slotProps={{ inputLabel: { shrink: true } }}
               {...form.register('date_of_birth')}
               fullWidth
             />
-            <TextField label="Género" {...form.register('gender')} fullWidth />
+            <TextField label={t('studentForm.gender')} {...form.register('gender')} fullWidth />
             <TextField
-              label="Fecha matrícula"
+              label={t('studentForm.enrollmentDate')}
               type="date"
               slotProps={{ inputLabel: { shrink: true } }}
               {...form.register('enrollment_date')}
               fullWidth
             />
-            <TextField label="Estrato" {...form.register('stratum')} fullWidth />
-            <TextField label="SISBEN" {...form.register('sisben')} fullWidth />
+            <TextField label={t('studentForm.stratum')} {...form.register('stratum')} fullWidth />
+            <TextField label={t('studentForm.sisben')} {...form.register('sisben')} fullWidth />
             <TextField
-              label="Barrio"
+              label={t('studentForm.neighborhood')}
               {...form.register('neighborhood')}
               fullWidth
             />
-            <TextField label="EPS" {...form.register('health_insurer')} fullWidth />
+            <TextField label={t('studentForm.healthInsurer')} {...form.register('health_insurer')} fullWidth />
             <TextField
-              label="Tipo sangre"
+              label={t('studentForm.bloodType')}
               {...form.register('blood_type')}
               fullWidth
             />
             <TextField
-              label="Discapacidad"
+              label={t('studentForm.disability')}
               {...form.register('disability')}
               fullWidth
             />
-            <TextField label="Teléfono" {...form.register('phone')} fullWidth />
+            <TextField label={t('studentForm.phone')} {...form.register('phone')} fullWidth />
             <Box className="flex gap-2 pt-2">
               <Button
                 type="submit"
                 variant="contained"
                 disabled={pending || (isEdit && isLoading)}
               >
-                Guardar
+                {t('common.save')}
               </Button>
               <Button
                 type="button"
                 component={Link}
                 to={isEdit && id ? `/students/${id}` : '/students'}
               >
-                Cancelar
+                {t('common.cancel')}
               </Button>
             </Box>
           </form>

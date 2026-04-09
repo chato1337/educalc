@@ -30,6 +30,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -69,6 +70,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function AcademicIndicatorsPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
@@ -247,8 +249,8 @@ export function AcademicIndicatorsPage() {
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
         <PageHeader
-          title="Indicadores académicos"
-          subtitle="Descriptores cualitativos por estudiante, curso y período."
+          title={t('academicIndicatorsOps.title')}
+          subtitle={t('academicIndicatorsOps.subtitle')}
         />
         <Button
           variant="contained"
@@ -258,20 +260,20 @@ export function AcademicIndicatorsPage() {
             !selectedInstitutionId || academicYears.length === 0
           }
         >
-          Nuevo indicador
+          {t('academicIndicatorsOps.new')}
         </Button>
       </Box>
 
       {!selectedInstitutionId ? (
         <Alert severity="info">
-          Selecciona una institución para ver años lectivos.
+          {t('academicIndicatorsOps.selectInstitution')}
         </Alert>
       ) : null}
 
       <Paper className="p-3 flex flex-wrap gap-2 items-end">
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -283,12 +285,12 @@ export function AcademicIndicatorsPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Buscar
+          {t('common.search')}
         </Button>
         <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Año</InputLabel>
+          <InputLabel>{t('academicIndicatorsOps.year')}</InputLabel>
           <Select
-            label="Año"
+            label={t('academicIndicatorsOps.year')}
             value={filterYearId ?? ''}
             onChange={(e) => {
               const v = e.target.value === '' ? null : e.target.value
@@ -296,7 +298,7 @@ export function AcademicIndicatorsPage() {
               setFilterPeriodId(null)
             }}
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('academicIndicatorsOps.all')}</MenuItem>
             {academicYears.map((y) => (
               <MenuItem key={y.id} value={y.id}>
                 {yearLabel(y)}
@@ -305,15 +307,15 @@ export function AcademicIndicatorsPage() {
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 160 }} disabled={!filterYearId}>
-          <InputLabel>Período</InputLabel>
+          <InputLabel>{t('academicIndicatorsOps.period')}</InputLabel>
           <Select
-            label="Período"
+            label={t('academicIndicatorsOps.period')}
             value={filterPeriodId ?? ''}
             onChange={(e) =>
               setFilterPeriodId(e.target.value === '' ? null : e.target.value)
             }
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('academicIndicatorsOps.all')}</MenuItem>
             {periodsForFilter.map((p) => (
               <MenuItem key={p.id} value={p.id}>
                 {p.name}
@@ -331,21 +333,21 @@ export function AcademicIndicatorsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Estudiante</TableCell>
-              <TableCell>Descripción</TableCell>
-              <TableCell>Nota</TableCell>
-              <TableCell>Nivel</TableCell>
+              <TableCell>{t('academicIndicatorsOps.student')}</TableCell>
+              <TableCell>{t('academicIndicatorsOps.description')}</TableCell>
+              <TableCell>{t('academicIndicatorsOps.grade')}</TableCell>
+              <TableCell>{t('academicIndicatorsOps.level')}</TableCell>
               <TableCell align="right" width={100} />
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5}>Cargando…</TableCell>
+                <TableCell colSpan={5}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5}>Sin registros.</TableCell>
+                <TableCell colSpan={5}>{t('common.none')}</TableCell>
               </TableRow>
             ) : (
               rows.map((row) => (
@@ -354,20 +356,20 @@ export function AcademicIndicatorsPage() {
                   <TableCell className="max-w-xs truncate">
                     {row.description}
                   </TableCell>
-                  <TableCell>{row.numerical_grade ?? '—'}</TableCell>
-                  <TableCell>{row.performance_level || '—'}</TableCell>
+                  <TableCell>{row.numerical_grade ?? '-'}</TableCell>
+                  <TableCell>{row.performance_level || '-'}</TableCell>
                   <TableCell align="right">
                     <IconButton
                       size="small"
                       onClick={() => openEdit(row)}
-                      aria-label="editar"
+                      aria-label={t('academicIndicatorsOps.edit')}
                     >
                       <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton
                       size="small"
                       onClick={() => setDeleteTarget(row)}
-                      aria-label="eliminar"
+                      aria-label={t('academicIndicatorsOps.delete')}
                     >
                       <DeleteOutlineIcon fontSize="small" />
                     </IconButton>
@@ -381,7 +383,7 @@ export function AcademicIndicatorsPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar indicador' : 'Nuevo indicador'}
+          {editing ? t('academicIndicatorsOps.editDialog') : t('academicIndicatorsOps.newDialog')}
         </DialogTitle>
         <form
           onSubmit={form.handleSubmit((v) => {
@@ -398,9 +400,9 @@ export function AcademicIndicatorsPage() {
             {formError ? <Alert severity="error">{formError}</Alert> : null}
             {!editing ? (
               <FormControl fullWidth required>
-                <InputLabel>Año lectivo</InputLabel>
+                <InputLabel>{t('academicIndicatorsOps.academicYear')}</InputLabel>
                 <Select
-                  label="Año lectivo"
+                  label={t('academicIndicatorsOps.academicYear')}
                   value={dialogYearId ?? ''}
                   onChange={(e) => {
                     const v = e.target.value
@@ -422,7 +424,7 @@ export function AcademicIndicatorsPage() {
                 <Box className="flex gap-2 items-end">
                   <TextField
                     size="small"
-                    label="Buscar estudiante"
+                    label={t('academicIndicatorsOps.searchStudent')}
                     fullWidth
                     value={studentSearchInput}
                     onChange={(e) => setStudentSearchInput(e.target.value)}
@@ -439,7 +441,7 @@ export function AcademicIndicatorsPage() {
                       setAppliedStudentSearch(studentSearchInput)
                     }
                   >
-                    Buscar
+                    {t('common.search')}
                   </Button>
                 </Box>
                 <Controller
@@ -457,7 +459,7 @@ export function AcademicIndicatorsPage() {
                       renderInput={(params: AutocompleteRenderInputParams) => (
                         <TextField
                           {...params}
-                          label="Estudiante"
+                          label={t('academicIndicatorsOps.student')}
                           error={!!fieldState.error}
                           helperText={fieldState.error?.message}
                           required
@@ -469,7 +471,7 @@ export function AcademicIndicatorsPage() {
               </Box>
             ) : (
               <TextField
-                label="Estudiante"
+                label={t('academicIndicatorsOps.student')}
                 value={editing.student_name}
                 disabled
                 fullWidth
@@ -493,7 +495,7 @@ export function AcademicIndicatorsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Asignación"
+                      label={t('academicIndicatorsOps.assignment')}
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
                       required
@@ -507,9 +509,9 @@ export function AcademicIndicatorsPage() {
               control={form.control}
               render={({ field }) => (
                 <FormControl fullWidth required disabled={!dialogYearId}>
-                  <InputLabel>Período</InputLabel>
+                  <InputLabel>{t('academicIndicatorsOps.period')}</InputLabel>
                   <Select
-                    label="Período"
+                    label={t('academicIndicatorsOps.period')}
                     value={field.value}
                     onChange={field.onChange}
                   >
@@ -523,7 +525,7 @@ export function AcademicIndicatorsPage() {
               )}
             />
             <TextField
-              label="Descripción"
+              label={t('academicIndicatorsOps.description')}
               fullWidth
               required
               multiline
@@ -531,20 +533,20 @@ export function AcademicIndicatorsPage() {
               {...form.register('description')}
             />
             <TextField
-              label="Nota numérica (opcional)"
+              label={t('academicIndicatorsOps.numericalGradeOptional')}
               fullWidth
               {...form.register('numerical_grade')}
             />
             <TextField
-              label="Nivel de desempeño (texto)"
+              label={t('academicIndicatorsOps.performanceLevel')}
               fullWidth
               {...form.register('performance_level')}
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={closeDialog}>Cancelar</Button>
+            <Button onClick={closeDialog}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
@@ -554,10 +556,10 @@ export function AcademicIndicatorsPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
       >
-        <DialogTitle>Eliminar indicador</DialogTitle>
-        <DialogContent>¿Eliminar este indicador?</DialogContent>
+        <DialogTitle>{t('academicIndicatorsOps.deleteDialog')}</DialogTitle>
+        <DialogContent>{t('academicIndicatorsOps.deletePrompt')}</DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -566,7 +568,7 @@ export function AcademicIndicatorsPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

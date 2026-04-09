@@ -26,6 +26,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm } from 'react-hook-form'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -52,6 +53,7 @@ const defaults: FormValues = {
 }
 
 export function AcademicAreasPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
@@ -177,16 +179,16 @@ export function AcademicAreasPage() {
   return (
     <Box className="p-4 md:p-6 max-w-5xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
-        <PageHeader title="Áreas académicas" />
+        <PageHeader title={t('academicAreas.title')} />
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-          Nueva área
+          {t('academicAreas.new')}
         </Button>
       </Box>
 
       <Paper className="p-3 flex flex-wrap gap-2 items-center">
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -198,7 +200,7 @@ export function AcademicAreasPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Aplicar
+          {t('common.apply')}
         </Button>
       </Paper>
 
@@ -208,32 +210,32 @@ export function AcademicAreasPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Código</TableCell>
-              <TableCell>Institución</TableCell>
-              <TableCell align="right">Acciones</TableCell>
+              <TableCell>{t('academicAreas.name')}</TableCell>
+              <TableCell>{t('academicAreas.code')}</TableCell>
+              <TableCell>{t('academicAreas.institution')}</TableCell>
+              <TableCell align="right">{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4}>Cargando…</TableCell>
+                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : null}
             {!isLoading && rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4}>Sin registros.</TableCell>
+                <TableCell colSpan={4}>{t('common.none')}</TableCell>
               </TableRow>
             ) : null}
             {rows.map((row) => (
               <TableRow key={row.id}>
                 <TableCell>{row.name}</TableCell>
-                <TableCell>{row.code || '—'}</TableCell>
+                <TableCell>{row.code || '-'}</TableCell>
                 <TableCell>{row.institution_name}</TableCell>
                 <TableCell align="right">
                   <IconButton
                     size="small"
-                    aria-label="Editar"
+                    aria-label={t('academicAreas.edit')}
                     onClick={() => openEdit(row)}
                   >
                     <EditIcon fontSize="small" />
@@ -241,7 +243,7 @@ export function AcademicAreasPage() {
                   <IconButton
                     size="small"
                     color="error"
-                    aria-label="Eliminar"
+                    aria-label={t('academicAreas.delete')}
                     onClick={() => setDeleteTarget(row)}
                   >
                     <DeleteOutlineIcon fontSize="small" />
@@ -255,7 +257,7 @@ export function AcademicAreasPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar área académica' : 'Nueva área académica'}
+          {editing ? t('academicAreas.editDialog') : t('academicAreas.newDialog')}
         </DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1">
@@ -276,7 +278,7 @@ export function AcademicAreasPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Institución"
+                      label={t('academicAreas.institution')}
                       required
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
@@ -286,7 +288,7 @@ export function AcademicAreasPage() {
               )}
             />
             <TextField
-              label="Nombre"
+              label={t('academicAreas.name')}
               {...form.register('name')}
               error={!!form.formState.errors.name}
               helperText={form.formState.errors.name?.message}
@@ -294,12 +296,12 @@ export function AcademicAreasPage() {
               fullWidth
             />
             <TextField
-              label="Código"
+              label={t('academicAreas.code')}
               {...form.register('code')}
               fullWidth
             />
             <TextField
-              label="Descripción"
+              label={t('academicAreas.description')}
               {...form.register('description')}
               fullWidth
               multiline
@@ -308,10 +310,10 @@ export function AcademicAreasPage() {
           </DialogContent>
           <DialogActions>
             <Button type="button" onClick={closeDialog}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
@@ -321,10 +323,10 @@ export function AcademicAreasPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
       >
-        <DialogTitle>Eliminar área</DialogTitle>
-        <DialogContent>¿Eliminar «{deleteTarget?.name}»?</DialogContent>
+        <DialogTitle>{t('academicAreas.deleteDialog')}</DialogTitle>
+        <DialogContent>{t('academicAreas.deletePrompt', { name: deleteTarget?.name ?? '' })}</DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -333,7 +335,7 @@ export function AcademicAreasPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

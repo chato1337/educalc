@@ -34,7 +34,7 @@ import {
 } from '@/app/roleMatrix'
 
 export type NavItem = {
-  label: string
+  labelKey: string
   path: string
   icon?: SvgIconComponent
   /** Si no se define, cualquier rol autenticado con perfil puede verlo. */
@@ -42,16 +42,16 @@ export type NavItem = {
 }
 
 export type NavSection = {
-  title: string
+  titleKey: string
   items: NavItem[]
 }
 
 export const navSections: NavSection[] = [
   {
-    title: 'General',
+    titleKey: 'nav.general',
     items: [
       {
-        label: 'Inicio',
+        labelKey: 'nav.home',
         path: '/dashboard',
         icon: Dashboard,
         rolesAllowed: ALL_APP_ROLES,
@@ -59,16 +59,16 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    title: 'Institución',
+    titleKey: 'nav.institutionSection',
     items: [
       {
-        label: 'Instituciones',
+        labelKey: 'nav.institutions',
         path: '/institutions',
         icon: School,
         rolesAllowed: ADMIN_ONLY,
       },
       {
-        label: 'Sedes (campus)',
+        labelKey: 'nav.campuses',
         path: '/campuses',
         icon: LocalLibrary,
         rolesAllowed: STAFF_ROLES,
@@ -76,40 +76,40 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    title: 'Estructura académica',
+    titleKey: 'nav.academicStructureSection',
     items: [
       {
-        label: 'Años lectivos',
+        labelKey: 'nav.academicYears',
         path: '/academic-years',
         icon: EventNote,
         rolesAllowed: STAFF_ROLES,
       },
       {
-        label: 'Períodos',
+        labelKey: 'nav.academicPeriods',
         path: '/academic-periods',
         icon: DateRange,
         rolesAllowed: STAFF_ROLES,
       },
       {
-        label: 'Niveles (grados)',
+        labelKey: 'nav.gradeLevels',
         path: '/grade-levels',
         icon: Layers,
         rolesAllowed: STAFF_ROLES,
       },
       {
-        label: 'Grupos',
+        labelKey: 'nav.groups',
         path: '/groups',
         icon: Group,
         rolesAllowed: STAFF_ROLES,
       },
       {
-        label: 'Áreas académicas',
+        labelKey: 'nav.academicAreas',
         path: '/academic-areas',
         icon: Category,
         rolesAllowed: STAFF_ROLES,
       },
       {
-        label: 'Materias (asignaturas)',
+        labelKey: 'nav.subjects',
         path: '/subjects',
         icon: Subject,
         rolesAllowed: STAFF_ROLES,
@@ -117,46 +117,46 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    title: 'Personas',
+    titleKey: 'nav.peopleSection',
     items: [
       {
-        label: 'Estudiantes',
+        labelKey: 'nav.students',
         path: '/students',
         icon: People,
         rolesAllowed: ALL_APP_ROLES,
       },
       {
-        label: 'Carga masiva CSV',
+        labelKey: 'nav.bulkLoadCsv',
         path: '/bulk-load',
         icon: SwapHoriz,
         rolesAllowed: ADMIN_COORDINATOR,
       },
       {
-        label: 'Docentes',
+        labelKey: 'nav.teachers',
         path: '/teachers',
         icon: Person,
         rolesAllowed: STAFF_ROLES,
       },
       {
-        label: 'Acudientes',
+        labelKey: 'nav.parents',
         path: '/parents',
         icon: FamilyRestroom,
         rolesAllowed: ADMIN_COORDINATOR,
       },
       {
-        label: 'Usuarios',
+        labelKey: 'nav.users',
         path: '/users',
         icon: Person,
         rolesAllowed: ADMIN_ONLY,
       },
       {
-        label: 'Estudiante–acudiente',
+        labelKey: 'nav.studentGuardians',
         path: '/student-guardians',
         icon: People,
         rolesAllowed: ADMIN_COORDINATOR,
       },
       {
-        label: 'Coordinadores de grado',
+        labelKey: 'nav.gradeDirectors',
         path: '/grade-directors',
         icon: Person,
         rolesAllowed: STAFF_ROLES,
@@ -164,16 +164,16 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    title: 'Matrícula y cursos',
+    titleKey: 'nav.enrollmentCoursesSection',
     items: [
       {
-        label: 'Matrículas',
+        labelKey: 'nav.enrollments',
         path: '/enrollments',
         icon: AssignmentInd,
         rolesAllowed: STAFF_ROLES,
       },
       {
-        label: 'Asignación docente–curso',
+        labelKey: 'nav.courseAssignments',
         path: '/course-assignments',
         icon: Class,
         rolesAllowed: STAFF_ROLES,
@@ -181,28 +181,28 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    title: 'Evaluación',
+    titleKey: 'nav.evaluationSection',
     items: [
       {
-        label: 'Calificaciones',
+        labelKey: 'nav.grades',
         path: '/grades',
         icon: Grade,
         rolesAllowed: STAFF_ROLES,
       },
       {
-        label: 'Escalas de valoración',
+        labelKey: 'nav.gradingScales',
         path: '/grading-scales',
         icon: FactCheck,
         rolesAllowed: STAFF_ROLES,
       },
       {
-        label: 'Indicadores académicos',
+        labelKey: 'nav.academicIndicators',
         path: '/academic-indicators',
         icon: Assessment,
         rolesAllowed: STAFF_ROLES,
       },
       {
-        label: 'Resúmenes de desempeño',
+        labelKey: 'nav.performanceSummaries',
         path: '/performance-summaries',
         icon: Assessment,
         rolesAllowed: STAFF_ROLES,
@@ -210,16 +210,16 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    title: 'Convivencia y asistencia',
+    titleKey: 'nav.coexistenceAttendanceSection',
     items: [
       {
-        label: 'Asistencia',
+        labelKey: 'nav.attendance',
         path: '/attendances',
         icon: EventAvailable,
         rolesAllowed: STAFF_ROLES,
       },
       {
-        label: 'Reportes disciplinarios',
+        labelKey: 'nav.disciplinaryReports',
         path: '/disciplinary-reports',
         icon: Gavel,
         rolesAllowed: STAFF_ROLES,
@@ -227,16 +227,16 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    title: 'Expedientes e informes',
+    titleKey: 'nav.recordsReportsSection',
     items: [
       {
-        label: 'Libro final de calificaciones',
+        labelKey: 'nav.schoolRecords',
         path: '/school-records',
         icon: Book,
         rolesAllowed: STAFF_ROLES,
       },
       {
-        label: 'Informes de indicadores',
+        labelKey: 'nav.academicIndicatorsReports',
         path: '/academic-indicators-reports',
         icon: Report,
         rolesAllowed: STAFF_ROLES,

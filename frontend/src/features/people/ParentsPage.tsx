@@ -1,6 +1,7 @@
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import EditIcon from '@mui/icons-material/Edit'
+import FilterAltOffIcon from '@mui/icons-material/FilterAltOff'
 import SearchIcon from '@mui/icons-material/Search'
 import {
   Alert,
@@ -10,8 +11,12 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
   IconButton,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -19,11 +24,13 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Typography,
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm, type Resolver } from 'react-hook-form'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -76,19 +83,34 @@ function toApiBody(v: FormValues) {
 }
 
 export function ParentsPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [searchInput, setSearchInput] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
+  const [documentTypeFilter, setDocumentTypeFilter] = useState('')
+  const [documentNumberFilter, setDocumentNumberFilter] = useState('')
+  const [emailFilter, setEmailFilter] = useState('')
+  const [kinshipFilter, setKinshipFilter] = useState('')
+  const [ordering, setOrdering] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Parent | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Parent | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
 
+  const listParams = {
+    search: appliedSearch || undefined,
+    document_type: documentTypeFilter.trim() || undefined,
+    document_number: documentNumberFilter.trim() || undefined,
+    email: emailFilter.trim() || undefined,
+    kinship: kinshipFilter.trim() || undefined,
+    ordering: ordering || undefined,
+  }
+
   const { data: rows = [], isLoading, error } = useQuery({
-    queryKey: ['parents', 'list', appliedSearch],
+    queryKey: ['parents', 'list', listParams],
     queryFn: async () => {
       const { data } = await apiClient.get<Parent[]>('/api/parents/', {
-        params: appliedSearch ? { search: appliedSearch } : undefined,
+        params: listParams,
       })
       return data
     },
@@ -183,16 +205,16 @@ export function ParentsPage() {
   return (
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
-        <PageHeader title="Acudientes" />
+        <PageHeader title={t('parents.title')} />
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-          Nuevo acudiente
+          {t('parents.new')}
         </Button>
       </Box>
 
-      <Paper className="p-3 flex flex-wrap gap-2 items-center">
+      <Paper className="p-3 flex flex-wrap gap-2 items-end">
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -204,8 +226,66 @@ export function ParentsPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Aplicar
+          {t('common.apply')}
         </Button>
+        <TextField
+          size="small"
+          label={t('parents.documentTypeExact')}
+          value={documentTypeFilter}
+          onChange={(e) => setDocumentTypeFilter(e.target.value)}
+        />
+        <TextField
+          size="small"
+          label={t('parents.documentNumberExact')}
+          value={documentNumberFilter}
+          onChange={(e) => setDocumentNumberFilter(e.target.value)}
+        />
+        <TextField
+          size="small"
+          label={t('parents.emailExact')}
+          value={emailFilter}
+          onChange={(e) => setEmailFilter(e.target.value)}
+        />
+        <TextField
+          size="small"
+          label={t('parents.kinshipExact')}
+          value={kinshipFilter}
+          onChange={(e) => setKinshipFilter(e.target.value)}
+        />
+        <FormControl size="small" sx={{ minWidth: 210 }}>
+          <InputLabel>{t('parents.order')}</InputLabel>
+          <Select
+            label={t('parents.order')}
+            value={ordering}
+            onChange={(e) => setOrdering(String(e.target.value))}
+          >
+            <MenuItem value="">{t('parents.defaultOrder')}</MenuItem>
+            <MenuItem value="full_name">{t('parents.nameAsc')}</MenuItem>
+            <MenuItem value="-full_name">{t('parents.nameDesc')}</MenuItem>
+            <MenuItem value="document_number">{t('parents.documentAsc')}</MenuItem>
+            <MenuItem value="-document_number">{t('parents.documentDesc')}</MenuItem>
+            <MenuItem value="email">{t('parents.emailAsc')}</MenuItem>
+            <MenuItem value="-email">{t('parents.emailDesc')}</MenuItem>
+          </Select>
+        </FormControl>
+        <Button
+          variant="text"
+          startIcon={<FilterAltOffIcon />}
+          onClick={() => {
+            setSearchInput('')
+            setAppliedSearch('')
+            setDocumentTypeFilter('')
+            setDocumentNumberFilter('')
+            setEmailFilter('')
+            setKinshipFilter('')
+            setOrdering('')
+          }}
+        >
+          {t('common.clear')}
+        </Button>
+        <Typography variant="caption" color="text.secondary" sx={{ width: '100%' }}>
+          {t('parents.globalSearchHint')}
+        </Typography>
       </Paper>
 
       {error ? <Alert severity="error">{getErrorMessage(error)}</Alert> : null}
@@ -214,32 +294,32 @@ export function ParentsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Parentesco</TableCell>
-              <TableCell align="right">Acciones</TableCell>
+              <TableCell>{t('parents.name')}</TableCell>
+              <TableCell>{t('parents.email')}</TableCell>
+              <TableCell>{t('parents.kinship')}</TableCell>
+              <TableCell align="right">{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4}>Cargando…</TableCell>
+                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : null}
             {!isLoading && rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4}>Sin registros.</TableCell>
+                <TableCell colSpan={4}>{t('common.none')}</TableCell>
               </TableRow>
             ) : null}
             {rows.map((row) => (
               <TableRow key={row.id}>
                 <TableCell>{row.full_name}</TableCell>
                 <TableCell>{row.email}</TableCell>
-                <TableCell>{row.kinship ?? '—'}</TableCell>
+                <TableCell>{row.kinship ?? '-'}</TableCell>
                 <TableCell align="right">
                   <IconButton
                     size="small"
-                    aria-label="Editar"
+                    aria-label={t('parents.edit')}
                     onClick={() => openEdit(row)}
                   >
                     <EditIcon fontSize="small" />
@@ -247,7 +327,7 @@ export function ParentsPage() {
                   <IconButton
                     size="small"
                     color="error"
-                    aria-label="Eliminar"
+                    aria-label={t('parents.delete')}
                     onClick={() => setDeleteTarget(row)}
                   >
                     <DeleteOutlineIcon fontSize="small" />
@@ -261,7 +341,7 @@ export function ParentsPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar acudiente' : 'Nuevo acudiente'}
+          {editing ? t('parents.editParent') : t('parents.newParent')}
         </DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1 max-h-[70vh] overflow-auto">
@@ -270,29 +350,29 @@ export function ParentsPage() {
               registerProps={form.register('document_type')}
               currentValue={documentTypeValue}
             />
-            <TextField label="Número documento" {...form.register('document_number')} fullWidth />
+            <TextField label={t('parents.documentNumber')} {...form.register('document_number')} fullWidth />
             <TextField
-              label="Nombre"
+              label={t('parents.firstName')}
               {...form.register('first_name')}
               required
               fullWidth
             />
-            <TextField label="Segundo nombre" {...form.register('second_name')} fullWidth />
+            <TextField label={t('parents.secondName')} {...form.register('second_name')} fullWidth />
             <TextField
-              label="Primer apellido"
+              label={t('parents.firstLastName')}
               {...form.register('first_last_name')}
               required
               fullWidth
             />
-            <TextField label="Segundo apellido" {...form.register('second_last_name')} fullWidth />
+            <TextField label={t('parents.secondLastName')} {...form.register('second_last_name')} fullWidth />
             <TextField
-              label="Nombre completo"
+              label={t('parents.fullName')}
               {...form.register('full_name')}
               required
               fullWidth
             />
             <TextField
-              label="Email"
+              label={t('parents.email')}
               type="email"
               {...form.register('email')}
               required
@@ -300,25 +380,25 @@ export function ParentsPage() {
               helperText={form.formState.errors.email?.message}
               fullWidth
             />
-            <TextField label="Teléfono" {...form.register('phone')} fullWidth />
-            <TextField label="Parentesco" {...form.register('kinship')} fullWidth />
+            <TextField label={t('parents.phone')} {...form.register('phone')} fullWidth />
+            <TextField label={t('parents.kinship')} {...form.register('kinship')} fullWidth />
           </DialogContent>
           <DialogActions>
             <Button type="button" onClick={closeDialog}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
       </Dialog>
 
       <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
-        <DialogTitle>Eliminar acudiente</DialogTitle>
-        <DialogContent>¿Eliminar a {deleteTarget?.full_name}?</DialogContent>
+        <DialogTitle>{t('parents.deleteParent')}</DialogTitle>
+        <DialogContent>{t('parents.deleteParentPrompt', { name: deleteTarget?.full_name ?? '' })}</DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -327,7 +407,7 @@ export function ParentsPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

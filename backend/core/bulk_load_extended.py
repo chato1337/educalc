@@ -2,6 +2,9 @@
 Extended bulk CSV loaders. Column names align with docs/plan-implementacion-carga-masiva-csv.md.
 """
 import logging
+import unicodedata
+
+from django.contrib.auth import get_user_model
 
 from .bulk_load_utils import (
     bool_from_cell,
@@ -35,13 +38,44 @@ from .models import (
     StudentGuardian,
     Subject,
     Teacher,
+    UserProfile,
 )
 
 logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 def _empty_stats(keys):
     return {k: 0 for k in keys}
+
+
+def _normalize_username_token(value):
+    """Normalize names to ASCII lowercase token safe for usernames."""
+    text = clean_str(value)
+    if not text:
+        return ""
+    normalized = unicodedata.normalize("NFKD", text)
+    ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
+    cleaned = "".join(ch for ch in ascii_text.lower() if ch.isalnum())
+    return cleaned
+
+
+def _build_teacher_username(first_name, first_last_name, document_number):
+    first = _normalize_username_token(first_name)
+    last = _normalize_username_token(first_last_name)
+    base = f"{first}.{last}" if first and last else ""
+    if not base:
+        base = f"doc.{clean_str(document_number) or 'teacher'}"
+    return base
+
+
+def _next_available_username(base_username):
+    username = base_username
+    suffix = 0
+    while User.objects.filter(username=username).exists():
+        suffix += 1
+        username = f"{base_username}{suffix}"
+    return username
 
 
 def bulk_load_academic_areas(csv_file):
@@ -237,6 +271,79 @@ def bulk_load_teachers(csv_file):
                     specialty=spec,
                 )
                 stats["created"] += 1
+            stats["rows_processed"] += 1
+        except Exception as e:
+            stats["errors"].append({"row": row_num, "error": str(e)})
+    return stats
+
+
+def bulk_load_teacher_users(csv_file):
+    """
+    Create/update auth users for teachers from teachers CSV.
+
+    Username format: first_name.first_last_name (normalized ASCII, lowercase).
+    Password format: teacher document number.
+    """
+    col = row_col
+    stats = _empty_stats(
+        ["rows_processed", "rows_skipped", "users_created", "users_updated", "profile_linked"]
+    )
+    stats["errors"] = []
+    reader = open_csv_dict_reader(csv_file)
+    for row_num, row in enumerate(reader, start=2):
+        try:
+            doc = clean_str(col(row, ["DOC", "doc", "DOC_DOCENTE"]))
+            n1 = clean_str(col(row, ["NOMBRE1", "nombre1"]))
+            a1 = clean_str(col(row, ["APELLIDO1", "apellido1"]))
+            if not doc:
+                stats["rows_skipped"] += 1
+                continue
+
+            teacher = Teacher.objects.filter(document_number=doc).first()
+            if not teacher:
+                stats["errors"].append(
+                    {"row": row_num, "error": f"Teacher not found DOC={doc}. Run teachers bulk load first."}
+                )
+                stats["rows_skipped"] += 1
+                continue
+
+            base_username = _build_teacher_username(n1 or teacher.first_name, a1 or teacher.first_last_name, doc)
+            existing_user = None
+            if hasattr(teacher, "user_profile") and teacher.user_profile:
+                existing_user = teacher.user_profile.user
+
+            if existing_user:
+                changed = False
+                if existing_user.username != base_username and not User.objects.filter(
+                    username=base_username
+                ).exclude(pk=existing_user.pk).exists():
+                    existing_user.username = base_username
+                    changed = True
+                if teacher.email and existing_user.email != teacher.email:
+                    existing_user.email = teacher.email
+                    changed = True
+                existing_user.set_password(doc)
+                changed = True
+                if changed:
+                    existing_user.save()
+                user = existing_user
+                stats["users_updated"] += 1
+            else:
+                username = _next_available_username(base_username)
+                user = User.objects.create_user(
+                    username=username,
+                    password=doc,
+                    email=teacher.email or "",
+                )
+                stats["users_created"] += 1
+
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+            if profile.teacher_id != teacher.id or profile.role != "TEACHER":
+                profile.teacher = teacher
+                profile.role = "TEACHER"
+                profile.save()
+                stats["profile_linked"] += 1
+
             stats["rows_processed"] += 1
         except Exception as e:
             stats["errors"].append({"row": row_num, "error": str(e)})

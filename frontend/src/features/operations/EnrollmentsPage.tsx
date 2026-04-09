@@ -29,6 +29,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { z } from 'zod'
 
@@ -63,6 +64,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function EnrollmentsPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
@@ -216,8 +218,8 @@ export function EnrollmentsPage() {
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
         <PageHeader
-          title="Matrículas"
-          subtitle="Inscripción de estudiantes a grupos por año lectivo."
+          title={t('enrollments.title')}
+          subtitle={t('enrollments.subtitle')}
         />
         <Button
           variant="contained"
@@ -225,21 +227,20 @@ export function EnrollmentsPage() {
           onClick={openCreate}
           disabled={!selectedInstitutionId || academicYears.length === 0}
         >
-          Nueva matrícula
+          {t('enrollments.new')}
         </Button>
       </Box>
 
       {!selectedInstitutionId ? (
         <Alert severity="info">
-          Selecciona una institución en la barra superior para filtrar años y
-          grupos.
+          {t('enrollments.selectInstitution')}
         </Alert>
       ) : null}
 
       <Paper className="p-3 flex flex-wrap gap-2 items-end">
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -251,18 +252,18 @@ export function EnrollmentsPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Buscar
+          {t('common.search')}
         </Button>
         <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Año lectivo</InputLabel>
+          <InputLabel>{t('enrollments.academicYear')}</InputLabel>
           <Select
-            label="Año lectivo"
+            label={t('enrollments.academicYear')}
             value={filterYearId ?? ''}
             onChange={(e) =>
               setFilterYearId(e.target.value === '' ? null : e.target.value)
             }
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('enrollments.all')}</MenuItem>
             {academicYears.map((y) => (
               <MenuItem key={y.id} value={y.id}>
                 {yearLabel(y)}
@@ -271,16 +272,16 @@ export function EnrollmentsPage() {
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Estado</InputLabel>
+          <InputLabel>{t('enrollments.status')}</InputLabel>
           <Select
-            label="Estado"
+            label={t('enrollments.status')}
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('enrollments.all')}</MenuItem>
             {statusOptions.map((s) => (
               <MenuItem key={s} value={s}>
-                {s}
+                {t(`enrollments.statusValues.${s}`)}
               </MenuItem>
             ))}
           </Select>
@@ -295,23 +296,23 @@ export function EnrollmentsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Estudiante</TableCell>
-              <TableCell>Grupo</TableCell>
-              <TableCell>Año</TableCell>
-              <TableCell>Estado</TableCell>
+              <TableCell>{t('enrollments.student')}</TableCell>
+              <TableCell>{t('enrollments.group')}</TableCell>
+              <TableCell>{t('enrollments.year')}</TableCell>
+              <TableCell>{t('enrollments.status')}</TableCell>
               <TableCell align="right" width={100}>
-                Acciones
+                {t('common.actions')}
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5}>Cargando…</TableCell>
+                <TableCell colSpan={5}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5}>Sin registros.</TableCell>
+                <TableCell colSpan={5}>{t('common.none')}</TableCell>
               </TableRow>
             ) : (
               rows.map((row) => (
@@ -319,17 +320,17 @@ export function EnrollmentsPage() {
                   <TableCell>{row.student_name}</TableCell>
                   <TableCell>{row.group_name}</TableCell>
                   <TableCell>{row.academic_year_year}</TableCell>
-                  <TableCell>{row.status}</TableCell>
+                  <TableCell>{t(`enrollments.statusValues.${row.status}`)}</TableCell>
                   <TableCell align="right">
                     <IconButton
-                      aria-label="editar"
+                      aria-label={t('enrollments.edit')}
                       size="small"
                       onClick={() => openEdit(row)}
                     >
                       <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton
-                      aria-label="eliminar"
+                      aria-label={t('enrollments.delete')}
                       size="small"
                       onClick={() => setDeleteTarget(row)}
                     >
@@ -345,7 +346,7 @@ export function EnrollmentsPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar matrícula' : 'Nueva matrícula'}
+          {editing ? t('enrollments.editDialog') : t('enrollments.newDialog')}
         </DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1">
@@ -355,7 +356,7 @@ export function EnrollmentsPage() {
                 <Box className="flex gap-2 items-end">
                   <TextField
                     size="small"
-                    label="Buscar estudiante"
+                    label={t('enrollments.searchStudent')}
                     fullWidth
                     value={studentSearchInput}
                     onChange={(e) => setStudentSearchInput(e.target.value)}
@@ -370,7 +371,7 @@ export function EnrollmentsPage() {
                     variant="outlined"
                     onClick={() => setAppliedStudentSearch(studentSearchInput)}
                   >
-                    Buscar
+                    {t('common.search')}
                   </Button>
                 </Box>
                 <Controller
@@ -387,7 +388,7 @@ export function EnrollmentsPage() {
                       renderInput={(params: AutocompleteRenderInputParams) => (
                         <TextField
                           {...params}
-                          label="Estudiante"
+                          label={t('enrollments.student')}
                           error={!!fieldState.error}
                           helperText={fieldState.error?.message}
                           required
@@ -399,7 +400,7 @@ export function EnrollmentsPage() {
               </Box>
             ) : (
               <TextField
-                label="Estudiante"
+                label={t('enrollments.student')}
                 value={editing.student_name}
                 disabled
                 fullWidth
@@ -410,9 +411,9 @@ export function EnrollmentsPage() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <FormControl fullWidth error={!!fieldState.error} required>
-                  <InputLabel>Año lectivo</InputLabel>
+                  <InputLabel>{t('enrollments.academicYear')}</InputLabel>
                   <Select
-                    label="Año lectivo"
+                    label={t('enrollments.academicYear')}
                     value={field.value}
                     onChange={(e) => {
                       field.onChange(e.target.value)
@@ -441,7 +442,7 @@ export function EnrollmentsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Grupo"
+                      label={t('enrollments.group')}
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
                       required
@@ -455,15 +456,15 @@ export function EnrollmentsPage() {
               control={form.control}
               render={({ field }) => (
                 <FormControl fullWidth required>
-                  <InputLabel>Estado</InputLabel>
+                  <InputLabel>{t('enrollments.status')}</InputLabel>
                   <Select
-                    label="Estado"
+                    label={t('enrollments.status')}
                     value={field.value}
                     onChange={field.onChange}
                   >
                     {statusOptions.map((s) => (
                       <MenuItem key={s} value={s}>
-                        {s}
+                        {t(`enrollments.statusValues.${s}`)}
                       </MenuItem>
                     ))}
                   </Select>
@@ -471,7 +472,7 @@ export function EnrollmentsPage() {
               )}
             />
             <TextField
-              label="Fecha matrícula"
+              label={t('enrollments.enrollmentDate')}
               type="date"
               InputLabelProps={{ shrink: true }}
               fullWidth
@@ -479,9 +480,9 @@ export function EnrollmentsPage() {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={closeDialog}>Cancelar</Button>
+            <Button onClick={closeDialog}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
@@ -491,20 +492,22 @@ export function EnrollmentsPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
       >
-        <DialogTitle>Eliminar matrícula</DialogTitle>
+        <DialogTitle>{t('enrollments.deleteDialog')}</DialogTitle>
         <DialogContent>
-          ¿Eliminar la matrícula de {deleteTarget?.student_name} en{' '}
-          {deleteTarget?.group_name}?
+          {t('enrollments.deletePrompt', {
+            student: deleteTarget?.student_name ?? '',
+            group: deleteTarget?.group_name ?? '',
+          })}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
             disabled={deleteMutation.isPending}
             onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

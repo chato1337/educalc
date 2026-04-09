@@ -30,6 +30,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -62,6 +63,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function AttendancesPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
@@ -210,8 +212,8 @@ export function AttendancesPage() {
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
         <PageHeader
-          title="Asistencia"
-          subtitle="Inasistencias por estudiante, asignación y período."
+          title={t('attendances.title')}
+          subtitle={t('attendances.subtitle')}
         />
         <Button
           variant="contained"
@@ -219,18 +221,18 @@ export function AttendancesPage() {
           onClick={openCreate}
           disabled={!selectedInstitutionId || academicYears.length === 0}
         >
-          Nuevo registro
+          {t('attendances.new')}
         </Button>
       </Box>
 
       {!selectedInstitutionId ? (
-        <Alert severity="info">Selecciona una institución.</Alert>
+        <Alert severity="info">{t('attendances.selectInstitution')}</Alert>
       ) : null}
 
       <Paper className="p-3 flex flex-wrap gap-2 items-end">
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -242,12 +244,12 @@ export function AttendancesPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Buscar
+          {t('common.search')}
         </Button>
         <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Año</InputLabel>
+          <InputLabel>{t('attendances.year')}</InputLabel>
           <Select
-            label="Año"
+            label={t('attendances.year')}
             value={filterYearId ?? ''}
             onChange={(e) => {
               const v = e.target.value === '' ? null : e.target.value
@@ -255,7 +257,7 @@ export function AttendancesPage() {
               setFilterPeriodId(null)
             }}
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('attendances.all')}</MenuItem>
             {academicYears.map((y) => (
               <MenuItem key={y.id} value={y.id}>
                 {yearLabel(y)}
@@ -264,15 +266,15 @@ export function AttendancesPage() {
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 160 }} disabled={!filterYearId}>
-          <InputLabel>Período</InputLabel>
+          <InputLabel>{t('attendances.period')}</InputLabel>
           <Select
-            label="Período"
+            label={t('attendances.period')}
             value={filterPeriodId ?? ''}
             onChange={(e) =>
               setFilterPeriodId(e.target.value === '' ? null : e.target.value)
             }
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('attendances.all')}</MenuItem>
             {periodsForFilter.map((p) => (
               <MenuItem key={p.id} value={p.id}>
                 {p.name}
@@ -290,20 +292,20 @@ export function AttendancesPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Estudiante</TableCell>
-              <TableCell>SE</TableCell>
-              <TableCell>CE</TableCell>
+              <TableCell>{t('attendances.student')}</TableCell>
+              <TableCell>{t('attendances.unexcusedShort')}</TableCell>
+              <TableCell>{t('attendances.excusedShort')}</TableCell>
               <TableCell align="right" width={100} />
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4}>Cargando…</TableCell>
+                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4}>Sin registros.</TableCell>
+                <TableCell colSpan={4}>{t('common.none')}</TableCell>
               </TableRow>
             ) : (
               rows.map((row) => (
@@ -315,14 +317,14 @@ export function AttendancesPage() {
                     <IconButton
                       size="small"
                       onClick={() => openEdit(row)}
-                      aria-label="editar"
+                      aria-label={t('attendances.edit')}
                     >
                       <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton
                       size="small"
                       onClick={() => setDeleteTarget(row)}
-                      aria-label="eliminar"
+                      aria-label={t('attendances.delete')}
                     >
                       <DeleteOutlineIcon fontSize="small" />
                     </IconButton>
@@ -336,7 +338,7 @@ export function AttendancesPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar asistencia' : 'Nuevo registro de asistencia'}
+          {editing ? t('attendances.editDialog') : t('attendances.newDialog')}
         </DialogTitle>
         <form
           onSubmit={form.handleSubmit((v) => {
@@ -352,9 +354,9 @@ export function AttendancesPage() {
             {formError ? <Alert severity="error">{formError}</Alert> : null}
             {!editing ? (
               <FormControl fullWidth required>
-                <InputLabel>Año lectivo</InputLabel>
+                <InputLabel>{t('attendances.academicYear')}</InputLabel>
                 <Select
-                  label="Año lectivo"
+                  label={t('attendances.academicYear')}
                   value={dialogYearId ?? ''}
                   onChange={(e) => {
                     const v = e.target.value
@@ -376,7 +378,7 @@ export function AttendancesPage() {
                 <Box className="flex gap-2 items-end">
                   <TextField
                     size="small"
-                    label="Buscar estudiante"
+                    label={t('attendances.searchStudent')}
                     fullWidth
                     value={studentSearchInput}
                     onChange={(e) => setStudentSearchInput(e.target.value)}
@@ -393,7 +395,7 @@ export function AttendancesPage() {
                       setAppliedStudentSearch(studentSearchInput)
                     }
                   >
-                    Buscar
+                    {t('common.search')}
                   </Button>
                 </Box>
                 <Controller
@@ -411,7 +413,7 @@ export function AttendancesPage() {
                       renderInput={(params: AutocompleteRenderInputParams) => (
                         <TextField
                           {...params}
-                          label="Estudiante"
+                          label={t('attendances.student')}
                           error={!!fieldState.error}
                           helperText={fieldState.error?.message}
                           required
@@ -423,7 +425,7 @@ export function AttendancesPage() {
               </Box>
             ) : (
               <TextField
-                label="Estudiante"
+                label={t('attendances.student')}
                 value={editing.student_name}
                 disabled
                 fullWidth
@@ -447,7 +449,7 @@ export function AttendancesPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Asignación"
+                      label={t('attendances.assignment')}
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
                       required
@@ -461,9 +463,9 @@ export function AttendancesPage() {
               control={form.control}
               render={({ field }) => (
                 <FormControl fullWidth required disabled={!dialogYearId}>
-                  <InputLabel>Período</InputLabel>
+                  <InputLabel>{t('attendances.period')}</InputLabel>
                   <Select
-                    label="Período"
+                    label={t('attendances.period')}
                     value={field.value}
                     onChange={field.onChange}
                   >
@@ -477,14 +479,14 @@ export function AttendancesPage() {
               )}
             />
             <TextField
-              label="Inasistencias sin excusa"
+              label={t('attendances.unexcused')}
               type="number"
               fullWidth
               inputProps={{ min: 0 }}
               {...form.register('unexcused_absences', { valueAsNumber: true })}
             />
             <TextField
-              label="Inasistencias con excusa"
+              label={t('attendances.excused')}
               type="number"
               fullWidth
               inputProps={{ min: 0 }}
@@ -492,9 +494,9 @@ export function AttendancesPage() {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={closeDialog}>Cancelar</Button>
+            <Button onClick={closeDialog}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
@@ -504,10 +506,10 @@ export function AttendancesPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
       >
-        <DialogTitle>Eliminar registro</DialogTitle>
-        <DialogContent>¿Eliminar asistencia de {deleteTarget?.student_name}?</DialogContent>
+        <DialogTitle>{t('attendances.deleteDialog')}</DialogTitle>
+        <DialogContent>{t('attendances.deletePrompt', { student: deleteTarget?.student_name ?? '' })}</DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -516,7 +518,7 @@ export function AttendancesPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

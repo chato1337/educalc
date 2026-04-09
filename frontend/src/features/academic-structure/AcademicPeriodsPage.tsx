@@ -24,6 +24,7 @@ import {
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import type { Resolver } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
 import { useMemo, useState } from 'react'
@@ -59,6 +60,7 @@ function yearLabel(y: AcademicYear) {
 }
 
 export function AcademicPeriodsPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
@@ -196,8 +198,8 @@ export function AcademicPeriodsPage() {
     <Box className="p-4 md:p-6 max-w-5xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
         <PageHeader
-          title="Períodos académicos"
-          subtitle="Filtra por año lectivo según la institución seleccionada en la barra."
+          title={t('academicPeriods.title')}
+          subtitle={t('academicPeriods.subtitle')}
         />
         <Button
           variant="contained"
@@ -205,14 +207,13 @@ export function AcademicPeriodsPage() {
           onClick={openCreate}
           disabled={yearOptions.length === 0}
         >
-          Nuevo período
+          {t('academicPeriods.new')}
         </Button>
       </Box>
 
       {yearOptions.length === 0 ? (
         <Alert severity="info">
-          No hay años lectivos para la institución seleccionada. Crea uno en
-          «Años lectivos» o elige otra institución.
+          {t('academicPeriods.noYears')}
         </Alert>
       ) : null}
 
@@ -224,13 +225,13 @@ export function AcademicPeriodsPage() {
           value={filterYear}
           onChange={(_, v) => setFilterYearId(v?.id ?? null)}
           renderInput={(params: AutocompleteRenderInputParams) => (
-            <TextField {...params} label="Filtrar por año lectivo" size="small" />
+            <TextField {...params} label={t('academicPeriods.filterByYear')} size="small" />
           )}
           isOptionEqualToValue={(a, b) => a.id === b.id}
         />
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -242,7 +243,7 @@ export function AcademicPeriodsPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Aplicar búsqueda
+          {t('academicPeriods.applySearch')}
         </Button>
       </Paper>
 
@@ -252,22 +253,22 @@ export function AcademicPeriodsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Núm.</TableCell>
-              <TableCell>Año lectivo</TableCell>
-              <TableCell>Fechas</TableCell>
-              <TableCell align="right">Acciones</TableCell>
+              <TableCell>{t('academicPeriods.name')}</TableCell>
+              <TableCell>{t('academicPeriods.numberShort')}</TableCell>
+              <TableCell>{t('academicPeriods.academicYear')}</TableCell>
+              <TableCell>{t('academicPeriods.dates')}</TableCell>
+              <TableCell align="right">{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5}>Cargando…</TableCell>
+                <TableCell colSpan={5}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : null}
             {!isLoading && rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5}>Sin registros.</TableCell>
+                <TableCell colSpan={5}>{t('common.none')}</TableCell>
               </TableRow>
             ) : null}
             {rows.map((row) => (
@@ -277,12 +278,12 @@ export function AcademicPeriodsPage() {
                 <TableCell>{row.academic_year_year}</TableCell>
                 <TableCell>
                   {[row.start_date, row.end_date].filter(Boolean).join(' → ') ||
-                    '—'}
+                    '-'}
                 </TableCell>
                 <TableCell align="right">
                   <IconButton
                     size="small"
-                    aria-label="Editar"
+                    aria-label={t('academicPeriods.edit')}
                     onClick={() => openEdit(row)}
                   >
                     <EditIcon fontSize="small" />
@@ -290,7 +291,7 @@ export function AcademicPeriodsPage() {
                   <IconButton
                     size="small"
                     color="error"
-                    aria-label="Eliminar"
+                    aria-label={t('academicPeriods.delete')}
                     onClick={() => setDeleteTarget(row)}
                   >
                     <DeleteOutlineIcon fontSize="small" />
@@ -304,7 +305,7 @@ export function AcademicPeriodsPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar período' : 'Nuevo período'}
+          {editing ? t('academicPeriods.editDialog') : t('academicPeriods.newDialog')}
         </DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1">
@@ -325,7 +326,7 @@ export function AcademicPeriodsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Año lectivo"
+                      label={t('academicPeriods.academicYear')}
                       required
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
@@ -335,7 +336,7 @@ export function AcademicPeriodsPage() {
               )}
             />
             <TextField
-              label="Número de período"
+              label={t('academicPeriods.periodNumber')}
               type="number"
               {...form.register('number', { valueAsNumber: true })}
               error={!!form.formState.errors.number}
@@ -344,7 +345,7 @@ export function AcademicPeriodsPage() {
               fullWidth
             />
             <TextField
-              label="Nombre (ej. P1)"
+              label={t('academicPeriods.nameExample')}
               {...form.register('name')}
               error={!!form.formState.errors.name}
               helperText={form.formState.errors.name?.message}
@@ -352,14 +353,14 @@ export function AcademicPeriodsPage() {
               fullWidth
             />
             <TextField
-              label="Inicio"
+              label={t('academicPeriods.start')}
               type="date"
               slotProps={{ inputLabel: { shrink: true } }}
               {...form.register('start_date')}
               fullWidth
             />
             <TextField
-              label="Fin"
+              label={t('academicPeriods.end')}
               type="date"
               slotProps={{ inputLabel: { shrink: true } }}
               {...form.register('end_date')}
@@ -368,10 +369,10 @@ export function AcademicPeriodsPage() {
           </DialogContent>
           <DialogActions>
             <Button type="button" onClick={closeDialog}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
@@ -381,12 +382,15 @@ export function AcademicPeriodsPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
       >
-        <DialogTitle>Eliminar período</DialogTitle>
+        <DialogTitle>{t('academicPeriods.deleteDialog')}</DialogTitle>
         <DialogContent>
-          ¿Eliminar «{deleteTarget?.name}» (año {deleteTarget?.academic_year_year})?
+          {t('academicPeriods.deletePrompt', {
+            name: deleteTarget?.name ?? '',
+            year: deleteTarget?.academic_year_year ?? '',
+          })}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -395,7 +399,7 @@ export function AcademicPeriodsPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

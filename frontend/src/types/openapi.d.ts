@@ -13,7 +13,7 @@ export interface paths {
         };
         /**
          * List Academic Areas
-         * @description Broad category of knowledge
+         * @description Broad category of knowledge Text search available through query param `search`. Supported fields: name, code, description. Available exact-match filters via query params: institution, institution__dane_code, name, code.
          */
         get: operations["academic_areas_list"];
         put?: never;
@@ -74,7 +74,7 @@ export interface paths {
         };
         /**
          * List Academic Indicators
-         * @description Qualitative achievement descriptor for a student
+         * @description Qualitative achievement descriptor for a student Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number, performance_level.
          */
         get: operations["academic_indicators_list"];
         put?: never;
@@ -95,7 +95,7 @@ export interface paths {
         };
         /**
          * List Academic Indicators Reports
-         * @description Academic Indicators document. GET list/detail, POST to generate.
+         * @description Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, academic_period__name, grade_director__full_name, grade_director__document_number. Available exact-match filters via query params: student, student__document_number, academic_period, academic_period__number, grade_director, grade_director__document_number.
          */
         get: operations["academic_indicators_reports_list"];
         put?: never;
@@ -199,7 +199,7 @@ export interface paths {
         };
         /**
          * List Academic Periods
-         * @description Evaluation period (P1, P2, P3, P4)
+         * @description Evaluation period (P1, P2, P3, P4) Text search available through query param `search`. Supported fields: name, =number, =academic_year__year. Available exact-match filters via query params: academic_year, academic_year__year, number, name.
          */
         get: operations["academic_periods_list"];
         put?: never;
@@ -260,7 +260,7 @@ export interface paths {
         };
         /**
          * List Academic Years
-         * @description Academic/school year
+         * @description Academic/school year Text search available through query param `search`. Supported fields: =year, institution__name. Available exact-match filters via query params: institution, institution__dane_code, year, is_active.
          */
         get: operations["academic_years_list"];
         put?: never;
@@ -301,7 +301,7 @@ export interface paths {
         };
         /**
          * List Attendance
-         * @description Absences per subject and period
+         * @description Absences per subject and period Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number.
          */
         get: operations["attendances_list"];
         put?: never;
@@ -422,7 +422,7 @@ export interface paths {
         };
         /**
          * List Campuses
-         * @description Campus or sede of an institution
+         * @description Campus or sede of an institution Text search available through query param `search`. Supported fields: name, code, institution__name, institution__dane_code. Available exact-match filters via query params: institution, institution__dane_code, name, code.
          */
         get: operations["campuses_list"];
         put?: never;
@@ -463,7 +463,7 @@ export interface paths {
         };
         /**
          * List Course Assignments
-         * @description Teacher assigned to a subject in a group for an academic year
+         * @description Teacher assigned to a subject in a group for an academic year Text search available through query param `search`. Supported fields: subject__name, subject__emphasis, teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: subject, subject__name, teacher, teacher__document_number, group, group__name, academic_year, academic_year__year.
          */
         get: operations["course_assignments_list"];
         put?: never;
@@ -524,7 +524,7 @@ export interface paths {
         };
         /**
          * List Disciplinary Reports
-         * @description Qualitative disciplinary/behavior report
+         * @description Qualitative disciplinary/behavior report Text search available through query param `search`. Supported fields: student__document_number, student__full_name, report_text, created_by__full_name, created_by__document_number. Available exact-match filters via query params: student, student__document_number, academic_period, academic_period__number, created_by, created_by__document_number.
          */
         get: operations["disciplinary_reports_list"];
         put?: never;
@@ -585,7 +585,7 @@ export interface paths {
         };
         /**
          * List Enrollments
-         * @description Student-group enrollment for an academic year
+         * @description Student-group enrollment for an academic year Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, =academic_year__year, status. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_year, academic_year__year, status.
          */
         get: operations["enrollments_list"];
         put?: never;
@@ -626,7 +626,7 @@ export interface paths {
         };
         /**
          * List Grade Directors
-         * @description Homeroom teacher for a group
+         * @description Homeroom teacher for a group Text search available through query param `search`. Supported fields: teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: teacher, teacher__document_number, group, group__name, academic_year, academic_year__year.
          */
         get: operations["grade_directors_list"];
         put?: never;
@@ -687,7 +687,7 @@ export interface paths {
         };
         /**
          * List Grade Levels
-         * @description Grade level (e.g. SEXTO, PRIMERO)
+         * @description Grade level (e.g. SEXTO, PRIMERO) Text search available through query param `search`. Supported fields: name. Available exact-match filters via query params: institution, institution__dane_code, name, level_order.
          */
         get: operations["grade_levels_list"];
         put?: never;
@@ -728,7 +728,7 @@ export interface paths {
         };
         /**
          * List Grades
-         * @description Student grade in a subject for a period
+         * @description Student grades with enriched context: student identity, course assignment (subject, teacher, group, academic year), and academic period. Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, course_assignment__teacher__document_number, course_assignment__group__name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number.
          */
         get: operations["grades_list"];
         put?: never;
@@ -747,7 +747,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Grades */
+        /**
+         * Get Grade
+         * @description Single grade with enriched context: student identity, course assignment (subject, teacher, group, academic year), and academic period.
+         */
         get: operations["grades_retrieve"];
         /** Update Grades */
         put: operations["grades_update"];
@@ -789,7 +792,7 @@ export interface paths {
         };
         /**
          * List Grading Scales
-         * @description Performance levels per Decreto 1290
+         * @description Performance levels per Decreto 1290 Text search available through query param `search`. Supported fields: code, name, description. Available exact-match filters via query params: institution, institution__dane_code, code, name.
          */
         get: operations["grading_scales_list"];
         put?: never;
@@ -850,7 +853,7 @@ export interface paths {
         };
         /**
          * List Groups
-         * @description Student group within a grade
+         * @description Student group within a grade Text search available through query param `search`. Supported fields: name, grade_level__name, campus__name, =academic_year__year. Available exact-match filters via query params: grade_level, grade_level__name, academic_year, academic_year__year, campus, campus__name, name.
          */
         get: operations["groups_list"];
         put?: never;
@@ -911,7 +914,7 @@ export interface paths {
         };
         /**
          * List Institutions
-         * @description Educational institutions at corporate level
+         * @description Educational institutions at corporate level Text search available through query param `search`. Supported fields: name, dane_code, nit. Available exact-match filters via query params: dane_code, nit, name.
          */
         get: operations["institutions_list"];
         put?: never;
@@ -952,7 +955,7 @@ export interface paths {
         };
         /**
          * List Parents
-         * @description Parent or guardian of a student
+         * @description Parent or guardian of a student Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. Available exact-match filters via query params: document_type, document_number, email, kinship.
          */
         get: operations["parents_list"];
         put?: never;
@@ -1013,7 +1016,7 @@ export interface paths {
         };
         /**
          * List Performance Summaries
-         * @description Student average and rank per period
+         * @description Student average and rank per period Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, academic_period__name. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_period, academic_period__number.
          */
         get: operations["performance_summaries_list"];
         put?: never;
@@ -1074,7 +1077,7 @@ export interface paths {
         };
         /**
          * List School Records
-         * @description School Assessment Record document. GET list/detail, POST to generate.
+         * @description Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, institution__name, institution__dane_code, campus__name. Available exact-match filters via query params: student, student__document_number, academic_year, academic_year__year, institution, institution__dane_code.
          */
         get: operations["school_records_list"];
         put?: never;
@@ -1138,7 +1141,7 @@ export interface paths {
         };
         /**
          * List Student Guardians
-         * @description Student-parent/guardian relationship
+         * @description Student-parent/guardian relationship Text search available through query param `search`. Supported fields: student__document_number, student__full_name, parent__document_number, parent__full_name, parent__email. Available exact-match filters via query params: student, student__document_number, parent, parent__document_number, is_primary.
          */
         get: operations["student_guardians_list"];
         put?: never;
@@ -1199,7 +1202,7 @@ export interface paths {
         };
         /**
          * List Students
-         * @description Student data
+         * @description Student data Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name. Available exact-match filters via query params: document_type, document_number, gender, sisben, stratum.
          */
         get: operations["students_list"];
         put?: never;
@@ -1280,7 +1283,7 @@ export interface paths {
         };
         /**
          * List Subjects
-         * @description Subject/course with optional emphasis
+         * @description Subject/course with optional emphasis Text search available through query param `search`. Supported fields: name, emphasis, academic_area__name, institution__name. Available exact-match filters via query params: academic_area, academic_area__name, institution, institution__dane_code, name, emphasis.
          */
         get: operations["subjects_list"];
         put?: never;
@@ -1341,7 +1344,7 @@ export interface paths {
         };
         /**
          * List Teachers
-         * @description Teacher/faculty information
+         * @description Teacher/faculty information Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. Available exact-match filters via query params: document_type, document_number, email, specialty.
          */
         get: operations["teachers_list"];
         put?: never;
@@ -1393,6 +1396,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/teachers/bulk-load-users/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk create users for teachers from CSV
+         * @description Uses the same teachers CSV columns (DOC, NOMBRE1, APELLIDO1, EMAIL). Creates or updates login users for existing teachers. Username format: nombre.apellido (normalized to lowercase ASCII). Password format: document number (DOC).
+         */
+        post: operations["teachers_bulk_load_users_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users/": {
         parameters: {
             query?: never;
@@ -1402,7 +1425,7 @@ export interface paths {
         };
         /**
          * List Users
-         * @description User profile for RBAC (Admin only)
+         * @description User profile for RBAC (Admin only) Text search available through query param `search`. Supported fields: user__username, user__email, teacher__document_number, teacher__full_name, parent__document_number, parent__full_name, institution__name. Available exact-match filters via query params: role, institution, institution__dane_code, user__username, user__email.
          */
         get: operations["users_list"];
         put?: never;
@@ -1739,10 +1762,19 @@ export interface components {
             /** Format: uuid */
             student: string;
             readonly student_name: string;
+            readonly student_document_number: string;
+            readonly student_document_type: string;
             /** Format: uuid */
             course_assignment: string;
+            readonly course_assignment_subject_name: string;
+            readonly course_assignment_subject_emphasis: string;
+            readonly course_assignment_teacher_name: string;
+            readonly course_assignment_group_name: string;
+            readonly course_assignment_academic_year_year: number;
             /** Format: uuid */
             academic_period: string;
+            readonly academic_period_name: string;
+            readonly academic_period_number: number;
             /** Format: decimal */
             numerical_grade: string;
             /** Format: uuid */
@@ -2422,10 +2454,17 @@ export interface operations {
     academic_areas_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `code`. */
+                code?: string;
+                /** @description Filter by exact value of `institution`. */
                 institution?: string;
+                /** @description Filter by exact value of `institution__dane_code`. */
+                institution__dane_code?: string;
+                /** @description Filter by exact value of `name`. */
+                name?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: name, code, description. */
                 search?: string;
             };
             header?: never;
@@ -2608,13 +2647,24 @@ export interface operations {
     academic_indicators_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `academic_period`. */
                 academic_period?: string;
+                /** @description Filter by exact value of `academic_period__number`. */
+                academic_period__number?: string;
+                /** @description Filter by exact value of `course_assignment`. */
                 course_assignment?: string;
+                /** @description Filter by exact value of `course_assignment__teacher__document_number`. */
+                course_assignment__teacher__document_number?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Filter by exact value of `performance_level`. */
+                performance_level?: string;
+                /** @description Search text across: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level. */
                 search?: string;
+                /** @description Filter by exact value of `student`. */
                 student?: string;
+                /** @description Filter by exact value of `student__document_number`. */
+                student__document_number?: string;
             };
             header?: never;
             path?: never;
@@ -2660,12 +2710,22 @@ export interface operations {
     academic_indicators_reports_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `academic_period`. */
                 academic_period?: string;
+                /** @description Filter by exact value of `academic_period__number`. */
+                academic_period__number?: string;
+                /** @description Filter by exact value of `grade_director`. */
+                grade_director?: string;
+                /** @description Filter by exact value of `grade_director__document_number`. */
+                grade_director__document_number?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: student__document_number, student__full_name, group__name, academic_period__name, grade_director__full_name, grade_director__document_number. */
                 search?: string;
+                /** @description Filter by exact value of `student`. */
                 student?: string;
+                /** @description Filter by exact value of `student__document_number`. */
+                student__document_number?: string;
             };
             header?: never;
             path?: never;
@@ -2891,10 +2951,17 @@ export interface operations {
     academic_periods_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `academic_year`. */
                 academic_year?: string;
+                /** @description Filter by exact value of `academic_year__year`. */
+                academic_year__year?: string;
+                /** @description Filter by exact value of `name`. */
+                name?: string;
+                /** @description Filter by exact value of `number`. */
+                number?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: name, =number, =academic_year__year. */
                 search?: string;
             };
             header?: never;
@@ -3077,12 +3144,18 @@ export interface operations {
     academic_years_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `institution`. */
                 institution?: string;
-                is_active?: boolean;
+                /** @description Filter by exact value of `institution__dane_code`. */
+                institution__dane_code?: string;
+                /** @description Filter by exact value of `is_active`. */
+                is_active?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: =year, institution__name. */
                 search?: string;
+                /** @description Filter by exact value of `year`. */
+                year?: string;
             };
             header?: never;
             path?: never;
@@ -3227,13 +3300,22 @@ export interface operations {
     attendances_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `academic_period`. */
                 academic_period?: string;
+                /** @description Filter by exact value of `academic_period__number`. */
+                academic_period__number?: string;
+                /** @description Filter by exact value of `course_assignment`. */
                 course_assignment?: string;
+                /** @description Filter by exact value of `course_assignment__teacher__document_number`. */
+                course_assignment__teacher__document_number?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, academic_period__name. */
                 search?: string;
+                /** @description Filter by exact value of `student`. */
                 student?: string;
+                /** @description Filter by exact value of `student__document_number`. */
+                student__document_number?: string;
             };
             header?: never;
             path?: never;
@@ -3486,10 +3568,17 @@ export interface operations {
     campuses_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `code`. */
+                code?: string;
+                /** @description Filter by exact value of `institution`. */
                 institution?: string;
+                /** @description Filter by exact value of `institution__dane_code`. */
+                institution__dane_code?: string;
+                /** @description Filter by exact value of `name`. */
+                name?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: name, code, institution__name, institution__dane_code. */
                 search?: string;
             };
             header?: never;
@@ -3635,14 +3724,26 @@ export interface operations {
     course_assignments_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `academic_year`. */
                 academic_year?: string;
+                /** @description Filter by exact value of `academic_year__year`. */
+                academic_year__year?: string;
+                /** @description Filter by exact value of `group`. */
                 group?: string;
+                /** @description Filter by exact value of `group__name`. */
+                group__name?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: subject__name, subject__emphasis, teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. */
                 search?: string;
+                /** @description Filter by exact value of `subject`. */
                 subject?: string;
+                /** @description Filter by exact value of `subject__name`. */
+                subject__name?: string;
+                /** @description Filter by exact value of `teacher`. */
                 teacher?: string;
+                /** @description Filter by exact value of `teacher__document_number`. */
+                teacher__document_number?: string;
             };
             header?: never;
             path?: never;
@@ -3824,12 +3925,22 @@ export interface operations {
     disciplinary_reports_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `academic_period`. */
                 academic_period?: string;
+                /** @description Filter by exact value of `academic_period__number`. */
+                academic_period__number?: string;
+                /** @description Filter by exact value of `created_by`. */
+                created_by?: string;
+                /** @description Filter by exact value of `created_by__document_number`. */
+                created_by__document_number?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: student__document_number, student__full_name, report_text, created_by__full_name, created_by__document_number. */
                 search?: string;
+                /** @description Filter by exact value of `student`. */
                 student?: string;
+                /** @description Filter by exact value of `student__document_number`. */
+                student__document_number?: string;
             };
             header?: never;
             path?: never;
@@ -4011,19 +4122,24 @@ export interface operations {
     enrollments_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `academic_year`. */
                 academic_year?: string;
+                /** @description Filter by exact value of `academic_year__year`. */
+                academic_year__year?: string;
+                /** @description Filter by exact value of `group`. */
                 group?: string;
+                /** @description Filter by exact value of `group__name`. */
+                group__name?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: student__document_number, student__full_name, group__name, group__grade_level__name, =academic_year__year, status. */
                 search?: string;
-                /**
-                 * @description * `active` - Active
-                 *     * `withdrawn` - Withdrawn
-                 *     * `graduated` - Graduated
-                 */
-                status?: "active" | "graduated" | "withdrawn";
+                /** @description Filter by exact value of `status`. */
+                status?: string;
+                /** @description Filter by exact value of `student`. */
                 student?: string;
+                /** @description Filter by exact value of `student__document_number`. */
+                student__document_number?: string;
             };
             header?: never;
             path?: never;
@@ -4168,13 +4284,22 @@ export interface operations {
     grade_directors_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `academic_year`. */
                 academic_year?: string;
+                /** @description Filter by exact value of `academic_year__year`. */
+                academic_year__year?: string;
+                /** @description Filter by exact value of `group`. */
                 group?: string;
+                /** @description Filter by exact value of `group__name`. */
+                group__name?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. */
                 search?: string;
+                /** @description Filter by exact value of `teacher`. */
                 teacher?: string;
+                /** @description Filter by exact value of `teacher__document_number`. */
+                teacher__document_number?: string;
             };
             header?: never;
             path?: never;
@@ -4356,10 +4481,17 @@ export interface operations {
     grade_levels_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `institution`. */
                 institution?: string;
+                /** @description Filter by exact value of `institution__dane_code`. */
+                institution__dane_code?: string;
+                /** @description Filter by exact value of `level_order`. */
+                level_order?: string;
+                /** @description Filter by exact value of `name`. */
+                name?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: name. */
                 search?: string;
             };
             header?: never;
@@ -4505,13 +4637,22 @@ export interface operations {
     grades_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `academic_period`. */
                 academic_period?: string;
+                /** @description Filter by exact value of `academic_period__number`. */
+                academic_period__number?: string;
+                /** @description Filter by exact value of `course_assignment`. */
                 course_assignment?: string;
+                /** @description Filter by exact value of `course_assignment__teacher__document_number`. */
+                course_assignment__teacher__document_number?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, course_assignment__teacher__document_number, course_assignment__group__name, academic_period__name. */
                 search?: string;
+                /** @description Filter by exact value of `student`. */
                 student?: string;
+                /** @description Filter by exact value of `student__document_number`. */
+                student__document_number?: string;
             };
             header?: never;
             path?: never;
@@ -4693,10 +4834,17 @@ export interface operations {
     grading_scales_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `code`. */
+                code?: string;
+                /** @description Filter by exact value of `institution`. */
                 institution?: string;
+                /** @description Filter by exact value of `institution__dane_code`. */
+                institution__dane_code?: string;
+                /** @description Filter by exact value of `name`. */
+                name?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: code, name, description. */
                 search?: string;
             };
             header?: never;
@@ -4879,12 +5027,23 @@ export interface operations {
     groups_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `academic_year`. */
                 academic_year?: string;
+                /** @description Filter by exact value of `academic_year__year`. */
+                academic_year__year?: string;
+                /** @description Filter by exact value of `campus`. */
                 campus?: string;
+                /** @description Filter by exact value of `campus__name`. */
+                campus__name?: string;
+                /** @description Filter by exact value of `grade_level`. */
                 grade_level?: string;
+                /** @description Filter by exact value of `grade_level__name`. */
+                grade_level__name?: string;
+                /** @description Filter by exact value of `name`. */
+                name?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: name, grade_level__name, campus__name, =academic_year__year. */
                 search?: string;
             };
             header?: never;
@@ -5054,9 +5213,15 @@ export interface operations {
     institutions_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `dane_code`. */
+                dane_code?: string;
+                /** @description Filter by exact value of `name`. */
+                name?: string;
+                /** @description Filter by exact value of `nit`. */
+                nit?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: name, dane_code, nit. */
                 search?: string;
             };
             header?: never;
@@ -5202,9 +5367,17 @@ export interface operations {
     parents_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `document_number`. */
+                document_number?: string;
+                /** @description Filter by exact value of `document_type`. */
+                document_type?: string;
+                /** @description Filter by exact value of `email`. */
+                email?: string;
+                /** @description Filter by exact value of `kinship`. */
+                kinship?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. */
                 search?: string;
             };
             header?: never;
@@ -5387,13 +5560,22 @@ export interface operations {
     performance_summaries_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `academic_period`. */
                 academic_period?: string;
+                /** @description Filter by exact value of `academic_period__number`. */
+                academic_period__number?: string;
+                /** @description Filter by exact value of `group`. */
                 group?: string;
+                /** @description Filter by exact value of `group__name`. */
+                group__name?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: student__document_number, student__full_name, group__name, group__grade_level__name, academic_period__name. */
                 search?: string;
+                /** @description Filter by exact value of `student`. */
                 student?: string;
+                /** @description Filter by exact value of `student__document_number`. */
+                student__document_number?: string;
             };
             header?: never;
             path?: never;
@@ -5575,13 +5757,22 @@ export interface operations {
     school_records_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `academic_year`. */
                 academic_year?: string;
+                /** @description Filter by exact value of `academic_year__year`. */
+                academic_year__year?: string;
+                /** @description Filter by exact value of `institution`. */
                 institution?: string;
+                /** @description Filter by exact value of `institution__dane_code`. */
+                institution__dane_code?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: student__document_number, student__full_name, group__name, group__grade_level__name, institution__name, institution__dane_code, campus__name. */
                 search?: string;
+                /** @description Filter by exact value of `student`. */
                 student?: string;
+                /** @description Filter by exact value of `student__document_number`. */
+                student__document_number?: string;
             };
             header?: never;
             path?: never;
@@ -5671,13 +5862,20 @@ export interface operations {
     student_guardians_list: {
         parameters: {
             query?: {
-                is_primary?: boolean;
+                /** @description Filter by exact value of `is_primary`. */
+                is_primary?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
+                /** @description Filter by exact value of `parent`. */
                 parent?: string;
-                /** @description A search term. */
+                /** @description Filter by exact value of `parent__document_number`. */
+                parent__document_number?: string;
+                /** @description Search text across: student__document_number, student__full_name, parent__document_number, parent__full_name, parent__email. */
                 search?: string;
+                /** @description Filter by exact value of `student`. */
                 student?: string;
+                /** @description Filter by exact value of `student__document_number`. */
+                student__document_number?: string;
             };
             header?: never;
             path?: never;
@@ -5859,10 +6057,20 @@ export interface operations {
     students_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `document_number`. */
+                document_number?: string;
+                /** @description Filter by exact value of `document_type`. */
+                document_type?: string;
+                /** @description Filter by exact value of `gender`. */
+                gender?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: document_number, full_name, first_name, second_name, first_last_name, second_last_name. */
                 search?: string;
+                /** @description Filter by exact value of `sisben`. */
+                sisben?: string;
+                /** @description Filter by exact value of `stratum`. */
+                stratum?: string;
             };
             header?: never;
             path?: never;
@@ -6066,11 +6274,21 @@ export interface operations {
     subjects_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `academic_area`. */
                 academic_area?: string;
+                /** @description Filter by exact value of `academic_area__name`. */
+                academic_area__name?: string;
+                /** @description Filter by exact value of `emphasis`. */
+                emphasis?: string;
+                /** @description Filter by exact value of `institution`. */
                 institution?: string;
+                /** @description Filter by exact value of `institution__dane_code`. */
+                institution__dane_code?: string;
+                /** @description Filter by exact value of `name`. */
+                name?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: name, emphasis, academic_area__name, institution__name. */
                 search?: string;
             };
             header?: never;
@@ -6253,10 +6471,18 @@ export interface operations {
     teachers_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `document_number`. */
+                document_number?: string;
+                /** @description Filter by exact value of `document_type`. */
+                document_type?: string;
+                /** @description Filter by exact value of `email`. */
+                email?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description A search term. */
+                /** @description Search text across: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. */
                 search?: string;
+                /** @description Filter by exact value of `specialty`. */
+                specialty?: string;
             };
             header?: never;
             path?: never;
@@ -6435,21 +6661,60 @@ export interface operations {
             };
         };
     };
+    teachers_bulk_load_users_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     users_list: {
         parameters: {
             query?: {
+                /** @description Filter by exact value of `institution`. */
                 institution?: string;
+                /** @description Filter by exact value of `institution__dane_code`. */
+                institution__dane_code?: string;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /**
-                 * @description * `ADMIN` - Administrator
-                 *     * `COORDINATOR` - Coordinator
-                 *     * `TEACHER` - Teacher
-                 *     * `PARENT` - Parent
-                 */
-                role?: "ADMIN" | "COORDINATOR" | "PARENT" | "TEACHER";
-                /** @description A search term. */
+                /** @description Filter by exact value of `role`. */
+                role?: string;
+                /** @description Search text across: user__username, user__email, teacher__document_number, teacher__full_name, parent__document_number, parent__full_name, institution__name. */
                 search?: string;
+                /** @description Filter by exact value of `user__email`. */
+                user__email?: string;
+                /** @description Filter by exact value of `user__username`. */
+                user__username?: string;
             };
             header?: never;
             path?: never;

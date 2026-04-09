@@ -1,6 +1,7 @@
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import EditIcon from '@mui/icons-material/Edit'
+import FilterAltOffIcon from '@mui/icons-material/FilterAltOff'
 import SearchIcon from '@mui/icons-material/Search'
 import type { AutocompleteRenderInputParams } from '@mui/material/Autocomplete'
 import {
@@ -25,18 +26,19 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Typography,
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
 import { useInstitutionsReference } from '@/features/academic-structure/academicQueries'
 import { PageHeader } from '@/components/PageHeader'
-import { useUiStore } from '@/stores/uiStore'
 import type { Parent, RoleEnum, Teacher, UserProfile } from '@/types/schemas'
 import type { Institution } from '@/types/schemas'
 
@@ -77,11 +79,16 @@ function toCreateBody(v: FormValues) {
 }
 
 export function UsersPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<RoleEnum | ''>('')
+  const [institutionFilter, setInstitutionFilter] = useState<string>('')
+  const [institutionDaneFilter, setInstitutionDaneFilter] = useState('')
+  const [usernameFilter, setUsernameFilter] = useState('')
+  const [emailFilter, setEmailFilter] = useState('')
+  const [ordering, setOrdering] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<UserProfile | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<UserProfile | null>(null)
@@ -106,9 +113,13 @@ export function UsersPage() {
   })
 
   const listParams = {
-    institution: selectedInstitutionId ?? undefined,
     role: roleFilter || undefined,
     search: appliedSearch || undefined,
+    institution: institutionFilter || undefined,
+    institution__dane_code: institutionDaneFilter.trim() || undefined,
+    user__username: usernameFilter.trim() || undefined,
+    user__email: emailFilter.trim() || undefined,
+    ordering: ordering || undefined,
   }
 
   const { data: rows = [], isLoading, error } = useQuery({
@@ -171,7 +182,7 @@ export function UsersPage() {
     form.reset({
       user: 0,
       role: undefined,
-      institution: selectedInstitutionId ?? '',
+      institution: '',
       teacher: '',
       parent: '',
     })
@@ -203,7 +214,7 @@ export function UsersPage() {
       updateMutation.mutate({ id: editing.id, body: toPatchBody(values) })
     } else {
       if (!values.user || values.user <= 0) {
-        setFormError('Indica el ID numérico del usuario Django (pk).')
+        setFormError(t('users.idRequired'))
         return
       }
       createMutation.mutate(toCreateBody(values))
@@ -219,25 +230,25 @@ export function UsersPage() {
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
         <PageHeader
-          title="Usuarios (perfiles)"
-          subtitle="Vincula el usuario Django (pk) con rol e institución. Requiere permisos de administración en API."
+          title={t('users.title')}
+          subtitle={t('users.subtitle')}
         />
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-          Nuevo perfil
+          {t('users.newProfile')}
         </Button>
       </Box>
 
       <Paper className="p-3 flex flex-wrap gap-2 items-end">
         <FormControl size="small" className="min-w-[160px]">
-          <InputLabel>Rol</InputLabel>
+          <InputLabel>{t('users.role')}</InputLabel>
           <Select
-            label="Rol"
+            label={t('users.role')}
             value={roleFilter}
             onChange={(e) =>
               setRoleFilter(e.target.value as RoleEnum | '')
             }
           >
-            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="">{t('users.all')}</MenuItem>
             {roleOptions.map((r) => (
               <MenuItem key={r} value={r}>
                 {r}
@@ -247,7 +258,7 @@ export function UsersPage() {
         </FormControl>
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -259,8 +270,73 @@ export function UsersPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Aplicar
+          {t('common.apply')}
         </Button>
+        <Autocomplete
+          size="small"
+          options={institutions}
+          sx={{ minWidth: 220 }}
+          getOptionLabel={(o: Institution) => o.name}
+          value={institutions.find((i) => i.id === institutionFilter) ?? null}
+          onChange={(_, v) => setInstitutionFilter(v?.id ?? '')}
+          isOptionEqualToValue={(a, b) => a.id === b.id}
+          renderInput={(params: AutocompleteRenderInputParams) => (
+            <TextField {...params} label={t('users.institution')} />
+          )}
+        />
+        <TextField
+          size="small"
+          label={t('users.usernameExact')}
+          value={usernameFilter}
+          onChange={(e) => setUsernameFilter(e.target.value)}
+        />
+        <TextField
+          size="small"
+          label={t('users.emailExact')}
+          value={emailFilter}
+          onChange={(e) => setEmailFilter(e.target.value)}
+        />
+        <TextField
+          size="small"
+          label={t('users.institutionDane')}
+          value={institutionDaneFilter}
+          onChange={(e) => setInstitutionDaneFilter(e.target.value)}
+        />
+        <FormControl size="small" sx={{ minWidth: 210 }}>
+          <InputLabel>{t('users.order')}</InputLabel>
+          <Select
+            label={t('users.order')}
+            value={ordering}
+            onChange={(e) => setOrdering(String(e.target.value))}
+          >
+            <MenuItem value="">{t('users.defaultOrder')}</MenuItem>
+            <MenuItem value="user__username">{t('users.usernameAsc')}</MenuItem>
+            <MenuItem value="-user__username">{t('users.usernameDesc')}</MenuItem>
+            <MenuItem value="user__email">{t('users.emailAsc')}</MenuItem>
+            <MenuItem value="-user__email">{t('users.emailDesc')}</MenuItem>
+            <MenuItem value="role">{t('users.roleAsc')}</MenuItem>
+            <MenuItem value="-role">{t('users.roleDesc')}</MenuItem>
+          </Select>
+        </FormControl>
+        <Button
+          variant="text"
+          startIcon={<FilterAltOffIcon />}
+          onClick={() => {
+            setSearchInput('')
+            setAppliedSearch('')
+            setRoleFilter('')
+            setInstitutionFilter('')
+            setInstitutionDaneFilter('')
+            setUsernameFilter('')
+            setEmailFilter('')
+            setOrdering('')
+          }}
+        >
+          {t('common.clear')}
+        </Button>
+        <Typography variant="caption" color="text.secondary" sx={{ width: '100%' }}>
+          {t('users.globalSearchHint')}
+        </Typography>
       </Paper>
 
       {error ? <Alert severity="error">{getErrorMessage(error)}</Alert> : null}
@@ -269,22 +345,22 @@ export function UsersPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Usuario</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Rol</TableCell>
-              <TableCell>Institución (id)</TableCell>
-              <TableCell align="right">Acciones</TableCell>
+              <TableCell>{t('users.username')}</TableCell>
+              <TableCell>{t('users.email')}</TableCell>
+              <TableCell>{t('users.role')}</TableCell>
+              <TableCell>{t('users.institutionId')}</TableCell>
+              <TableCell align="right">{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5}>Cargando…</TableCell>
+                <TableCell colSpan={5}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : null}
             {!isLoading && rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5}>Sin registros.</TableCell>
+                <TableCell colSpan={5}>{t('common.none')}</TableCell>
               </TableRow>
             ) : null}
             {rows.map((row) => (
@@ -293,12 +369,12 @@ export function UsersPage() {
                   #{row.user} — {row.username}
                 </TableCell>
                 <TableCell>{row.email}</TableCell>
-                <TableCell>{row.role ?? '—'}</TableCell>
-                <TableCell>{row.institution ?? '—'}</TableCell>
+                <TableCell>{row.role ?? '-'}</TableCell>
+                <TableCell>{row.institution ?? '-'}</TableCell>
                 <TableCell align="right">
                   <IconButton
                     size="small"
-                    aria-label="Editar"
+                    aria-label={t('users.edit')}
                     onClick={() => openEdit(row)}
                   >
                     <EditIcon fontSize="small" />
@@ -306,7 +382,7 @@ export function UsersPage() {
                   <IconButton
                     size="small"
                     color="error"
-                    aria-label="Eliminar"
+                    aria-label={t('users.delete')}
                     onClick={() => setDeleteTarget(row)}
                   >
                     <DeleteOutlineIcon fontSize="small" />
@@ -320,28 +396,28 @@ export function UsersPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar perfil de usuario' : 'Nuevo perfil de usuario'}
+          {editing ? t('users.editProfile') : t('users.newProfileDialog')}
         </DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1">
             {formError ? <Alert severity="error">{formError}</Alert> : null}
             <TextField
-              label="ID usuario Django (pk)"
+              label={t('users.djangoPk')}
               type="number"
               {...form.register('user', { valueAsNumber: true })}
               disabled={!!editing}
               required={!editing}
               fullWidth
-              helperText="Solo al crear. Es el pk de auth_user."
+              helperText={t('users.djangoPkHelp')}
             />
             <FormControl fullWidth>
-              <InputLabel>Rol</InputLabel>
+              <InputLabel>{t('users.role')}</InputLabel>
               <Controller
                 name="role"
                 control={form.control}
                 render={({ field }) => (
                   <Select
-                    label="Rol"
+                    label={t('users.role')}
                     value={field.value ?? ''}
                     onChange={(e) => {
                       const v = String(e.target.value)
@@ -350,7 +426,7 @@ export function UsersPage() {
                       )
                     }}
                   >
-                    <MenuItem value="">(sin rol)</MenuItem>
+                    <MenuItem value="">{t('users.noRole')}</MenuItem>
                     {roleOptions.map((r) => (
                       <MenuItem key={r} value={r}>
                         {r}
@@ -372,7 +448,7 @@ export function UsersPage() {
                   }
                   onChange={(_, v) => field.onChange(v?.id ?? '')}
                   renderInput={(params: AutocompleteRenderInputParams) => (
-                    <TextField {...params} label="Institución" />
+                    <TextField {...params} label={t('users.institution')} />
                   )}
                   isOptionEqualToValue={(a, b) => a.id === b.id}
                 />
@@ -388,7 +464,7 @@ export function UsersPage() {
                   value={teachers.find((t) => t.id === field.value) ?? null}
                   onChange={(_, v) => field.onChange(v?.id ?? '')}
                   renderInput={(params: AutocompleteRenderInputParams) => (
-                    <TextField {...params} label="Docente (opcional)" />
+                    <TextField {...params} label={t('users.teacherOptional')} />
                   )}
                   isOptionEqualToValue={(a, b) => a.id === b.id}
                 />
@@ -404,7 +480,7 @@ export function UsersPage() {
                   value={parents.find((p) => p.id === field.value) ?? null}
                   onChange={(_, v) => field.onChange(v?.id ?? '')}
                   renderInput={(params: AutocompleteRenderInputParams) => (
-                    <TextField {...params} label="Acudiente (opcional)" />
+                    <TextField {...params} label={t('users.parentOptional')} />
                   )}
                   isOptionEqualToValue={(a, b) => a.id === b.id}
                 />
@@ -413,22 +489,22 @@ export function UsersPage() {
           </DialogContent>
           <DialogActions>
             <Button type="button" onClick={closeDialog}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
       </Dialog>
 
       <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
-        <DialogTitle>Eliminar perfil</DialogTitle>
+        <DialogTitle>{t('users.deleteProfile')}</DialogTitle>
         <DialogContent>
-          ¿Eliminar el perfil de {deleteTarget?.username}?
+          {t('users.deleteProfilePrompt', { username: deleteTarget?.username ?? '' })}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -437,7 +513,7 @@ export function UsersPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,4 +1,5 @@
 import AddIcon from '@mui/icons-material/Add'
+import FilterAltOffIcon from '@mui/icons-material/FilterAltOff'
 import SearchIcon from '@mui/icons-material/Search'
 import type { AutocompleteRenderInputParams } from '@mui/material/Autocomplete'
 import {
@@ -28,6 +29,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -63,12 +65,17 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function AcademicIndicatorsReportsPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
   const [filterYearId, setFilterYearId] = useState<string | null>(null)
   const [filterPeriodId, setFilterPeriodId] = useState<string | null>(null)
+  const [studentDocFilter, setStudentDocFilter] = useState('')
+  const [gradeDirectorDocFilter, setGradeDirectorDocFilter] = useState('')
+  const [periodNumberFilter, setPeriodNumberFilter] = useState('')
+  const [ordering, setOrdering] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [studentSearchInput, setStudentSearchInput] = useState('')
@@ -96,6 +103,11 @@ export function AcademicIndicatorsReportsPage() {
   const listParams = {
     academic_period: filterPeriodId ?? undefined,
     search: appliedSearch || undefined,
+    student__document_number: studentDocFilter.trim() || undefined,
+    grade_director__document_number:
+      gradeDirectorDocFilter.trim() || undefined,
+    academic_period__number: periodNumberFilter.trim() || undefined,
+    ordering: ordering || undefined,
   }
 
   const { data: rows = [], isLoading, error } = useQuery({
@@ -226,8 +238,8 @@ export function AcademicIndicatorsReportsPage() {
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
         <PageHeader
-          title="Informes de indicadores"
-          subtitle="Documentos por estudiante y período. Coordinador de grado y observaciones."
+          title={t('academicIndicators.title')}
+          subtitle={t('academicIndicators.subtitle')}
         />
         <Button
           variant="contained"
@@ -235,33 +247,41 @@ export function AcademicIndicatorsReportsPage() {
           onClick={openCreate}
           disabled={academicYears.length === 0}
         >
-          Generar informe
+          {t('academicIndicators.generateReport')}
         </Button>
       </Box>
 
       {!selectedInstitutionId ? (
         <Alert severity="info">
-          Selecciona una institución para años lectivos en el formulario.
+          {t('academicIndicators.selectInstitution')}
         </Alert>
       ) : null}
 
       <Paper className="p-4 flex flex-col gap-3">
         <Box>
           <Typography variant="subtitle1" className="font-medium">
-            Consulta o generación por estudiante y período
+            {t('academicIndicators.queryOrCreate')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Usa{' '}
-            <code className="text-xs bg-gray-100 px-1 rounded">
+            {t('academicIndicators.use')}{' '}
+            <Box
+              component="code"
+              sx={{
+                fontSize: 12,
+                bgcolor: 'action.hover',
+                px: 0.5,
+                borderRadius: 0.5,
+              }}
+            >
               GET /api/academic-indicators-reports/&lt;student_id&gt;/&lt;period_id&gt;/
-            </code>
-            : requiere matrícula y coordinador de grado del grupo del estudiante.
+            </Box>
+            {t('academicIndicators.endpointHelp')}
           </Typography>
         </Box>
         <Box className="flex flex-wrap gap-2 items-end">
           <TextField
             size="small"
-            label="Buscar estudiante"
+            label={t('academicIndicators.searchStudent')}
             value={compSearchInput}
             onChange={(e) => setCompSearchInput(e.target.value)}
             onKeyDown={(e) => {
@@ -277,7 +297,7 @@ export function AcademicIndicatorsReportsPage() {
             size="small"
             onClick={() => setCompAppliedSearch(compSearchInput)}
           >
-            Buscar
+            {t('common.search')}
           </Button>
           <Autocomplete
             sx={{ minWidth: 260, flex: 1 }}
@@ -288,13 +308,13 @@ export function AcademicIndicatorsReportsPage() {
             }
             onChange={(_, v) => setCompStudentId(v?.id ?? '')}
             renderInput={(params: AutocompleteRenderInputParams) => (
-              <TextField {...params} label="Estudiante" size="small" />
+              <TextField {...params} label={t('academicIndicators.student')} size="small" />
             )}
           />
           <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>Año (períodos)</InputLabel>
+            <InputLabel>{t('academicIndicators.yearPeriods')}</InputLabel>
             <Select
-              label="Año (períodos)"
+              label={t('academicIndicators.yearPeriods')}
               value={compYearId}
               onChange={(e) => {
                 const v = e.target.value
@@ -303,7 +323,7 @@ export function AcademicIndicatorsReportsPage() {
               }}
             >
               <MenuItem value="">
-                <em>Selecciona</em>
+                <em>{t('academicIndicators.select')}</em>
               </MenuItem>
               {academicYears.map((y) => (
                 <MenuItem key={y.id} value={y.id}>
@@ -317,14 +337,14 @@ export function AcademicIndicatorsReportsPage() {
             sx={{ minWidth: 180 }}
             disabled={!compYearId}
           >
-            <InputLabel>Período</InputLabel>
+            <InputLabel>{t('academicIndicators.period')}</InputLabel>
             <Select
-              label="Período"
+              label={t('academicIndicators.period')}
               value={compPeriodId}
               onChange={(e) => setCompPeriodId(e.target.value)}
             >
               <MenuItem value="">
-                <em>Selecciona</em>
+                <em>{t('academicIndicators.select')}</em>
               </MenuItem>
               {compPeriods.map((p: AcademicPeriod) => (
                 <MenuItem key={p.id} value={p.id}>
@@ -347,7 +367,7 @@ export function AcademicIndicatorsReportsPage() {
               }
             }}
           >
-            {compositeLoading ? 'Consultando…' : 'Consultar'}
+            {compositeLoading ? t('academicIndicators.consulting') : t('academicIndicators.consult')}
           </Button>
         </Box>
         {compositeIsError ? (
@@ -358,23 +378,25 @@ export function AcademicIndicatorsReportsPage() {
         {compositeReport && !compositeLoading ? (
           <Alert severity="success" className="[&_.MuiAlert-message]:w-full">
             <Typography variant="body2" className="font-medium mb-1">
-              Informe obtenido
+              {t('academicIndicators.fetched')}
             </Typography>
             <Typography variant="body2">
-              Estudiante: {compositeReport.student_name} · Grupo:{' '}
-              {compositeReport.group_name} · Coordinador:{' '}
-              {compositeReport.grade_director_name}
+              {t('academicIndicators.infoLine', {
+                student: compositeReport.student_name,
+                group: compositeReport.group_name,
+                director: compositeReport.grade_director_name,
+              })}
             </Typography>
             {compositeReport.general_observations ? (
               <Typography variant="body2" className="mt-1">
-                Observaciones: {compositeReport.general_observations}
+                {t('academicIndicators.observations')}: {compositeReport.general_observations}
               </Typography>
             ) : null}
             <Typography variant="body2">
-              Generado:{' '}
+              {t('academicIndicators.generated')}{' '}
               {compositeReport.generated_at
                 ? new Date(compositeReport.generated_at).toLocaleString()
-                : '—'}
+                : '-'}
             </Typography>
           </Alert>
         ) : null}
@@ -383,7 +405,7 @@ export function AcademicIndicatorsReportsPage() {
       <Paper className="p-3 flex flex-wrap gap-2 items-end">
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -395,12 +417,12 @@ export function AcademicIndicatorsReportsPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Buscar
+          {t('common.search')}
         </Button>
         <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Año</InputLabel>
+          <InputLabel>{t('academicIndicators.year')}</InputLabel>
           <Select
-            label="Año"
+            label={t('academicIndicators.year')}
             value={filterYearId ?? ''}
             onChange={(e) => {
               const v = e.target.value === '' ? null : e.target.value
@@ -408,7 +430,7 @@ export function AcademicIndicatorsReportsPage() {
               setFilterPeriodId(null)
             }}
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('academicIndicators.all')}</MenuItem>
             {academicYears.map((y) => (
               <MenuItem key={y.id} value={y.id}>
                 {yearLabel(y)}
@@ -417,15 +439,15 @@ export function AcademicIndicatorsReportsPage() {
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 160 }} disabled={!filterYearId}>
-          <InputLabel>Período</InputLabel>
+          <InputLabel>{t('academicIndicators.period')}</InputLabel>
           <Select
-            label="Período"
+            label={t('academicIndicators.period')}
             value={filterPeriodId ?? ''}
             onChange={(e) =>
               setFilterPeriodId(e.target.value === '' ? null : e.target.value)
             }
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('academicIndicators.all')}</MenuItem>
             {periodsForFilter.map((p) => (
               <MenuItem key={p.id} value={p.id}>
                 {p.name}
@@ -433,6 +455,57 @@ export function AcademicIndicatorsReportsPage() {
             ))}
           </Select>
         </FormControl>
+        <TextField
+          size="small"
+          label={t('academicIndicators.studentDocExact')}
+          value={studentDocFilter}
+          onChange={(e) => setStudentDocFilter(e.target.value)}
+        />
+        <TextField
+          size="small"
+          label={t('academicIndicators.directorDocExact')}
+          value={gradeDirectorDocFilter}
+          onChange={(e) => setGradeDirectorDocFilter(e.target.value)}
+        />
+        <TextField
+          size="small"
+          label={t('academicIndicators.periodNumberExact')}
+          value={periodNumberFilter}
+          onChange={(e) => setPeriodNumberFilter(e.target.value)}
+          sx={{ maxWidth: 180 }}
+        />
+        <FormControl size="small" sx={{ minWidth: 210 }}>
+          <InputLabel>{t('academicIndicators.order')}</InputLabel>
+          <Select
+            label={t('academicIndicators.order')}
+            value={ordering}
+            onChange={(e) => setOrdering(String(e.target.value))}
+          >
+            <MenuItem value="">{t('academicIndicators.defaultOrder')}</MenuItem>
+            <MenuItem value="student__full_name">{t('academicIndicators.studentAsc')}</MenuItem>
+            <MenuItem value="-student__full_name">{t('academicIndicators.studentDesc')}</MenuItem>
+            <MenuItem value="academic_period__name">{t('academicIndicators.periodAsc')}</MenuItem>
+            <MenuItem value="-academic_period__name">{t('academicIndicators.periodDesc')}</MenuItem>
+            <MenuItem value="-generated_at">{t('academicIndicators.recentFirst')}</MenuItem>
+            <MenuItem value="generated_at">{t('academicIndicators.oldFirst')}</MenuItem>
+          </Select>
+        </FormControl>
+        <Button
+          variant="text"
+          startIcon={<FilterAltOffIcon />}
+          onClick={() => {
+            setSearchInput('')
+            setAppliedSearch('')
+            setFilterYearId(null)
+            setFilterPeriodId(null)
+            setStudentDocFilter('')
+            setGradeDirectorDocFilter('')
+            setPeriodNumberFilter('')
+            setOrdering('')
+          }}
+        >
+          {t('common.clear')}
+        </Button>
       </Paper>
 
       {error ? (
@@ -443,20 +516,20 @@ export function AcademicIndicatorsReportsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Estudiante</TableCell>
-              <TableCell>Grupo</TableCell>
-              <TableCell>Coordinador</TableCell>
-              <TableCell>Generado</TableCell>
+              <TableCell>{t('academicIndicators.student')}</TableCell>
+              <TableCell>{t('academicIndicators.group')}</TableCell>
+              <TableCell>{t('academicIndicators.director')}</TableCell>
+              <TableCell>{t('academicIndicators.generated')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4}>Cargando…</TableCell>
+                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4}>Sin registros.</TableCell>
+                <TableCell colSpan={4}>{t('common.none')}</TableCell>
               </TableRow>
             ) : (
               rows.map((row) => (
@@ -467,7 +540,7 @@ export function AcademicIndicatorsReportsPage() {
                   <TableCell>
                     {row.generated_at
                       ? new Date(row.generated_at).toLocaleString()
-                      : '—'}
+                      : '-'}
                   </TableCell>
                 </TableRow>
               ))
@@ -477,7 +550,7 @@ export function AcademicIndicatorsReportsPage() {
       </TableContainer>
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
-        <DialogTitle>Generar informe de indicadores</DialogTitle>
+        <DialogTitle>{t('academicIndicators.generateReportDialog')}</DialogTitle>
         <form
           onSubmit={form.handleSubmit((v) => {
             setFormError(null)
@@ -499,7 +572,7 @@ export function AcademicIndicatorsReportsPage() {
             <Box className="flex gap-2 items-end">
               <TextField
                 size="small"
-                label="Buscar estudiante"
+                label={t('academicIndicators.searchStudent')}
                 fullWidth
                 value={studentSearchInput}
                 onChange={(e) => setStudentSearchInput(e.target.value)}
@@ -514,7 +587,7 @@ export function AcademicIndicatorsReportsPage() {
                 variant="outlined"
                 onClick={() => setAppliedStudentSearch(studentSearchInput)}
               >
-                Buscar
+                {t('common.search')}
               </Button>
             </Box>
             <Controller
@@ -531,7 +604,7 @@ export function AcademicIndicatorsReportsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Estudiante"
+                      label={t('academicIndicators.student')}
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
                       required
@@ -545,9 +618,9 @@ export function AcademicIndicatorsReportsPage() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <FormControl fullWidth required error={!!fieldState.error}>
-                  <InputLabel>Año lectivo</InputLabel>
+                  <InputLabel>{t('academicIndicators.academicYear')}</InputLabel>
                   <Select
-                    label="Año lectivo"
+                    label={t('academicIndicators.academicYear')}
                     value={field.value ?? ''}
                     onChange={(e) => {
                       field.onChange(e.target.value)
@@ -583,7 +656,7 @@ export function AcademicIndicatorsReportsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Grupo"
+                      label={t('academicIndicators.group')}
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
                       required
@@ -597,9 +670,9 @@ export function AcademicIndicatorsReportsPage() {
               control={form.control}
               render={({ field }) => (
                 <FormControl fullWidth required disabled={!dialogYearId}>
-                  <InputLabel>Período</InputLabel>
+                  <InputLabel>{t('academicIndicators.period')}</InputLabel>
                   <Select
-                    label="Período"
+                    label={t('academicIndicators.period')}
                     value={field.value}
                     onChange={field.onChange}
                   >
@@ -622,9 +695,9 @@ export function AcademicIndicatorsReportsPage() {
                   error={!!fieldState.error}
                   disabled={directorsForDialog.length === 0}
                 >
-                  <InputLabel>Coordinador de grado</InputLabel>
+                  <InputLabel>{t('academicIndicators.director')}</InputLabel>
                   <Select
-                    label="Coordinador de grado"
+                    label={t('academicIndicators.director')}
                     value={field.value}
                     onChange={field.onChange}
                   >
@@ -638,7 +711,7 @@ export function AcademicIndicatorsReportsPage() {
               )}
             />
             <TextField
-              label="Observaciones generales"
+              label={t('academicIndicators.generalObservations')}
               fullWidth
               multiline
               minRows={3}
@@ -646,9 +719,9 @@ export function AcademicIndicatorsReportsPage() {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={closeDialog}>Cancelar</Button>
+            <Button onClick={closeDialog}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Generar
+              {t('academicIndicators.generate')}
             </Button>
           </DialogActions>
         </form>

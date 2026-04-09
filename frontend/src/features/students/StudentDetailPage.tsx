@@ -1,5 +1,6 @@
 import { Alert, Box, Paper, Typography } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 
 import { apiClient } from '@/api/client'
@@ -31,6 +32,7 @@ const fields: (keyof Student)[] = [
 ]
 
 export function StudentDetailPage() {
+  const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()
 
   const { data, isLoading, error } = useQuery({
@@ -43,34 +45,34 @@ export function StudentDetailPage() {
   })
 
   if (!id) {
-    return <Alert severity="warning">ID no válido.</Alert>
+    return <Alert severity="warning">{t('studentDetail.invalidId')}</Alert>
   }
 
   return (
     <Box className="p-4 md:p-6 max-w-3xl mx-auto w-full flex flex-col gap-4">
-      <PageHeader title="Estudiante" />
+      <PageHeader title={t('studentDetail.title')} />
       <Typography variant="body2">
         <Link to="/students" className="text-blue-600 underline">
-          ← Volver al listado
+          {t('studentDetail.backToList')}
         </Link>
         {' · '}
         <Link
           to={`/students/${id}/edit`}
           className="text-blue-600 underline"
         >
-          Editar
+          {t('studentDetail.edit')}
         </Link>
         {' · '}
         <Link
           to={`/students/${id}/grades-summary`}
           className="text-blue-600 underline"
         >
-          Resumen de calificaciones
+          {t('studentDetail.gradesSummary')}
         </Link>
       </Typography>
 
       {error ? <Alert severity="error">{getErrorMessage(error)}</Alert> : null}
-      {isLoading ? <Typography>Cargando…</Typography> : null}
+      {isLoading ? <Typography>{t('common.loading')}</Typography> : null}
 
       {data ? (
         <Paper className="p-4 flex flex-col gap-2">
@@ -81,10 +83,10 @@ export function StudentDetailPage() {
                 variant="body2"
                 className="font-medium min-w-[160px]"
               >
-                {key}
+                {t(`studentDetail.fields.${key}`, { defaultValue: key })}
               </Typography>
               <Typography component="span" variant="body2" color="text.secondary">
-                {formatVal(data[key])}
+                {formatVal(data[key], t('studentDetail.empty'))}
               </Typography>
             </Box>
           ))}
@@ -94,7 +96,7 @@ export function StudentDetailPage() {
   )
 }
 
-function formatVal(v: unknown): string {
-  if (v === null || v === undefined || v === '') return '—'
+function formatVal(v: unknown, emptyValue: string): string {
+  if (v === null || v === undefined || v === '') return emptyValue
   return String(v)
 }

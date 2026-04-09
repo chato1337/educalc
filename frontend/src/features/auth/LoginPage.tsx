@@ -8,6 +8,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 
 import { APP_NAME } from '@/app/appName'
@@ -16,6 +17,7 @@ import { useAuthStoreHydrated } from '@/hooks/useAuthStoreHydrated'
 import { useAuthStore } from '@/stores/authStore'
 
 export function LoginPage() {
+  const { t } = useTranslation()
   const hydrated = useAuthStoreHydrated()
   const access = useAuthStore((s) => s.access)
   const login = useAuthStore((s) => s.login)
@@ -33,9 +35,10 @@ export function LoginPage() {
   if (!hydrated) {
     return (
       <Box
-        className="min-h-screen flex items-center justify-center p-4 bg-gray-100"
+        className="min-h-screen flex items-center justify-center p-4"
+        sx={{ bgcolor: 'background.default' }}
         role="status"
-        aria-label="Restaurando sesión"
+        aria-label={t('login.restoreSession')}
       >
         <CircularProgress />
       </Box>
@@ -54,25 +57,28 @@ export function LoginPage() {
       await login(username.trim(), password)
       navigate(from, { replace: true })
     } catch (err) {
-      setError(getErrorMessage(err, 'No se pudo iniciar sesión'))
+      setError(getErrorMessage(err, t('login.defaultError')))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <Box className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
+    <Box
+      className="min-h-screen flex items-center justify-center p-4"
+      sx={{ bgcolor: 'background.default' }}
+    >
       <Paper className="p-6 w-full max-w-md flex flex-col gap-4">
         <Typography variant="h5" component="h1">
-          {APP_NAME} — Administración
+          {t('login.title', { appName: APP_NAME })}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Ingresa con tu usuario del backend (JWT).
+          {t('login.subtitle')}
         </Typography>
         {error ? <Alert severity="error">{error}</Alert> : null}
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <TextField
-            label="Usuario"
+            label={t('login.username')}
             name="username"
             autoComplete="username"
             value={username}
@@ -82,7 +88,7 @@ export function LoginPage() {
             autoFocus
           />
           <TextField
-            label="Contraseña"
+            label={t('login.password')}
             name="password"
             type="password"
             autoComplete="current-password"
@@ -97,7 +103,7 @@ export function LoginPage() {
             size="large"
             disabled={loading}
           >
-            {loading ? 'Entrando…' : 'Entrar'}
+            {loading ? t('login.submitting') : t('login.submit')}
           </Button>
         </form>
       </Paper>

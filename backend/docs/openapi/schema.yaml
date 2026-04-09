@@ -8,26 +8,42 @@ paths:
   /api/academic-areas/:
     get:
       operationId: academic_areas_list
-      description: Broad category of knowledge
+      description: 'Broad category of knowledge Text search available through query
+        param `search`. Supported fields: name, code, description. Available exact-match
+        filters via query params: institution, institution__dane_code, name, code.'
       summary: List Academic Areas
       parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+        description: Filter by exact value of `code`.
       - in: query
         name: institution
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `institution`.
+      - in: query
+        name: institution__dane_code
+        schema:
+          type: string
+        description: Filter by exact value of `institution__dane_code`.
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: Filter by exact value of `name`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: name, code, description.'
       tags:
       - Academic Areas
       security:
@@ -192,7 +208,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BulkLoadFileRequest'
+              $ref: '#/components/schemas/BulkLoadCsvUploadRequest'
         required: true
       security:
       - jwtAuth: []
@@ -202,41 +218,76 @@ paths:
           content:
             application/json:
               schema:
-                description: Bulk load statistics
-          description: ''
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
   /api/academic-indicators/:
     get:
       operationId: academic_indicators_list
-      description: Qualitative achievement descriptor for a student
+      description: 'Qualitative achievement descriptor for a student Text search available
+        through query param `search`. Supported fields: student__document_number,
+        student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name,
+        description, performance_level. Available exact-match filters via query params:
+        student, student__document_number, course_assignment, course_assignment__teacher__document_number,
+        academic_period, academic_period__number, performance_level.'
       summary: List Academic Indicators
       parameters:
       - in: query
         name: academic_period
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `academic_period`.
+      - in: query
+        name: academic_period__number
+        schema:
+          type: string
+        description: Filter by exact value of `academic_period__number`.
       - in: query
         name: course_assignment
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `course_assignment`.
+      - in: query
+        name: course_assignment__teacher__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `course_assignment__teacher__document_number`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: performance_level
         schema:
           type: string
+        description: Filter by exact value of `performance_level`.
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: 'Search text across: student__document_number, student__full_name,
+          course_assignment__subject__name, course_assignment__teacher__full_name,
+          description, performance_level.'
       - in: query
         name: student
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `student`.
+      - in: query
+        name: student__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `student__document_number`.
       tags:
       - Academic Indicators
       security:
@@ -281,31 +332,55 @@ paths:
   /api/academic-indicators-reports/:
     get:
       operationId: academic_indicators_reports_list
-      description: Academic Indicators document. GET list/detail, POST to generate.
+      description: 'Text search available through query param `search`. Supported
+        fields: student__document_number, student__full_name, group__name, academic_period__name,
+        grade_director__full_name, grade_director__document_number. Available exact-match
+        filters via query params: student, student__document_number, academic_period,
+        academic_period__number, grade_director, grade_director__document_number.'
       summary: List Academic Indicators Reports
       parameters:
       - in: query
         name: academic_period
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `academic_period`.
+      - in: query
+        name: academic_period__number
+        schema:
+          type: string
+        description: Filter by exact value of `academic_period__number`.
+      - in: query
+        name: grade_director
+        schema:
+          type: string
+        description: Filter by exact value of `grade_director`.
+      - in: query
+        name: grade_director__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `grade_director__document_number`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: student__document_number, student__full_name,
+          group__name, academic_period__name, grade_director__full_name, grade_director__document_number.'
       - in: query
         name: student
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `student`.
+      - in: query
+        name: student__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `student__document_number`.
       tags:
       - Academic Indicators Reports
       security:
@@ -527,7 +602,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BulkLoadFileRequest'
+              $ref: '#/components/schemas/BulkLoadCsvUploadRequest'
         required: true
       security:
       - jwtAuth: []
@@ -537,31 +612,57 @@ paths:
           content:
             application/json:
               schema:
-                description: Bulk load statistics
-          description: ''
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
   /api/academic-periods/:
     get:
       operationId: academic_periods_list
-      description: Evaluation period (P1, P2, P3, P4)
+      description: 'Evaluation period (P1, P2, P3, P4) Text search available through
+        query param `search`. Supported fields: name, =number, =academic_year__year.
+        Available exact-match filters via query params: academic_year, academic_year__year,
+        number, name.'
       summary: List Academic Periods
       parameters:
       - in: query
         name: academic_year
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `academic_year`.
+      - in: query
+        name: academic_year__year
+        schema:
+          type: string
+        description: Filter by exact value of `academic_year__year`.
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: Filter by exact value of `name`.
+      - in: query
+        name: number
+        schema:
+          type: string
+        description: Filter by exact value of `number`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: name, =number, =academic_year__year.'
       tags:
       - Academic Periods
       security:
@@ -727,7 +828,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BulkLoadFileRequest'
+              $ref: '#/components/schemas/BulkLoadCsvUploadRequest'
         required: true
       security:
       - jwtAuth: []
@@ -737,35 +838,56 @@ paths:
           content:
             application/json:
               schema:
-                description: Bulk load statistics
-          description: ''
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
   /api/academic-years/:
     get:
       operationId: academic_years_list
-      description: Academic/school year
+      description: 'Academic/school year Text search available through query param
+        `search`. Supported fields: =year, institution__name. Available exact-match
+        filters via query params: institution, institution__dane_code, year, is_active.'
       summary: List Academic Years
       parameters:
       - in: query
         name: institution
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `institution`.
+      - in: query
+        name: institution__dane_code
+        schema:
+          type: string
+        description: Filter by exact value of `institution__dane_code`.
       - in: query
         name: is_active
         schema:
-          type: boolean
+          type: string
+        description: Filter by exact value of `is_active`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: =year, institution__name.'
+      - in: query
+        name: year
+        schema:
+          type: string
+        description: Filter by exact value of `year`.
       tags:
       - Academic Years
       security:
@@ -922,36 +1044,57 @@ paths:
   /api/attendances/:
     get:
       operationId: attendances_list
-      description: Absences per subject and period
+      description: 'Absences per subject and period Text search available through
+        query param `search`. Supported fields: student__document_number, student__full_name,
+        course_assignment__subject__name, course_assignment__teacher__full_name, academic_period__name.
+        Available exact-match filters via query params: student, student__document_number,
+        course_assignment, course_assignment__teacher__document_number, academic_period,
+        academic_period__number.'
       summary: List Attendance
       parameters:
       - in: query
         name: academic_period
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `academic_period`.
+      - in: query
+        name: academic_period__number
+        schema:
+          type: string
+        description: Filter by exact value of `academic_period__number`.
       - in: query
         name: course_assignment
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `course_assignment`.
+      - in: query
+        name: course_assignment__teacher__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `course_assignment__teacher__document_number`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: student__document_number, student__full_name,
+          course_assignment__subject__name, course_assignment__teacher__full_name,
+          academic_period__name.'
       - in: query
         name: student
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `student`.
+      - in: query
+        name: student__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `student__document_number`.
       tags:
       - Attendance
       security:
@@ -1117,7 +1260,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BulkLoadFileRequest'
+              $ref: '#/components/schemas/BulkLoadCsvUploadRequest'
         required: true
       security:
       - jwtAuth: []
@@ -1127,8 +1270,17 @@ paths:
           content:
             application/json:
               schema:
-                description: Bulk load statistics
-          description: ''
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
   /api/auth/login/:
     post:
       operationId: auth_login_create
@@ -1226,26 +1378,43 @@ paths:
   /api/campuses/:
     get:
       operationId: campuses_list
-      description: Campus or sede of an institution
+      description: 'Campus or sede of an institution Text search available through
+        query param `search`. Supported fields: name, code, institution__name, institution__dane_code.
+        Available exact-match filters via query params: institution, institution__dane_code,
+        name, code.'
       summary: List Campuses
       parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+        description: Filter by exact value of `code`.
       - in: query
         name: institution
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `institution`.
+      - in: query
+        name: institution__dane_code
+        schema:
+          type: string
+        description: Filter by exact value of `institution__dane_code`.
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: Filter by exact value of `name`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: name, code, institution__name, institution__dane_code.'
       tags:
       - Campuses
       security:
@@ -1402,41 +1571,66 @@ paths:
   /api/course-assignments/:
     get:
       operationId: course_assignments_list
-      description: Teacher assigned to a subject in a group for an academic year
+      description: 'Teacher assigned to a subject in a group for an academic year
+        Text search available through query param `search`. Supported fields: subject__name,
+        subject__emphasis, teacher__full_name, teacher__document_number, group__name,
+        group__grade_level__name, =academic_year__year. Available exact-match filters
+        via query params: subject, subject__name, teacher, teacher__document_number,
+        group, group__name, academic_year, academic_year__year.'
       summary: List Course Assignments
       parameters:
       - in: query
         name: academic_year
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `academic_year`.
+      - in: query
+        name: academic_year__year
+        schema:
+          type: string
+        description: Filter by exact value of `academic_year__year`.
       - in: query
         name: group
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `group`.
+      - in: query
+        name: group__name
+        schema:
+          type: string
+        description: Filter by exact value of `group__name`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: subject__name, subject__emphasis, teacher__full_name,
+          teacher__document_number, group__name, group__grade_level__name, =academic_year__year.'
       - in: query
         name: subject
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `subject`.
+      - in: query
+        name: subject__name
+        schema:
+          type: string
+        description: Filter by exact value of `subject__name`.
       - in: query
         name: teacher
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `teacher`.
+      - in: query
+        name: teacher__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `teacher__document_number`.
       tags:
       - Course Assignments
       security:
@@ -1602,7 +1796,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BulkLoadFileRequest'
+              $ref: '#/components/schemas/BulkLoadCsvUploadRequest'
         required: true
       security:
       - jwtAuth: []
@@ -1612,36 +1806,69 @@ paths:
           content:
             application/json:
               schema:
-                description: Bulk load statistics
-          description: ''
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
   /api/disciplinary-reports/:
     get:
       operationId: disciplinary_reports_list
-      description: Qualitative disciplinary/behavior report
+      description: 'Qualitative disciplinary/behavior report Text search available
+        through query param `search`. Supported fields: student__document_number,
+        student__full_name, report_text, created_by__full_name, created_by__document_number.
+        Available exact-match filters via query params: student, student__document_number,
+        academic_period, academic_period__number, created_by, created_by__document_number.'
       summary: List Disciplinary Reports
       parameters:
       - in: query
         name: academic_period
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `academic_period`.
+      - in: query
+        name: academic_period__number
+        schema:
+          type: string
+        description: Filter by exact value of `academic_period__number`.
+      - in: query
+        name: created_by
+        schema:
+          type: string
+        description: Filter by exact value of `created_by`.
+      - in: query
+        name: created_by__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `created_by__document_number`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: student__document_number, student__full_name,
+          report_text, created_by__full_name, created_by__document_number.'
       - in: query
         name: student
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `student`.
+      - in: query
+        name: student__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `student__document_number`.
       tags:
       - Disciplinary Reports
       security:
@@ -1807,7 +2034,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BulkLoadFileRequest'
+              $ref: '#/components/schemas/BulkLoadCsvUploadRequest'
         required: true
       security:
       - jwtAuth: []
@@ -1817,53 +2044,74 @@ paths:
           content:
             application/json:
               schema:
-                description: Bulk load statistics
-          description: ''
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
   /api/enrollments/:
     get:
       operationId: enrollments_list
-      description: Student-group enrollment for an academic year
+      description: 'Student-group enrollment for an academic year Text search available
+        through query param `search`. Supported fields: student__document_number,
+        student__full_name, group__name, group__grade_level__name, =academic_year__year,
+        status. Available exact-match filters via query params: student, student__document_number,
+        group, group__name, academic_year, academic_year__year, status.'
       summary: List Enrollments
       parameters:
       - in: query
         name: academic_year
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `academic_year`.
+      - in: query
+        name: academic_year__year
+        schema:
+          type: string
+        description: Filter by exact value of `academic_year__year`.
       - in: query
         name: group
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `group`.
+      - in: query
+        name: group__name
+        schema:
+          type: string
+        description: Filter by exact value of `group__name`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: student__document_number, student__full_name,
+          group__name, group__grade_level__name, =academic_year__year, status.'
       - in: query
         name: status
         schema:
           type: string
-          enum:
-          - active
-          - graduated
-          - withdrawn
-        description: |-
-          * `active` - Active
-          * `withdrawn` - Withdrawn
-          * `graduated` - Graduated
+        description: Filter by exact value of `status`.
       - in: query
         name: student
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `student`.
+      - in: query
+        name: student__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `student__document_number`.
       tags:
       - Enrollments
       security:
@@ -2020,36 +2268,55 @@ paths:
   /api/grade-directors/:
     get:
       operationId: grade_directors_list
-      description: Homeroom teacher for a group
+      description: 'Homeroom teacher for a group Text search available through query
+        param `search`. Supported fields: teacher__full_name, teacher__document_number,
+        group__name, group__grade_level__name, =academic_year__year. Available exact-match
+        filters via query params: teacher, teacher__document_number, group, group__name,
+        academic_year, academic_year__year.'
       summary: List Grade Directors
       parameters:
       - in: query
         name: academic_year
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `academic_year`.
+      - in: query
+        name: academic_year__year
+        schema:
+          type: string
+        description: Filter by exact value of `academic_year__year`.
       - in: query
         name: group
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `group`.
+      - in: query
+        name: group__name
+        schema:
+          type: string
+        description: Filter by exact value of `group__name`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: teacher__full_name, teacher__document_number,
+          group__name, group__grade_level__name, =academic_year__year.'
       - in: query
         name: teacher
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `teacher`.
+      - in: query
+        name: teacher__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `teacher__document_number`.
       tags:
       - Grade Directors
       security:
@@ -2214,7 +2481,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BulkLoadFileRequest'
+              $ref: '#/components/schemas/BulkLoadCsvUploadRequest'
         required: true
       security:
       - jwtAuth: []
@@ -2224,31 +2491,56 @@ paths:
           content:
             application/json:
               schema:
-                description: Bulk load statistics
-          description: ''
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
   /api/grade-levels/:
     get:
       operationId: grade_levels_list
-      description: Grade level (e.g. SEXTO, PRIMERO)
+      description: 'Grade level (e.g. SEXTO, PRIMERO) Text search available through
+        query param `search`. Supported fields: name. Available exact-match filters
+        via query params: institution, institution__dane_code, name, level_order.'
       summary: List Grade Levels
       parameters:
       - in: query
         name: institution
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `institution`.
+      - in: query
+        name: institution__dane_code
+        schema:
+          type: string
+        description: Filter by exact value of `institution__dane_code`.
+      - in: query
+        name: level_order
+        schema:
+          type: string
+        description: Filter by exact value of `level_order`.
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: Filter by exact value of `name`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: name.'
       tags:
       - Grade Levels
       security:
@@ -2405,36 +2697,60 @@ paths:
   /api/grades/:
     get:
       operationId: grades_list
-      description: Student grade in a subject for a period
+      description: 'Student grades with enriched context: student identity, course
+        assignment (subject, teacher, group, academic year), and academic period.
+        Text search available through query param `search`. Supported fields: student__document_number,
+        student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name,
+        course_assignment__teacher__document_number, course_assignment__group__name,
+        academic_period__name. Available exact-match filters via query params: student,
+        student__document_number, course_assignment, course_assignment__teacher__document_number,
+        academic_period, academic_period__number.'
       summary: List Grades
       parameters:
       - in: query
         name: academic_period
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `academic_period`.
+      - in: query
+        name: academic_period__number
+        schema:
+          type: string
+        description: Filter by exact value of `academic_period__number`.
       - in: query
         name: course_assignment
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `course_assignment`.
+      - in: query
+        name: course_assignment__teacher__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `course_assignment__teacher__document_number`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: student__document_number, student__full_name,
+          course_assignment__subject__name, course_assignment__teacher__full_name,
+          course_assignment__teacher__document_number, course_assignment__group__name,
+          academic_period__name.'
       - in: query
         name: student
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `student`.
+      - in: query
+        name: student__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `student__document_number`.
       tags:
       - Grades
       security:
@@ -2479,7 +2795,9 @@ paths:
   /api/grades/{id}/:
     get:
       operationId: grades_retrieve
-      summary: Get Grades
+      description: 'Single grade with enriched context: student identity, course assignment
+        (subject, teacher, group, academic year), and academic period.'
+      summary: Get Grade
       parameters:
       - in: path
         name: id
@@ -2601,7 +2919,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BulkLoadFileRequest'
+              $ref: '#/components/schemas/BulkLoadCsvUploadRequest'
         required: true
       security:
       - jwtAuth: []
@@ -2611,31 +2929,57 @@ paths:
           content:
             application/json:
               schema:
-                description: Bulk load statistics
-          description: ''
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
   /api/grading-scales/:
     get:
       operationId: grading_scales_list
-      description: Performance levels per Decreto 1290
+      description: 'Performance levels per Decreto 1290 Text search available through
+        query param `search`. Supported fields: code, name, description. Available
+        exact-match filters via query params: institution, institution__dane_code,
+        code, name.'
       summary: List Grading Scales
       parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+        description: Filter by exact value of `code`.
       - in: query
         name: institution
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `institution`.
+      - in: query
+        name: institution__dane_code
+        schema:
+          type: string
+        description: Filter by exact value of `institution__dane_code`.
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: Filter by exact value of `name`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: code, name, description.'
       tags:
       - Grading Scales
       security:
@@ -2801,7 +3145,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BulkLoadFileRequest'
+              $ref: '#/components/schemas/BulkLoadCsvUploadRequest'
         required: true
       security:
       - jwtAuth: []
@@ -2811,41 +3155,72 @@ paths:
           content:
             application/json:
               schema:
-                description: Bulk load statistics
-          description: ''
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
   /api/groups/:
     get:
       operationId: groups_list
-      description: Student group within a grade
+      description: 'Student group within a grade Text search available through query
+        param `search`. Supported fields: name, grade_level__name, campus__name, =academic_year__year.
+        Available exact-match filters via query params: grade_level, grade_level__name,
+        academic_year, academic_year__year, campus, campus__name, name.'
       summary: List Groups
       parameters:
       - in: query
         name: academic_year
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `academic_year`.
+      - in: query
+        name: academic_year__year
+        schema:
+          type: string
+        description: Filter by exact value of `academic_year__year`.
       - in: query
         name: campus
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `campus`.
+      - in: query
+        name: campus__name
+        schema:
+          type: string
+        description: Filter by exact value of `campus__name`.
       - in: query
         name: grade_level
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `grade_level`.
+      - in: query
+        name: grade_level__name
+        schema:
+          type: string
+        description: Filter by exact value of `grade_level__name`.
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: Filter by exact value of `name`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: name, grade_level__name, campus__name, =academic_year__year.'
       tags:
       - Groups
       security:
@@ -3032,21 +3407,37 @@ paths:
   /api/institutions/:
     get:
       operationId: institutions_list
-      description: Educational institutions at corporate level
+      description: 'Educational institutions at corporate level Text search available
+        through query param `search`. Supported fields: name, dane_code, nit. Available
+        exact-match filters via query params: dane_code, nit, name.'
       summary: List Institutions
       parameters:
+      - in: query
+        name: dane_code
+        schema:
+          type: string
+        description: Filter by exact value of `dane_code`.
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: Filter by exact value of `name`.
+      - in: query
+        name: nit
+        schema:
+          type: string
+        description: Filter by exact value of `nit`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: name, dane_code, nit.'
       tags:
       - Institutions
       security:
@@ -3203,21 +3594,44 @@ paths:
   /api/parents/:
     get:
       operationId: parents_list
-      description: Parent or guardian of a student
+      description: 'Parent or guardian of a student Text search available through
+        query param `search`. Supported fields: document_number, full_name, first_name,
+        second_name, first_last_name, second_last_name, email. Available exact-match
+        filters via query params: document_type, document_number, email, kinship.'
       summary: List Parents
       parameters:
+      - in: query
+        name: document_number
+        schema:
+          type: string
+        description: Filter by exact value of `document_number`.
+      - in: query
+        name: document_type
+        schema:
+          type: string
+        description: Filter by exact value of `document_type`.
+      - in: query
+        name: email
+        schema:
+          type: string
+        description: Filter by exact value of `email`.
+      - in: query
+        name: kinship
+        schema:
+          type: string
+        description: Filter by exact value of `kinship`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: document_number, full_name, first_name,
+          second_name, first_last_name, second_last_name, email.'
       tags:
       - Parents
       security:
@@ -3383,7 +3797,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BulkLoadFileRequest'
+              $ref: '#/components/schemas/BulkLoadCsvUploadRequest'
         required: true
       security:
       - jwtAuth: []
@@ -3393,41 +3807,69 @@ paths:
           content:
             application/json:
               schema:
-                description: Bulk load statistics
-          description: ''
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
   /api/performance-summaries/:
     get:
       operationId: performance_summaries_list
-      description: Student average and rank per period
+      description: 'Student average and rank per period Text search available through
+        query param `search`. Supported fields: student__document_number, student__full_name,
+        group__name, group__grade_level__name, academic_period__name. Available exact-match
+        filters via query params: student, student__document_number, group, group__name,
+        academic_period, academic_period__number.'
       summary: List Performance Summaries
       parameters:
       - in: query
         name: academic_period
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `academic_period`.
+      - in: query
+        name: academic_period__number
+        schema:
+          type: string
+        description: Filter by exact value of `academic_period__number`.
       - in: query
         name: group
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `group`.
+      - in: query
+        name: group__name
+        schema:
+          type: string
+        description: Filter by exact value of `group__name`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: student__document_number, student__full_name,
+          group__name, group__grade_level__name, academic_period__name.'
       - in: query
         name: student
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `student`.
+      - in: query
+        name: student__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `student__document_number`.
       tags:
       - Performance Summaries
       security:
@@ -3593,7 +4035,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BulkLoadFileRequest'
+              $ref: '#/components/schemas/BulkLoadCsvUploadRequest'
         required: true
       security:
       - jwtAuth: []
@@ -3603,41 +4045,70 @@ paths:
           content:
             application/json:
               schema:
-                description: Bulk load statistics
-          description: ''
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
   /api/school-records/:
     get:
       operationId: school_records_list
-      description: School Assessment Record document. GET list/detail, POST to generate.
+      description: 'Text search available through query param `search`. Supported
+        fields: student__document_number, student__full_name, group__name, group__grade_level__name,
+        institution__name, institution__dane_code, campus__name. Available exact-match
+        filters via query params: student, student__document_number, academic_year,
+        academic_year__year, institution, institution__dane_code.'
       summary: List School Records
       parameters:
       - in: query
         name: academic_year
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `academic_year`.
+      - in: query
+        name: academic_year__year
+        schema:
+          type: string
+        description: Filter by exact value of `academic_year__year`.
       - in: query
         name: institution
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `institution`.
+      - in: query
+        name: institution__dane_code
+        schema:
+          type: string
+        description: Filter by exact value of `institution__dane_code`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: student__document_number, student__full_name,
+          group__name, group__grade_level__name, institution__name, institution__dane_code,
+          campus__name.'
       - in: query
         name: student
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `student`.
+      - in: query
+        name: student__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `student__document_number`.
       tags:
       - School Records
       security:
@@ -3737,13 +4208,18 @@ paths:
   /api/student-guardians/:
     get:
       operationId: student_guardians_list
-      description: Student-parent/guardian relationship
+      description: 'Student-parent/guardian relationship Text search available through
+        query param `search`. Supported fields: student__document_number, student__full_name,
+        parent__document_number, parent__full_name, parent__email. Available exact-match
+        filters via query params: student, student__document_number, parent, parent__document_number,
+        is_primary.'
       summary: List Student Guardians
       parameters:
       - in: query
         name: is_primary
         schema:
-          type: boolean
+          type: string
+        description: Filter by exact value of `is_primary`.
       - name: ordering
         required: false
         in: query
@@ -3754,18 +4230,28 @@ paths:
         name: parent
         schema:
           type: string
-          format: uuid
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+        description: Filter by exact value of `parent`.
+      - in: query
+        name: parent__document_number
         schema:
           type: string
+        description: Filter by exact value of `parent__document_number`.
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: 'Search text across: student__document_number, student__full_name,
+          parent__document_number, parent__full_name, parent__email.'
       - in: query
         name: student
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `student`.
+      - in: query
+        name: student__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `student__document_number`.
       tags:
       - Student Guardians
       security:
@@ -3930,7 +4416,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BulkLoadFileRequest'
+              $ref: '#/components/schemas/BulkLoadCsvUploadRequest'
         required: true
       security:
       - jwtAuth: []
@@ -3940,26 +4426,63 @@ paths:
           content:
             application/json:
               schema:
-                description: Bulk load statistics
-          description: ''
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
   /api/students/:
     get:
       operationId: students_list
-      description: Student data
+      description: 'Student data Text search available through query param `search`.
+        Supported fields: document_number, full_name, first_name, second_name, first_last_name,
+        second_last_name. Available exact-match filters via query params: document_type,
+        document_number, gender, sisben, stratum.'
       summary: List Students
       parameters:
+      - in: query
+        name: document_number
+        schema:
+          type: string
+        description: Filter by exact value of `document_number`.
+      - in: query
+        name: document_type
+        schema:
+          type: string
+        description: Filter by exact value of `document_type`.
+      - in: query
+        name: gender
+        schema:
+          type: string
+        description: Filter by exact value of `gender`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: document_number, full_name, first_name,
+          second_name, first_last_name, second_last_name.'
+      - in: query
+        name: sisben
+        schema:
+          type: string
+        description: Filter by exact value of `sisben`.
+      - in: query
+        name: stratum
+        schema:
+          type: string
+        description: Filter by exact value of `stratum`.
       tags:
       - Students
       security:
@@ -4155,7 +4678,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BulkLoadStudentsRequest'
+              $ref: '#/components/schemas/BulkLoadStudentsCsvRequest'
         required: true
       security:
       - jwtAuth: []
@@ -4165,36 +4688,67 @@ paths:
           content:
             application/json:
               schema:
-                description: Bulk load statistics
-          description: ''
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
   /api/subjects/:
     get:
       operationId: subjects_list
-      description: Subject/course with optional emphasis
+      description: 'Subject/course with optional emphasis Text search available through
+        query param `search`. Supported fields: name, emphasis, academic_area__name,
+        institution__name. Available exact-match filters via query params: academic_area,
+        academic_area__name, institution, institution__dane_code, name, emphasis.'
       summary: List Subjects
       parameters:
       - in: query
         name: academic_area
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `academic_area`.
+      - in: query
+        name: academic_area__name
+        schema:
+          type: string
+        description: Filter by exact value of `academic_area__name`.
+      - in: query
+        name: emphasis
+        schema:
+          type: string
+        description: Filter by exact value of `emphasis`.
       - in: query
         name: institution
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `institution`.
+      - in: query
+        name: institution__dane_code
+        schema:
+          type: string
+        description: Filter by exact value of `institution__dane_code`.
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: Filter by exact value of `name`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: name, emphasis, academic_area__name, institution__name.'
       tags:
       - Subjects
       security:
@@ -4359,7 +4913,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BulkLoadFileRequest'
+              $ref: '#/components/schemas/BulkLoadCsvUploadRequest'
         required: true
       security:
       - jwtAuth: []
@@ -4369,26 +4923,58 @@ paths:
           content:
             application/json:
               schema:
-                description: Bulk load statistics
-          description: ''
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
   /api/teachers/:
     get:
       operationId: teachers_list
-      description: Teacher/faculty information
+      description: 'Teacher/faculty information Text search available through query
+        param `search`. Supported fields: document_number, full_name, first_name,
+        second_name, first_last_name, second_last_name, email. Available exact-match
+        filters via query params: document_type, document_number, email, specialty.'
       summary: List Teachers
       parameters:
+      - in: query
+        name: document_number
+        schema:
+          type: string
+        description: Filter by exact value of `document_number`.
+      - in: query
+        name: document_type
+        schema:
+          type: string
+        description: Filter by exact value of `document_type`.
+      - in: query
+        name: email
+        schema:
+          type: string
+        description: Filter by exact value of `email`.
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: document_number, full_name, first_name,
+          second_name, first_last_name, second_last_name, email.'
+      - in: query
+        name: specialty
+        schema:
+          type: string
+        description: Filter by exact value of `specialty`.
       tags:
       - Teachers
       security:
@@ -4554,7 +5140,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BulkLoadFileRequest'
+              $ref: '#/components/schemas/BulkLoadCsvUploadRequest'
         required: true
       security:
       - jwtAuth: []
@@ -4564,19 +5150,71 @@ paths:
           content:
             application/json:
               schema:
-                description: Bulk load statistics
-          description: ''
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
+  /api/teachers/bulk-load-users/:
+    post:
+      operationId: teachers_bulk_load_users_create
+      description: 'Uses the same teachers CSV columns (DOC, NOMBRE1, APELLIDO1, EMAIL).
+        Creates or updates login users for existing teachers. Username format: nombre.apellido
+        (normalized to lowercase ASCII). Password format: document number (DOC).'
+      summary: Bulk create users for teachers from CSV
+      tags:
+      - Teachers
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLoadCsvUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Loader statistics: created/updated counts, rows_processed,
+            rows_skipped, errors[].'
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: 'Validation failure or {"error": "..."}.'
   /api/users/:
     get:
       operationId: users_list
-      description: User profile for RBAC (Admin only)
+      description: 'User profile for RBAC (Admin only) Text search available through
+        query param `search`. Supported fields: user__username, user__email, teacher__document_number,
+        teacher__full_name, parent__document_number, parent__full_name, institution__name.
+        Available exact-match filters via query params: role, institution, institution__dane_code,
+        user__username, user__email.'
       summary: List Users
       parameters:
       - in: query
         name: institution
         schema:
           type: string
-          format: uuid
+        description: Filter by exact value of `institution`.
+      - in: query
+        name: institution__dane_code
+        schema:
+          type: string
+        description: Filter by exact value of `institution__dane_code`.
       - name: ordering
         required: false
         in: query
@@ -4587,22 +5225,23 @@ paths:
         name: role
         schema:
           type: string
-          enum:
-          - ADMIN
-          - COORDINATOR
-          - PARENT
-          - TEACHER
-        description: |-
-          * `ADMIN` - Administrator
-          * `COORDINATOR` - Coordinator
-          * `TEACHER` - Teacher
-          * `PARENT` - Parent
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+        description: Filter by exact value of `role`.
+      - in: query
+        name: search
         schema:
           type: string
+        description: 'Search text across: user__username, user__email, teacher__document_number,
+          teacher__full_name, parent__document_number, parent__full_name, institution__name.'
+      - in: query
+        name: user__email
+        schema:
+          type: string
+        description: Filter by exact value of `user__email`.
+      - in: query
+        name: user__username
+        schema:
+          type: string
+        description: Filter by exact value of `user__username`.
       tags:
       - Users
       security:
@@ -5167,9 +5806,10 @@ components:
       - academic_period
       - course_assignment
       - student
-    BulkLoadFileRequest:
+    BulkLoadCsvUploadRequest:
       type: object
-      description: Multipart CSV upload for bulk loaders.
+      description: 'Multipart CSV upload for bulk loaders (OpenAPI: multipart field
+        ``file``).'
       properties:
         file:
           type: string
@@ -5177,9 +5817,10 @@ components:
           description: UTF-8 CSV file (.csv)
       required:
       - file
-    BulkLoadStudentsRequest:
+    BulkLoadStudentsCsvRequest:
       type: object
-      description: Request serializer for bulk load (file upload).
+      description: 'Request serializer for student bulk load (OpenAPI: multipart field
+        ``file``).'
       properties:
         file:
           type: string
@@ -5471,12 +6112,39 @@ components:
         student_name:
           type: string
           readOnly: true
+        student_document_number:
+          type: string
+          readOnly: true
+        student_document_type:
+          type: string
+          readOnly: true
         course_assignment:
           type: string
           format: uuid
+        course_assignment_subject_name:
+          type: string
+          readOnly: true
+        course_assignment_subject_emphasis:
+          type: string
+          readOnly: true
+        course_assignment_teacher_name:
+          type: string
+          readOnly: true
+        course_assignment_group_name:
+          type: string
+          readOnly: true
+        course_assignment_academic_year_year:
+          type: integer
+          readOnly: true
         academic_period:
           type: string
           format: uuid
+        academic_period_name:
+          type: string
+          readOnly: true
+        academic_period_number:
+          type: integer
+          readOnly: true
         numerical_grade:
           type: string
           format: decimal
@@ -5503,12 +6171,21 @@ components:
           readOnly: true
       required:
       - academic_period
+      - academic_period_name
+      - academic_period_number
       - course_assignment
+      - course_assignment_academic_year_year
+      - course_assignment_group_name
+      - course_assignment_subject_emphasis
+      - course_assignment_subject_name
+      - course_assignment_teacher_name
       - created_at
       - id
       - numerical_grade
       - performance_level_name
       - student
+      - student_document_number
+      - student_document_type
       - student_name
       - updated_at
     GradeDirector:
@@ -5900,7 +6577,7 @@ components:
           readOnly: true
         document_type:
           type: string
-          maxLength: 10
+          maxLength: 80
         document_number:
           type: string
           maxLength: 20
@@ -5950,7 +6627,7 @@ components:
       properties:
         document_type:
           type: string
-          maxLength: 10
+          maxLength: 80
         document_number:
           type: string
           maxLength: 20
@@ -6263,7 +6940,7 @@ components:
       properties:
         document_type:
           type: string
-          maxLength: 10
+          maxLength: 80
         document_number:
           type: string
           maxLength: 20
@@ -6418,7 +7095,7 @@ components:
       properties:
         document_type:
           type: string
-          maxLength: 10
+          maxLength: 80
         document_number:
           type: string
           maxLength: 20
@@ -6933,7 +7610,7 @@ components:
           readOnly: true
         document_type:
           type: string
-          maxLength: 10
+          maxLength: 80
         document_number:
           type: string
           maxLength: 20
@@ -6982,7 +7659,7 @@ components:
       properties:
         document_type:
           type: string
-          maxLength: 10
+          maxLength: 80
         document_number:
           type: string
           maxLength: 20

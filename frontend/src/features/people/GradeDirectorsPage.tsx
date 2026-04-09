@@ -1,6 +1,7 @@
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import EditIcon from '@mui/icons-material/Edit'
+import FilterAltOffIcon from '@mui/icons-material/FilterAltOff'
 import SearchIcon from '@mui/icons-material/Search'
 import type { AutocompleteRenderInputParams } from '@mui/material/Autocomplete'
 import {
@@ -12,8 +13,12 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
   IconButton,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -21,6 +26,7 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Typography,
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -31,6 +37,7 @@ import {
   type Resolver,
 } from 'react-hook-form'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -56,6 +63,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function GradeDirectorsPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
@@ -63,6 +71,10 @@ export function GradeDirectorsPage() {
   const [filterYearId, setFilterYearId] = useState<string | null>(null)
   const [filterGroupId, setFilterGroupId] = useState<string | null>(null)
   const [filterTeacherId, setFilterTeacherId] = useState<string | null>(null)
+  const [filterYearNumber, setFilterYearNumber] = useState('')
+  const [filterGroupName, setFilterGroupName] = useState('')
+  const [filterTeacherDocument, setFilterTeacherDocument] = useState('')
+  const [ordering, setOrdering] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<GradeDirector | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<GradeDirector | null>(null)
@@ -104,6 +116,10 @@ export function GradeDirectorsPage() {
     group: filterGroupId ?? undefined,
     teacher: filterTeacherId ?? undefined,
     search: appliedSearch || undefined,
+    academic_year__year: filterYearNumber.trim() || undefined,
+    group__name: filterGroupName.trim() || undefined,
+    teacher__document_number: filterTeacherDocument.trim() || undefined,
+    ordering: ordering || undefined,
   }
 
   const { data: rows = [], isLoading, error } = useQuery({
@@ -223,8 +239,8 @@ export function GradeDirectorsPage() {
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
         <PageHeader
-          title="Coordinadores de grado"
-          subtitle="Docente asignado a un grupo en un año lectivo."
+          title={t('gradeDirectors.title')}
+          subtitle={t('gradeDirectors.subtitle')}
         />
         <Button
           variant="contained"
@@ -232,7 +248,7 @@ export function GradeDirectorsPage() {
           onClick={openCreate}
           disabled={academicYears.length === 0}
         >
-          Nuevo coordinador
+          {t('gradeDirectors.new')}
         </Button>
       </Box>
 
@@ -251,7 +267,7 @@ export function GradeDirectorsPage() {
               setFilterGroupId(null)
             }}
             renderInput={(params: AutocompleteRenderInputParams) => (
-              <TextField {...params} label="Año lectivo" />
+              <TextField {...params} label={t('gradeDirectors.academicYear')} />
             )}
             isOptionEqualToValue={(a, b) => a.id === b.id}
           />
@@ -264,7 +280,7 @@ export function GradeDirectorsPage() {
             onChange={(_, v) => setFilterGroupId(v?.id ?? null)}
             disabled={!filterYearId}
             renderInput={(params: AutocompleteRenderInputParams) => (
-              <TextField {...params} label="Grupo" />
+              <TextField {...params} label={t('gradeDirectors.group')} />
             )}
             isOptionEqualToValue={(a, b) => a.id === b.id}
           />
@@ -276,7 +292,7 @@ export function GradeDirectorsPage() {
             value={filterTeacher}
             onChange={(_, v) => setFilterTeacherId(v?.id ?? null)}
             renderInput={(params: AutocompleteRenderInputParams) => (
-              <TextField {...params} label="Docente (filtro)" />
+              <TextField {...params} label={t('gradeDirectors.teacherFilter')} />
             )}
             isOptionEqualToValue={(a, b) => a.id === b.id}
           />
@@ -284,7 +300,7 @@ export function GradeDirectorsPage() {
         <Box className="flex flex-wrap gap-2 items-center">
           <TextField
             size="small"
-            label="Buscar"
+            label={t('common.search')}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => {
@@ -296,8 +312,67 @@ export function GradeDirectorsPage() {
             startIcon={<SearchIcon />}
             onClick={() => setAppliedSearch(searchInput)}
           >
-            Aplicar
+            {t('common.apply')}
           </Button>
+          <TextField
+            size="small"
+            label={t('gradeDirectors.yearExact')}
+            value={filterYearNumber}
+            onChange={(e) => setFilterYearNumber(e.target.value)}
+            sx={{ maxWidth: 140 }}
+          />
+          <TextField
+            size="small"
+            label={t('gradeDirectors.groupExact')}
+            value={filterGroupName}
+            onChange={(e) => setFilterGroupName(e.target.value)}
+          />
+          <TextField
+            size="small"
+            label={t('gradeDirectors.teacherDocExact')}
+            value={filterTeacherDocument}
+            onChange={(e) => setFilterTeacherDocument(e.target.value)}
+          />
+          <FormControl size="small" sx={{ minWidth: 210 }}>
+            <InputLabel>{t('gradeDirectors.order')}</InputLabel>
+            <Select
+              label={t('gradeDirectors.order')}
+              value={ordering}
+              onChange={(e) => setOrdering(String(e.target.value))}
+            >
+              <MenuItem value="">{t('gradeDirectors.defaultOrder')}</MenuItem>
+              <MenuItem value="teacher__full_name">{t('gradeDirectors.teacherAsc')}</MenuItem>
+              <MenuItem value="-teacher__full_name">{t('gradeDirectors.teacherDesc')}</MenuItem>
+              <MenuItem value="group__name">{t('gradeDirectors.groupAsc')}</MenuItem>
+              <MenuItem value="-group__name">{t('gradeDirectors.groupDesc')}</MenuItem>
+              <MenuItem value="-academic_year__year">{t('gradeDirectors.yearDesc')}</MenuItem>
+              <MenuItem value="academic_year__year">{t('gradeDirectors.yearAsc')}</MenuItem>
+            </Select>
+          </FormControl>
+          <Button
+            variant="text"
+            startIcon={<FilterAltOffIcon />}
+            onClick={() => {
+              setSearchInput('')
+              setAppliedSearch('')
+              setFilterYearId(null)
+              setFilterGroupId(null)
+              setFilterTeacherId(null)
+              setFilterYearNumber('')
+              setFilterGroupName('')
+              setFilterTeacherDocument('')
+              setOrdering('')
+            }}
+          >
+            {t('common.clear')}
+          </Button>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ width: '100%' }}
+          >
+            {t('gradeDirectors.globalSearchHint')}
+          </Typography>
         </Box>
       </Paper>
 
@@ -307,21 +382,21 @@ export function GradeDirectorsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Docente</TableCell>
-              <TableCell>Grupo</TableCell>
-              <TableCell>Año</TableCell>
-              <TableCell align="right">Acciones</TableCell>
+              <TableCell>{t('gradeDirectors.teacher')}</TableCell>
+              <TableCell>{t('gradeDirectors.group')}</TableCell>
+              <TableCell>{t('gradeDirectors.year')}</TableCell>
+              <TableCell align="right">{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4}>Cargando…</TableCell>
+                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : null}
             {!isLoading && rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4}>Sin registros.</TableCell>
+                <TableCell colSpan={4}>{t('common.none')}</TableCell>
               </TableRow>
             ) : null}
             {rows.map((row) => (
@@ -332,7 +407,7 @@ export function GradeDirectorsPage() {
                 <TableCell align="right">
                   <IconButton
                     size="small"
-                    aria-label="Editar"
+                    aria-label={t('gradeDirectors.edit')}
                     onClick={() => openEdit(row)}
                   >
                     <EditIcon fontSize="small" />
@@ -340,7 +415,7 @@ export function GradeDirectorsPage() {
                   <IconButton
                     size="small"
                     color="error"
-                    aria-label="Eliminar"
+                    aria-label={t('gradeDirectors.delete')}
                     onClick={() => setDeleteTarget(row)}
                   >
                     <DeleteOutlineIcon fontSize="small" />
@@ -354,7 +429,7 @@ export function GradeDirectorsPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar coordinador' : 'Nuevo coordinador'}
+          {editing ? t('gradeDirectors.editDirector') : t('gradeDirectors.newDirector')}
         </DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1">
@@ -373,7 +448,7 @@ export function GradeDirectorsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Docente"
+                      label={t('gradeDirectors.teacher')}
                       required
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
@@ -403,7 +478,7 @@ export function GradeDirectorsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Año lectivo"
+                      label={t('gradeDirectors.academicYear')}
                       required
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
@@ -430,12 +505,12 @@ export function GradeDirectorsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Grupo"
+                      label={t('gradeDirectors.group')}
                       required
                       error={!!fieldState.error}
                       helperText={
                         fieldState.error?.message ||
-                        (!watchedYear ? 'Elige primero el año' : undefined)
+                        (!watchedYear ? t('gradeDirectors.pickYearFirst') : undefined)
                       }
                     />
                   )}
@@ -445,23 +520,25 @@ export function GradeDirectorsPage() {
           </DialogContent>
           <DialogActions>
             <Button type="button" onClick={closeDialog}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
       </Dialog>
 
       <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
-        <DialogTitle>Eliminar coordinador</DialogTitle>
+        <DialogTitle>{t('gradeDirectors.deleteDirector')}</DialogTitle>
         <DialogContent>
-          ¿Eliminar a {deleteTarget?.teacher_name} como coordinador de{' '}
-          {deleteTarget?.group_name}?
+          {t('gradeDirectors.deletePrompt', {
+            teacher: deleteTarget?.teacher_name ?? '',
+            group: deleteTarget?.group_name ?? '',
+          })}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -470,7 +547,7 @@ export function GradeDirectorsPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

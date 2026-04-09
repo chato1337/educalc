@@ -23,6 +23,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm, type Resolver } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { z } from 'zod'
 
@@ -83,6 +84,7 @@ function toPatchedGradingScaleRequest(
 }
 
 export function GradingScalesPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
@@ -206,8 +208,8 @@ export function GradingScalesPage() {
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
         <PageHeader
-          title="Escalas de valoración"
-          subtitle="Niveles de desempeño vinculados a la institución (p. ej. para calificaciones cualitativas)."
+          title={t('gradingScales.title')}
+          subtitle={t('gradingScales.subtitle')}
         />
         <Button
           variant="contained"
@@ -215,21 +217,20 @@ export function GradingScalesPage() {
           onClick={openCreate}
           disabled={!selectedInstitutionId}
         >
-          Nueva escala
+          {t('gradingScales.new')}
         </Button>
       </Box>
 
       {!selectedInstitutionId ? (
         <Alert severity="info">
-          Sin institución seleccionada se listan todas las escalas. Elige una en la barra
-          superior para filtrar y para usar «Nueva escala».
+          {t('gradingScales.selectInstitution')}
         </Alert>
       ) : null}
 
       <Paper className="p-3 flex flex-wrap gap-2 items-center">
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -241,7 +242,7 @@ export function GradingScalesPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Buscar
+          {t('common.search')}
         </Button>
       </Paper>
 
@@ -253,23 +254,23 @@ export function GradingScalesPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Código</TableCell>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Mín</TableCell>
-              <TableCell>Máx</TableCell>
+              <TableCell>{t('gradingScales.code')}</TableCell>
+              <TableCell>{t('gradingScales.name')}</TableCell>
+              <TableCell>{t('gradingScales.min')}</TableCell>
+              <TableCell>{t('gradingScales.max')}</TableCell>
               <TableCell align="right" width={100}>
-                Acciones
+                {t('common.actions')}
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5}>Cargando…</TableCell>
+                <TableCell colSpan={5}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5}>Sin registros.</TableCell>
+                <TableCell colSpan={5}>{t('common.none')}</TableCell>
               </TableRow>
             ) : (
               rows.map((row) => (
@@ -280,14 +281,14 @@ export function GradingScalesPage() {
                   <TableCell>{row.max_score}</TableCell>
                   <TableCell align="right">
                     <IconButton
-                      aria-label="editar"
+                      aria-label={t('gradingScales.edit')}
                       size="small"
                       onClick={() => openEdit(row)}
                     >
                       <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton
-                      aria-label="eliminar"
+                      aria-label={t('gradingScales.delete')}
                       size="small"
                       onClick={() => setDeleteTarget(row)}
                     >
@@ -303,14 +304,14 @@ export function GradingScalesPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar escala' : 'Nueva escala'}
+          {editing ? t('gradingScales.editDialog') : t('gradingScales.newDialog')}
         </DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1">
             {formError ? <Alert severity="error">{formError}</Alert> : null}
             <input type="hidden" {...form.register('institution')} />
             <TextField
-              label="Código"
+              label={t('gradingScales.code')}
               fullWidth
               required
               {...form.register('code')}
@@ -318,7 +319,7 @@ export function GradingScalesPage() {
               helperText={form.formState.errors.code?.message}
             />
             <TextField
-              label="Nombre"
+              label={t('gradingScales.name')}
               fullWidth
               required
               {...form.register('name')}
@@ -326,7 +327,7 @@ export function GradingScalesPage() {
               helperText={form.formState.errors.name?.message}
             />
             <TextField
-              label="Nota mínima"
+              label={t('gradingScales.minScore')}
               fullWidth
               required
               {...form.register('min_score')}
@@ -334,7 +335,7 @@ export function GradingScalesPage() {
               helperText={form.formState.errors.min_score?.message}
             />
             <TextField
-              label="Nota máxima"
+              label={t('gradingScales.maxScore')}
               fullWidth
               required
               {...form.register('max_score')}
@@ -342,7 +343,7 @@ export function GradingScalesPage() {
               helperText={form.formState.errors.max_score?.message}
             />
             <TextField
-              label="Descripción"
+              label={t('gradingScales.description')}
               fullWidth
               multiline
               minRows={2}
@@ -350,9 +351,9 @@ export function GradingScalesPage() {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={closeDialog}>Cancelar</Button>
+            <Button onClick={closeDialog}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
@@ -362,12 +363,15 @@ export function GradingScalesPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
       >
-        <DialogTitle>Eliminar escala</DialogTitle>
+        <DialogTitle>{t('gradingScales.deleteDialog')}</DialogTitle>
         <DialogContent>
-          ¿Eliminar la escala «{deleteTarget?.name}» ({deleteTarget?.code})?
+          {t('gradingScales.deletePrompt', {
+            name: deleteTarget?.name ?? '',
+            code: deleteTarget?.code ?? '',
+          })}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -376,7 +380,7 @@ export function GradingScalesPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

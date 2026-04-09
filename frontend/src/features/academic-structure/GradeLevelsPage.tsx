@@ -24,6 +24,7 @@ import {
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import type { Resolver } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
 import { useState } from 'react'
@@ -56,6 +57,7 @@ const defaults: FormValues = {
 }
 
 export function GradeLevelsPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
@@ -182,16 +184,16 @@ export function GradeLevelsPage() {
   return (
     <Box className="p-4 md:p-6 max-w-5xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
-        <PageHeader title="Niveles (grados)" />
+        <PageHeader title={t('gradeLevels.title')} />
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-          Nuevo nivel
+          {t('gradeLevels.new')}
         </Button>
       </Box>
 
       <Paper className="p-3 flex flex-wrap gap-2 items-center">
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -203,7 +205,7 @@ export function GradeLevelsPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Aplicar
+          {t('common.apply')}
         </Button>
       </Paper>
 
@@ -213,32 +215,32 @@ export function GradeLevelsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Orden</TableCell>
-              <TableCell>Institución</TableCell>
-              <TableCell align="right">Acciones</TableCell>
+              <TableCell>{t('gradeLevels.name')}</TableCell>
+              <TableCell>{t('gradeLevels.order')}</TableCell>
+              <TableCell>{t('gradeLevels.institution')}</TableCell>
+              <TableCell align="right">{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4}>Cargando…</TableCell>
+                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : null}
             {!isLoading && rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4}>Sin registros.</TableCell>
+                <TableCell colSpan={4}>{t('common.none')}</TableCell>
               </TableRow>
             ) : null}
             {rows.map((row) => (
               <TableRow key={row.id}>
                 <TableCell>{row.name}</TableCell>
-                <TableCell>{row.level_order ?? '—'}</TableCell>
+                <TableCell>{row.level_order ?? '-'}</TableCell>
                 <TableCell>{row.institution_name}</TableCell>
                 <TableCell align="right">
                   <IconButton
                     size="small"
-                    aria-label="Editar"
+                    aria-label={t('gradeLevels.edit')}
                     onClick={() => openEdit(row)}
                   >
                     <EditIcon fontSize="small" />
@@ -246,7 +248,7 @@ export function GradeLevelsPage() {
                   <IconButton
                     size="small"
                     color="error"
-                    aria-label="Eliminar"
+                    aria-label={t('gradeLevels.delete')}
                     onClick={() => setDeleteTarget(row)}
                   >
                     <DeleteOutlineIcon fontSize="small" />
@@ -260,7 +262,7 @@ export function GradeLevelsPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar nivel' : 'Nuevo nivel'}
+          {editing ? t('gradeLevels.editDialog') : t('gradeLevels.newDialog')}
         </DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1">
@@ -281,7 +283,7 @@ export function GradeLevelsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Institución"
+                      label={t('gradeLevels.institution')}
                       required
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
@@ -291,7 +293,7 @@ export function GradeLevelsPage() {
               )}
             />
             <TextField
-              label="Nombre del nivel"
+              label={t('gradeLevels.levelName')}
               {...form.register('name')}
               error={!!form.formState.errors.name}
               helperText={form.formState.errors.name?.message}
@@ -299,7 +301,7 @@ export function GradeLevelsPage() {
               fullWidth
             />
             <TextField
-              label="Orden (opcional)"
+              label={t('gradeLevels.orderOptional')}
               type="number"
               {...form.register('level_order')}
               error={!!form.formState.errors.level_order}
@@ -309,10 +311,10 @@ export function GradeLevelsPage() {
           </DialogContent>
           <DialogActions>
             <Button type="button" onClick={closeDialog}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
@@ -322,10 +324,10 @@ export function GradeLevelsPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
       >
-        <DialogTitle>Eliminar nivel</DialogTitle>
-        <DialogContent>¿Eliminar «{deleteTarget?.name}»?</DialogContent>
+        <DialogTitle>{t('gradeLevels.deleteDialog')}</DialogTitle>
+        <DialogContent>{t('gradeLevels.deletePrompt', { name: deleteTarget?.name ?? '' })}</DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -334,7 +336,7 @@ export function GradeLevelsPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

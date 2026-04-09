@@ -24,6 +24,7 @@ import {
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import type { Resolver } from 'react-hook-form'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { useState } from 'react'
@@ -61,6 +62,7 @@ const defaults: FormValues = {
 }
 
 export function SubjectsPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
@@ -206,16 +208,16 @@ export function SubjectsPage() {
   return (
     <Box className="p-4 md:p-6 max-w-5xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
-        <PageHeader title="Materias (asignaturas)" />
+        <PageHeader title={t('subjects.title')} />
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-          Nueva materia
+          {t('subjects.new')}
         </Button>
       </Box>
 
       <Paper className="p-3 flex flex-wrap gap-2 items-center">
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -227,7 +229,7 @@ export function SubjectsPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Aplicar
+          {t('common.apply')}
         </Button>
       </Paper>
 
@@ -237,22 +239,22 @@ export function SubjectsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Área</TableCell>
-              <TableCell>Institución</TableCell>
-              <TableCell>Horas</TableCell>
-              <TableCell align="right">Acciones</TableCell>
+              <TableCell>{t('subjects.name')}</TableCell>
+              <TableCell>{t('subjects.area')}</TableCell>
+              <TableCell>{t('subjects.institution')}</TableCell>
+              <TableCell>{t('subjects.hours')}</TableCell>
+              <TableCell align="right">{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5}>Cargando…</TableCell>
+                <TableCell colSpan={5}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : null}
             {!isLoading && rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5}>Sin registros.</TableCell>
+                <TableCell colSpan={5}>{t('common.none')}</TableCell>
               </TableRow>
             ) : null}
             {rows.map((row) => (
@@ -260,11 +262,11 @@ export function SubjectsPage() {
                 <TableCell>{row.name}</TableCell>
                 <TableCell>{row.academic_area_name}</TableCell>
                 <TableCell>{row.institution_name}</TableCell>
-                <TableCell>{row.hours ?? '—'}</TableCell>
+                <TableCell>{row.hours ?? '-'}</TableCell>
                 <TableCell align="right">
                   <IconButton
                     size="small"
-                    aria-label="Editar"
+                    aria-label={t('subjects.edit')}
                     onClick={() => openEdit(row)}
                   >
                     <EditIcon fontSize="small" />
@@ -272,7 +274,7 @@ export function SubjectsPage() {
                   <IconButton
                     size="small"
                     color="error"
-                    aria-label="Eliminar"
+                    aria-label={t('subjects.delete')}
                     onClick={() => setDeleteTarget(row)}
                   >
                     <DeleteOutlineIcon fontSize="small" />
@@ -286,7 +288,7 @@ export function SubjectsPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar materia' : 'Nueva materia'}
+          {editing ? t('subjects.editDialog') : t('subjects.newDialog')}
         </DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1">
@@ -310,7 +312,7 @@ export function SubjectsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Institución"
+                      label={t('subjects.institution')}
                       required
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
@@ -335,13 +337,13 @@ export function SubjectsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Área académica"
+                      label={t('subjects.academicArea')}
                       required
                       error={!!fieldState.error}
                       helperText={
                         fieldState.error?.message ||
                         (!watchedInstitution
-                          ? 'Elige primero la institución'
+                          ? t('subjects.pickInstitutionFirst')
                           : undefined)
                       }
                     />
@@ -350,7 +352,7 @@ export function SubjectsPage() {
               )}
             />
             <TextField
-              label="Nombre"
+              label={t('subjects.name')}
               {...form.register('name')}
               error={!!form.formState.errors.name}
               helperText={form.formState.errors.name?.message}
@@ -358,12 +360,12 @@ export function SubjectsPage() {
               fullWidth
             />
             <TextField
-              label="Énfasis"
+              label={t('subjects.emphasis')}
               {...form.register('emphasis')}
               fullWidth
             />
             <TextField
-              label="Horas (opcional)"
+              label={t('subjects.hoursOptional')}
               type="number"
               {...form.register('hours')}
               error={!!form.formState.errors.hours}
@@ -373,10 +375,10 @@ export function SubjectsPage() {
           </DialogContent>
           <DialogActions>
             <Button type="button" onClick={closeDialog}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
@@ -386,10 +388,10 @@ export function SubjectsPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
       >
-        <DialogTitle>Eliminar materia</DialogTitle>
-        <DialogContent>¿Eliminar «{deleteTarget?.name}»?</DialogContent>
+        <DialogTitle>{t('subjects.deleteDialog')}</DialogTitle>
+        <DialogContent>{t('subjects.deletePrompt', { name: deleteTarget?.name ?? '' })}</DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -398,7 +400,7 @@ export function SubjectsPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

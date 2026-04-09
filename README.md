@@ -7,7 +7,7 @@ El repositorio es un **monorepo** con backend, frontend y documentación en la c
 ## Características principales
 
 - **Backend:** Django REST Framework, autenticación JWT (SimpleJWT), filtros (`django-filter`), esquema **OpenAPI** con Swagger/ReDoc (`drf-spectacular`).
-- **Frontend:** React, Vite, Material UI, TanStack Query, React Router, formularios con React Hook Form y Zod.
+- **Frontend:** React, Vite, Material UI, TanStack Query, React Router, formularios con React Hook Form y Zod, e internacionalizacion con i18next/react-i18next (base en `frontend/src/i18n/locales/es.json`).
 - **Base de datos:** PostgreSQL o SQLite (configurable por variables de entorno).
 - **Carga masiva:** endpoints de carga por CSV documentados en OpenAPI; plantillas y planes en `docs/`.
 - **Control de acceso:** perfiles de usuario con roles (p. ej. administrador, coordinador, docente, acudiente) y alcance por institución.
@@ -146,6 +146,7 @@ bun run build
 
 - **API (Swagger, exportación del schema, CORS):** [`docs/api-documentacion.md`](docs/api-documentacion.md)
 - **Modelos y referencia de dominio:** `docs/analisis-entidades-reporte-academico.md` (citado en el código del backend)
+- **Frontend i18n (implementacion y convenciones):** `frontend/docs/i18n-implementacion.md`
 - **Planes y estado:** `docs/plan-implementacion-carga-masiva-csv.md`, `frontend/docs/ESTADO-IMPLEMENTACION.md`, etc.
 
 ## Variables de entorno (resumen)

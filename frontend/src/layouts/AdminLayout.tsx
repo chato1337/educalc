@@ -1,4 +1,6 @@
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
+import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
 import LogoutIcon from '@mui/icons-material/Logout'
 import MenuIcon from '@mui/icons-material/Menu'
 import type { AutocompleteRenderInputParams } from '@mui/material/Autocomplete'
@@ -15,12 +17,14 @@ import {
   ListItemText,
   TextField,
   Toolbar,
+  Tooltip,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import { Suspense, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   matchPath,
   NavLink,
@@ -52,6 +56,7 @@ const drawerWidth = 280
 const NAV_PREFIX_MATCH_PATHS = new Set(['/students', '/groups'])
 
 export function AdminLayout() {
+  const { t } = useTranslation()
   const theme = useTheme()
   const location = useLocation()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
@@ -64,6 +69,8 @@ export function AdminLayout() {
   const setSelectedInstitutionId = useUiStore(
     (s) => s.setSelectedInstitutionId,
   )
+  const themeMode = useUiStore((s) => s.themeMode)
+  const toggleThemeMode = useUiStore((s) => s.toggleThemeMode)
 
   const { data: me } = useQuery({
     queryKey: queryKeys.me,
@@ -83,6 +90,14 @@ export function AdminLayout() {
     if (isMobile) setDrawerOpen(false)
   }, [isMobile, setDrawerOpen])
 
+  useEffect(() => {
+    if (institutions.length === 0) return
+    const hasSelected = institutions.some((i) => i.id === selectedInstitutionId)
+    if (!hasSelected) {
+      setSelectedInstitutionId(institutions[0].id)
+    }
+  }, [institutions, selectedInstitutionId, setSelectedInstitutionId])
+
   const effectiveRole = useMemo(
     () => resolvedAppRole(me?.role ?? user?.role),
     [me?.role, user?.role],
@@ -100,7 +115,7 @@ export function AdminLayout() {
   )
   const routeBlocked = requiredRoles != null && !routeAllowed
 
-  const currentUserLabel = me?.username ?? user?.username ?? 'Usuario'
+  const currentUserLabel = me?.username ?? user?.username ?? t('adminLayout.defaultUser')
 
   const selectedInstitution =
     institutions.find((i) => i.id === selectedInstitutionId) ?? null
@@ -109,18 +124,19 @@ export function AdminLayout() {
     <Box className="flex flex-col h-full">
       <Toolbar className="justify-center">
         <Typography variant="h6" noWrap>
-          {APP_NAME} Admin
+          {t('adminLayout.brand', { appName: APP_NAME })}
         </Typography>
       </Toolbar>
       <Divider />
       <List component="nav" dense className="flex-1 overflow-auto py-0">
         {navSectionsFiltered.map((section) => (
-          <Box key={section.title}>
+          <Box key={section.titleKey}>
             <ListItemText
-              primary={section.title}
+              primary={t(section.titleKey)}
               primaryTypographyProps={{
                 className:
-                  'px-3 pt-2 pb-0 text-xs font-semibold text-gray-500 uppercase tracking-wide',
+                  'px-3 pt-2 pb-0 text-xs font-semibold uppercase tracking-wide',
+                sx: { color: 'text.secondary' },
               }}
             />
             {section.items.map((item) => {
@@ -146,7 +162,7 @@ export function AdminLayout() {
                       <Icon fontSize="small" />
                     </ListItemIcon>
                   ) : null}
-                  <ListItemText primary={item.label} />
+                  <ListItemText primary={t(item.labelKey)} />
                 </ListItemButton>
               )
             })}
@@ -177,11 +193,11 @@ export function AdminLayout() {
             aria-label={
               drawerOpen
                 ? isMobile
-                  ? 'Cerrar menú'
-                  : 'Ocultar menú lateral'
+                  ? t('adminLayout.closeMenu')
+                  : t('adminLayout.hideSidebar')
                 : isMobile
-                  ? 'Abrir menú'
-                  : 'Mostrar menú lateral'
+                  ? t('adminLayout.openMenu')
+                  : t('adminLayout.showSidebar')
             }
           >
             <MenuIcon />
@@ -199,23 +215,46 @@ export function AdminLayout() {
             getOptionLabel={(o) => o.name}
             value={selectedInstitution}
             onChange={(_, v) => setSelectedInstitutionId(v?.id ?? null)}
-            renderInput={(params) => renderInstitutionField(params)}
+            renderInput={(params) => renderInstitutionField(params, t)}
             isOptionEqualToValue={(a, b) => a.id === b.id}
           />
+          <Tooltip
+            title={
+              themeMode === 'dark'
+                ? t('adminLayout.themeLight')
+                : t('adminLayout.themeDark')
+            }
+          >
+            <IconButton
+              color="inherit"
+              onClick={toggleThemeMode}
+              aria-label={
+                themeMode === 'dark'
+                  ? t('adminLayout.themeLight')
+                  : t('adminLayout.themeDark')
+              }
+            >
+              {themeMode === 'dark' ? (
+                <LightModeOutlinedIcon />
+              ) : (
+                <DarkModeOutlinedIcon />
+              )}
+            </IconButton>
+          </Tooltip>
           <IconButton
             color="inherit"
             onClick={() => {
               logout()
               navigate('/login', { replace: true })
             }}
-            aria-label="Cerrar sesión"
+            aria-label={t('adminLayout.logout')}
           >
             <LogoutIcon />
           </IconButton>
         </Toolbar>
       </AppBar>
 
-      <Box component="nav" aria-label="Navegación principal">
+      <Box component="nav" aria-label={t('adminLayout.mainNavigation')}>
         <Drawer
           variant={isMobile ? 'temporary' : 'persistent'}
           open={drawerOpen}
@@ -242,7 +281,7 @@ export function AdminLayout() {
             <Toolbar className="flex justify-end">
               <IconButton
                 onClick={() => setDrawerOpen(false)}
-                aria-label="Cerrar menú"
+                aria-label={t('adminLayout.closeMenu')}
               >
                 <ChevronLeftIcon />
               </IconButton>
@@ -255,8 +294,8 @@ export function AdminLayout() {
       {/* Sin margin-left extra: el Drawer persistente ya reserva ancho en la fila flex. */}
       <Box
         component="main"
-        className="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-gray-900"
-        sx={{ flexGrow: 1, p: 0, mt: 8 }}
+        className="flex-1 flex flex-col min-w-0"
+        sx={{ flexGrow: 1, p: 0, mt: 8, bgcolor: 'background.default' }}
       >
         <Suspense fallback={<RoutePageFallback />}>
           {routeBlocked && requiredRoles ? (
@@ -275,16 +314,19 @@ export function AdminLayout() {
   )
 }
 
-function renderInstitutionField(params: AutocompleteRenderInputParams) {
+function renderInstitutionField(
+  params: AutocompleteRenderInputParams,
+  t: (key: string) => string,
+) {
   return (
     <TextField
       {...params}
-      label="Institución"
-      placeholder="Todas"
+      label={t('adminLayout.institution')}
+      placeholder={t('adminLayout.all')}
       slotProps={{
         htmlInput: {
           ...params.inputProps,
-          'aria-label': 'Filtrar por institución',
+          'aria-label': t('adminLayout.filterByInstitution'),
         },
       }}
     />

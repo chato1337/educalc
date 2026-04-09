@@ -14,6 +14,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useMutation } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -25,6 +26,7 @@ import { BulkLoadResultSummary } from './BulkLoadResultSummary'
 import { bulkLoadSections, bulkLoadTargets } from './bulkLoadTargets'
 
 export function BulkLoadHubPage() {
+  const { t } = useTranslation()
   const inputRef = useRef<HTMLInputElement>(null)
   const [targetId, setTargetId] = useState(
     () => bulkLoadTargets.find((t) => t.id === 'students')?.id ?? bulkLoadTargets[0]?.id ?? 'students',
@@ -60,31 +62,33 @@ export function BulkLoadHubPage() {
   return (
     <Box className="p-4 md:p-6 max-w-3xl mx-auto w-full flex flex-col gap-4">
       <PageHeader
-        title="Carga masiva CSV"
-        subtitle="Operaciones POST multipart del OpenAPI (`file`). Elige módulo y tipo; las columnas coinciden con la descripción de cada endpoint en el schema."
+        title={t('bulkLoadHub.title')}
+        subtitle={t('bulkLoadHub.subtitle')}
       />
       <Typography variant="body2">
         <Link to="/dashboard" className="text-blue-600 underline">
-          ← Inicio
+          {t('bulkLoadHub.backHome')}
         </Link>
         {' · '}
         <Link to="/students" className="text-blue-600 underline">
-          Estudiantes
+          {t('bulkLoadHub.students')}
         </Link>
       </Typography>
 
       <FormControl fullWidth size="small">
-        <InputLabel id="bulk-target-label">Módulo y tipo de carga</InputLabel>
+        <InputLabel id="bulk-target-label">{t('bulkLoadHub.moduleAndType')}</InputLabel>
         <Select
           labelId="bulk-target-label"
-          label="Módulo y tipo de carga"
+          label={t('bulkLoadHub.moduleAndType')}
           value={targetId}
           onChange={onTargetChange}
           renderValue={(id) => {
-            const t = bulkLoadTargets.find((x) => x.id === id)
-            if (!t) return ''
+            const selectedTarget = bulkLoadTargets.find((x) => x.id === id)
+            if (!selectedTarget) return ''
             const sec = bulkLoadSections.find((s) => s.targets.some((x) => x.id === id))
-            return sec ? `${sec.title}: ${t.label}` : t.label
+            return sec
+              ? `${t(sec.titleKey)}: ${t(selectedTarget.labelKey)}`
+              : t(selectedTarget.labelKey)
           }}
           MenuProps={{
             autoFocus: false,
@@ -93,14 +97,14 @@ export function BulkLoadHubPage() {
         >
           {bulkLoadSections.flatMap((section) => [
             <ListSubheader
-              key={`h-${section.title}`}
+              key={`h-${section.titleKey}`}
               sx={{ lineHeight: '32px', fontWeight: 600 }}
             >
-              {section.title}
+              {t(section.titleKey)}
             </ListSubheader>,
-            ...section.targets.map((t) => (
-              <MenuItem key={t.id} value={t.id} sx={{ pl: 3 }}>
-                {t.label}
+            ...section.targets.map((targetOption) => (
+              <MenuItem key={targetOption.id} value={targetOption.id} sx={{ pl: 3 }}>
+                {t(targetOption.labelKey)}
               </MenuItem>
             )),
           ])}
@@ -111,16 +115,16 @@ export function BulkLoadHubPage() {
         <Paper variant="outlined" className="p-3">
           <Typography variant="body2" color="text.secondary" component="div" className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <strong>Endpoint:</strong> <code>{target.apiPath}</code>
+              <strong>{t('bulkLoadHub.endpoint')}:</strong> <code>{target.apiPath}</code>
               <Chip size="small" label={target.requestSchema} variant="outlined" />
             </div>
             <div>
-              <strong>Contrato OpenAPI (columnas):</strong> {target.openApiDescription}
+              <strong>{t('bulkLoadHub.openapiContract')}:</strong> {target.openApiDescription}
             </div>
             <div>
-              <strong>Ejemplo en repo:</strong> <code>docs/{target.sampleFile}</code>
+              <strong>{t('bulkLoadHub.sampleInRepo')}:</strong> <code>docs/{target.sampleFile}</code>
             </div>
-            {target.hint ? <div>{target.hint}</div> : null}
+            {target.hintKey ? <div>{t(target.hintKey)}</div> : null}
           </Typography>
         </Paper>
       ) : null}
@@ -141,11 +145,11 @@ export function BulkLoadHubPage() {
           onClick={onPickClick}
           disabled={mutation.isPending || !target}
         >
-          {mutation.isPending ? 'Subiendo…' : 'Elegir archivo CSV'}
+          {mutation.isPending ? t('bulkLoadHub.uploading') : t('bulkLoadHub.chooseCsv')}
         </Button>
         {selectedName ? (
           <Typography variant="caption" color="text.secondary">
-            Último archivo: {selectedName}
+            {t('bulkLoadHub.lastFile', { file: selectedName })}
           </Typography>
         ) : null}
       </Paper>
@@ -156,8 +160,7 @@ export function BulkLoadHubPage() {
 
       {mutation.isSuccess && mutation.data ? (
         <Alert severity="success">
-          Carga finalizada. Revisa el resumen, los errores por fila (si los hay) y el JSON
-          completo.
+          {t('bulkLoadHub.success')}
         </Alert>
       ) : null}
 

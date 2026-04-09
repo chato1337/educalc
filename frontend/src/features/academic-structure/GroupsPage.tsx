@@ -24,6 +24,7 @@ import {
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -62,6 +63,7 @@ const defaults: FormValues = {
 }
 
 export function GroupsPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
@@ -202,8 +204,8 @@ export function GroupsPage() {
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
         <PageHeader
-          title="Grupos"
-          subtitle="Filtra por institución en la barra; opcionalmente por año, sede y nivel."
+          title={t('groups.title')}
+          subtitle={t('groups.subtitle')}
         />
         <Button
           variant="contained"
@@ -211,28 +213,26 @@ export function GroupsPage() {
           onClick={openCreate}
           disabled={!canForm}
         >
-          Nuevo grupo
+          {t('groups.new')}
         </Button>
       </Box>
 
       {!selectedInstitutionId ? (
         <Alert severity="info">
-          Elige una institución para cargar sedes, años y niveles coherentes en
-          el formulario y filtros.
+          {t('groups.selectInstitution')}
         </Alert>
       ) : null}
 
       {selectedInstitutionId && !canForm ? (
         <Alert severity="warning">
-          Faltan datos: necesitas al menos un año lectivo, una sede y un nivel
-          para esta institución.
+          {t('groups.missingData')}
         </Alert>
       ) : null}
 
       <Alert severity="info">
-        Ranking de estudiantes:{' '}
-        <code className="text-xs">/groups/&lt;uuid&gt;/rankings</code> — en la
-        tabla usa el enlace «Ranking».
+        {t('groups.rankingInfo')}{' '}
+        <code className="text-xs">/groups/&lt;uuid&gt;/rankings</code> -{' '}
+        {t('groups.rankingLinkHelp', { ranking: t('groups.ranking') })}
       </Alert>
 
       <Paper className="p-3 flex flex-col gap-3">
@@ -249,7 +249,7 @@ export function GroupsPage() {
             }
             onChange={(_, v) => setFilterYearId(v?.id ?? null)}
             renderInput={(params: AutocompleteRenderInputParams) => (
-              <TextField {...params} label="Año lectivo" />
+              <TextField {...params} label={t('groups.academicYear')} />
             )}
             isOptionEqualToValue={(a, b) => a.id === b.id}
           />
@@ -261,7 +261,7 @@ export function GroupsPage() {
             value={campuses.find((c) => c.id === filterCampusId) ?? null}
             onChange={(_, v) => setFilterCampusId(v?.id ?? null)}
             renderInput={(params: AutocompleteRenderInputParams) => (
-              <TextField {...params} label="Sede" />
+              <TextField {...params} label={t('groups.campus')} />
             )}
             isOptionEqualToValue={(a, b) => a.id === b.id}
           />
@@ -275,7 +275,7 @@ export function GroupsPage() {
             }
             onChange={(_, v) => setFilterGradeLevelId(v?.id ?? null)}
             renderInput={(params: AutocompleteRenderInputParams) => (
-              <TextField {...params} label="Nivel" />
+              <TextField {...params} label={t('groups.level')} />
             )}
             isOptionEqualToValue={(a, b) => a.id === b.id}
           />
@@ -283,7 +283,7 @@ export function GroupsPage() {
         <Box className="flex flex-wrap gap-2 items-center">
           <TextField
             size="small"
-            label="Buscar"
+            label={t('common.search')}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => {
@@ -295,7 +295,7 @@ export function GroupsPage() {
             startIcon={<SearchIcon />}
             onClick={() => setAppliedSearch(searchInput)}
           >
-            Aplicar
+            {t('common.apply')}
           </Button>
         </Box>
       </Paper>
@@ -306,22 +306,22 @@ export function GroupsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Nivel</TableCell>
-              <TableCell>Año</TableCell>
-              <TableCell>Sede</TableCell>
-              <TableCell align="right">Acciones</TableCell>
+              <TableCell>{t('groups.name')}</TableCell>
+              <TableCell>{t('groups.level')}</TableCell>
+              <TableCell>{t('groups.year')}</TableCell>
+              <TableCell>{t('groups.campus')}</TableCell>
+              <TableCell align="right">{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5}>Cargando…</TableCell>
+                <TableCell colSpan={5}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : null}
             {!isLoading && rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5}>Sin registros.</TableCell>
+                <TableCell colSpan={5}>{t('common.none')}</TableCell>
               </TableRow>
             ) : null}
             {rows.map((row) => (
@@ -335,11 +335,11 @@ export function GroupsPage() {
                     to={`/groups/${row.id}/rankings`}
                     className="text-blue-600 text-sm mr-2"
                   >
-                    Ranking
+                    {t('groups.ranking')}
                   </Link>
                   <IconButton
                     size="small"
-                    aria-label="Editar"
+                    aria-label={t('groups.edit')}
                     onClick={() => openEdit(row)}
                   >
                     <EditIcon fontSize="small" />
@@ -347,7 +347,7 @@ export function GroupsPage() {
                   <IconButton
                     size="small"
                     color="error"
-                    aria-label="Eliminar"
+                    aria-label={t('groups.delete')}
                     onClick={() => setDeleteTarget(row)}
                   >
                     <DeleteOutlineIcon fontSize="small" />
@@ -361,7 +361,7 @@ export function GroupsPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar grupo' : 'Nuevo grupo'}
+          {editing ? t('groups.editDialog') : t('groups.newDialog')}
         </DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1">
@@ -382,7 +382,7 @@ export function GroupsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Nivel"
+                      label={t('groups.level')}
                       required
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
@@ -409,7 +409,7 @@ export function GroupsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Año lectivo"
+                      label={t('groups.academicYear')}
                       required
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
@@ -432,7 +432,7 @@ export function GroupsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Sede"
+                      label={t('groups.campus')}
                       required
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
@@ -442,7 +442,7 @@ export function GroupsPage() {
               )}
             />
             <TextField
-              label="Nombre del grupo"
+              label={t('groups.groupName')}
               {...form.register('name')}
               error={!!form.formState.errors.name}
               helperText={form.formState.errors.name?.message}
@@ -452,10 +452,10 @@ export function GroupsPage() {
           </DialogContent>
           <DialogActions>
             <Button type="button" onClick={closeDialog}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
@@ -465,10 +465,10 @@ export function GroupsPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
       >
-        <DialogTitle>Eliminar grupo</DialogTitle>
-        <DialogContent>¿Eliminar «{deleteTarget?.name}»?</DialogContent>
+        <DialogTitle>{t('groups.deleteDialog')}</DialogTitle>
+        <DialogContent>{t('groups.deletePrompt', { name: deleteTarget?.name ?? '' })}</DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -477,7 +477,7 @@ export function GroupsPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,4 +1,5 @@
 import AddIcon from '@mui/icons-material/Add'
+import FilterAltOffIcon from '@mui/icons-material/FilterAltOff'
 import SearchIcon from '@mui/icons-material/Search'
 import type { AutocompleteRenderInputParams } from '@mui/material/Autocomplete'
 import {
@@ -28,6 +29,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -60,11 +62,16 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function SchoolRecordsPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
   const [filterYearId, setFilterYearId] = useState<string | null>(null)
+  const [studentDocFilter, setStudentDocFilter] = useState('')
+  const [institutionDaneFilter, setInstitutionDaneFilter] = useState('')
+  const [yearNumberFilter, setYearNumberFilter] = useState('')
+  const [ordering, setOrdering] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [studentSearchInput, setStudentSearchInput] = useState('')
@@ -89,6 +96,10 @@ export function SchoolRecordsPage() {
     academic_year: filterYearId ?? undefined,
     institution: selectedInstitutionId ?? undefined,
     search: appliedSearch || undefined,
+    student__document_number: studentDocFilter.trim() || undefined,
+    institution__dane_code: institutionDaneFilter.trim() || undefined,
+    academic_year__year: yearNumberFilter.trim() || undefined,
+    ordering: ordering || undefined,
   }
 
   const { data: rows = [], isLoading, error } = useQuery({
@@ -186,8 +197,8 @@ export function SchoolRecordsPage() {
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
         <PageHeader
-          title="Libro final de calificaciones"
-          subtitle="Documentos generados por estudiante y año. Solo creación vía API (sin edición)."
+          title={t('schoolRecords.title')}
+          subtitle={t('schoolRecords.subtitle')}
         />
         <Button
           variant="contained"
@@ -199,34 +210,41 @@ export function SchoolRecordsPage() {
             campuses.length === 0
           }
         >
-          Generar registro
+          {t('schoolRecords.generateRecord')}
         </Button>
       </Box>
 
       {!selectedInstitutionId ? (
         <Alert severity="info">
-          Selecciona una institución para listar y generar registros.
+          {t('schoolRecords.selectInstitution')}
         </Alert>
       ) : null}
 
       <Paper className="p-4 flex flex-col gap-3">
         <Box>
           <Typography variant="subtitle1" className="font-medium">
-            Consulta o generación por estudiante y año
+            {t('schoolRecords.queryOrCreate')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Usa el endpoint{' '}
-            <code className="text-xs bg-gray-100 px-1 rounded">
+            {t('schoolRecords.useEndpoint')}{' '}
+            <Box
+              component="code"
+              sx={{
+                fontSize: 12,
+                bgcolor: 'action.hover',
+                px: 0.5,
+                borderRadius: 0.5,
+              }}
+            >
               GET /api/school-records/&lt;student_id&gt;/&lt;academic_year_id&gt;/
-            </code>
-            : obtiene el registro existente o lo genera si hay matrícula activa en
-            ese año.
+            </Box>
+            {t('schoolRecords.endpointHelp')}
           </Typography>
         </Box>
         <Box className="flex flex-wrap gap-2 items-end">
           <TextField
             size="small"
-            label="Buscar estudiante"
+            label={t('schoolRecords.searchStudent')}
             value={compSearchInput}
             onChange={(e) => setCompSearchInput(e.target.value)}
             onKeyDown={(e) => {
@@ -242,7 +260,7 @@ export function SchoolRecordsPage() {
             size="small"
             onClick={() => setCompAppliedSearch(compSearchInput)}
           >
-            Buscar
+            {t('common.search')}
           </Button>
           <Autocomplete
             sx={{ minWidth: 260, flex: 1 }}
@@ -253,18 +271,18 @@ export function SchoolRecordsPage() {
             }
             onChange={(_, v) => setCompStudentId(v?.id ?? '')}
             renderInput={(params: AutocompleteRenderInputParams) => (
-              <TextField {...params} label="Estudiante" size="small" />
+              <TextField {...params} label={t('schoolRecords.student')} size="small" />
             )}
           />
           <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>Año lectivo</InputLabel>
+            <InputLabel>{t('schoolRecords.academicYear')}</InputLabel>
             <Select
-              label="Año lectivo"
+              label={t('schoolRecords.academicYear')}
               value={compYearId}
               onChange={(e) => setCompYearId(e.target.value)}
             >
               <MenuItem value="">
-                <em>Selecciona</em>
+                <em>{t('schoolRecords.select')}</em>
               </MenuItem>
               {academicYears.map((y) => (
                 <MenuItem key={y.id} value={y.id}>
@@ -282,7 +300,7 @@ export function SchoolRecordsPage() {
               }
             }}
           >
-            {compositeLoading ? 'Consultando…' : 'Consultar'}
+            {compositeLoading ? t('schoolRecords.consulting') : t('schoolRecords.consult')}
           </Button>
         </Box>
         {compositeIsError ? (
@@ -293,17 +311,20 @@ export function SchoolRecordsPage() {
         {compositeRecord && !compositeLoading ? (
           <Alert severity="success" className="[&_.MuiAlert-message]:w-full">
             <Typography variant="body2" className="font-medium mb-1">
-              Registro obtenido
+              {t('schoolRecords.recordFetched')}
             </Typography>
             <Typography variant="body2">
-              Estudiante: {compositeRecord.student_name} · Grupo:{' '}
-              {compositeRecord.group_name} · Sede: {compositeRecord.campus_name}
+              {t('schoolRecords.recordLine', {
+                student: compositeRecord.student_name,
+                group: compositeRecord.group_name,
+                campus: compositeRecord.campus_name,
+              })}
             </Typography>
             <Typography variant="body2">
-              Generado:{' '}
+              {t('schoolRecords.generated')}{' '}
               {compositeRecord.generated_at
                 ? new Date(compositeRecord.generated_at).toLocaleString()
-                : '—'}
+                : '-'}
             </Typography>
           </Alert>
         ) : null}
@@ -312,7 +333,7 @@ export function SchoolRecordsPage() {
       <Paper className="p-3 flex flex-wrap gap-2 items-end">
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -324,18 +345,18 @@ export function SchoolRecordsPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Buscar
+          {t('common.search')}
         </Button>
         <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Año</InputLabel>
+          <InputLabel>{t('schoolRecords.year')}</InputLabel>
           <Select
-            label="Año"
+            label={t('schoolRecords.year')}
             value={filterYearId ?? ''}
             onChange={(e) =>
               setFilterYearId(e.target.value === '' ? null : e.target.value)
             }
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('schoolRecords.all')}</MenuItem>
             {academicYears.map((y) => (
               <MenuItem key={y.id} value={y.id}>
                 {yearLabel(y)}
@@ -343,6 +364,56 @@ export function SchoolRecordsPage() {
             ))}
           </Select>
         </FormControl>
+        <TextField
+          size="small"
+          label={t('schoolRecords.studentDocExact')}
+          value={studentDocFilter}
+          onChange={(e) => setStudentDocFilter(e.target.value)}
+        />
+        <TextField
+          size="small"
+          label={t('schoolRecords.institutionDane')}
+          value={institutionDaneFilter}
+          onChange={(e) => setInstitutionDaneFilter(e.target.value)}
+        />
+        <TextField
+          size="small"
+          label={t('schoolRecords.yearExact')}
+          value={yearNumberFilter}
+          onChange={(e) => setYearNumberFilter(e.target.value)}
+          sx={{ maxWidth: 160 }}
+        />
+        <FormControl size="small" sx={{ minWidth: 210 }}>
+          <InputLabel>{t('schoolRecords.order')}</InputLabel>
+          <Select
+            label={t('schoolRecords.order')}
+            value={ordering}
+            onChange={(e) => setOrdering(String(e.target.value))}
+          >
+            <MenuItem value="">{t('schoolRecords.defaultOrder')}</MenuItem>
+            <MenuItem value="student__full_name">{t('schoolRecords.studentAsc')}</MenuItem>
+            <MenuItem value="-student__full_name">{t('schoolRecords.studentDesc')}</MenuItem>
+            <MenuItem value="group__name">{t('schoolRecords.groupAsc')}</MenuItem>
+            <MenuItem value="-group__name">{t('schoolRecords.groupDesc')}</MenuItem>
+            <MenuItem value="-generated_at">{t('schoolRecords.recentFirst')}</MenuItem>
+            <MenuItem value="generated_at">{t('schoolRecords.oldFirst')}</MenuItem>
+          </Select>
+        </FormControl>
+        <Button
+          variant="text"
+          startIcon={<FilterAltOffIcon />}
+          onClick={() => {
+            setSearchInput('')
+            setAppliedSearch('')
+            setFilterYearId(null)
+            setStudentDocFilter('')
+            setInstitutionDaneFilter('')
+            setYearNumberFilter('')
+            setOrdering('')
+          }}
+        >
+          {t('common.clear')}
+        </Button>
       </Paper>
 
       {error ? (
@@ -353,20 +424,20 @@ export function SchoolRecordsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Estudiante</TableCell>
-              <TableCell>Grupo</TableCell>
-              <TableCell>Sede</TableCell>
-              <TableCell>Generado</TableCell>
+              <TableCell>{t('schoolRecords.student')}</TableCell>
+              <TableCell>{t('schoolRecords.group')}</TableCell>
+              <TableCell>{t('schoolRecords.campus')}</TableCell>
+              <TableCell>{t('schoolRecords.generated')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4}>Cargando…</TableCell>
+                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4}>Sin registros.</TableCell>
+                <TableCell colSpan={4}>{t('common.none')}</TableCell>
               </TableRow>
             ) : (
               rows.map((row) => (
@@ -377,7 +448,7 @@ export function SchoolRecordsPage() {
                   <TableCell>
                     {row.generated_at
                       ? new Date(row.generated_at).toLocaleString()
-                      : '—'}
+                      : '-'}
                   </TableCell>
                 </TableRow>
               ))
@@ -387,7 +458,7 @@ export function SchoolRecordsPage() {
       </TableContainer>
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
-        <DialogTitle>Generar libro final</DialogTitle>
+        <DialogTitle>{t('schoolRecords.generateFinalBook')}</DialogTitle>
         <form
           onSubmit={form.handleSubmit((v) => {
             setFormError(null)
@@ -402,7 +473,7 @@ export function SchoolRecordsPage() {
             <Box className="flex gap-2 items-end">
               <TextField
                 size="small"
-                label="Buscar estudiante"
+                label={t('schoolRecords.searchStudent')}
                 fullWidth
                 value={studentSearchInput}
                 onChange={(e) => setStudentSearchInput(e.target.value)}
@@ -417,7 +488,7 @@ export function SchoolRecordsPage() {
                 variant="outlined"
                 onClick={() => setAppliedStudentSearch(studentSearchInput)}
               >
-                Buscar
+                {t('common.search')}
               </Button>
             </Box>
             <Controller
@@ -434,7 +505,7 @@ export function SchoolRecordsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Estudiante"
+                      label={t('schoolRecords.student')}
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
                       required
@@ -448,9 +519,9 @@ export function SchoolRecordsPage() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <FormControl fullWidth required error={!!fieldState.error}>
-                  <InputLabel>Año lectivo</InputLabel>
+                  <InputLabel>{t('schoolRecords.academicYear')}</InputLabel>
                   <Select
-                    label="Año lectivo"
+                    label={t('schoolRecords.academicYear')}
                     value={field.value}
                     onChange={(e) => {
                       field.onChange(e.target.value)
@@ -481,7 +552,7 @@ export function SchoolRecordsPage() {
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
                       {...params}
-                      label="Grupo"
+                      label={t('schoolRecords.group')}
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
                       required
@@ -496,9 +567,9 @@ export function SchoolRecordsPage() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <FormControl fullWidth required error={!!fieldState.error}>
-                  <InputLabel>Sede</InputLabel>
+                  <InputLabel>{t('schoolRecords.campus')}</InputLabel>
                   <Select
-                    label="Sede"
+                    label={t('schoolRecords.campus')}
                     value={field.value}
                     onChange={field.onChange}
                   >
@@ -513,9 +584,9 @@ export function SchoolRecordsPage() {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={closeDialog}>Cancelar</Button>
+            <Button onClick={closeDialog}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Generar
+              {t('schoolRecords.generate')}
             </Button>
           </DialogActions>
         </form>

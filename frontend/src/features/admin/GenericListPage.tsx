@@ -16,6 +16,7 @@ import {
 } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
@@ -45,6 +46,7 @@ function formatCell(v: unknown): string {
 type Props = { config: ResourceListConfig }
 
 export function GenericListPage({ config }: Props) {
+  const { t } = useTranslation()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
@@ -87,8 +89,7 @@ export function GenericListPage({ config }: Props) {
 
       {config.institutionParam && !selectedInstitutionId ? (
         <Alert severity="info">
-          Selecciona una institución en la barra superior para filtrar este
-          listado (opcional según permisos del backend).
+          {t('genericList.selectInstitution')}
         </Alert>
       ) : null}
 
@@ -96,20 +97,20 @@ export function GenericListPage({ config }: Props) {
         <Paper className="p-3 flex flex-wrap gap-2 items-center">
           <TextField
             size="small"
-            label="Buscar"
+            label={t('common.search')}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') setAppliedSearch(searchInput)
             }}
-            slotProps={{ input: { 'aria-label': 'Buscar en listado' } }}
+            slotProps={{ input: { 'aria-label': t('genericList.searchAria') } }}
           />
           <Button
             variant="contained"
             startIcon={<SearchIcon />}
             onClick={() => setAppliedSearch(searchInput)}
           >
-            Aplicar
+            {t('common.apply')}
           </Button>
         </Paper>
       ) : null}
@@ -125,7 +126,7 @@ export function GenericListPage({ config }: Props) {
       ) : null}
 
       {!isLoading && data && data.length === 0 ? (
-        <Typography color="text.secondary">Sin registros.</Typography>
+        <Typography color="text.secondary">{t('common.none')}</Typography>
       ) : null}
 
       {!isLoading && data && data.length > 0 ? (
@@ -153,7 +154,7 @@ export function GenericListPage({ config }: Props) {
 
       {isFetching && !isLoading ? (
         <Typography variant="caption" color="text.secondary">
-          Actualizando…
+          {t('genericList.updating')}
         </Typography>
       ) : null}
     </Box>

@@ -30,6 +30,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -58,6 +59,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function DisciplinaryReportsPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
@@ -213,8 +215,8 @@ export function DisciplinaryReportsPage() {
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
         <PageHeader
-          title="Reportes disciplinarios"
-          subtitle="Incidencias por estudiante y período académico."
+          title={t('disciplinaryReports.title')}
+          subtitle={t('disciplinaryReports.subtitle')}
         />
         <Button
           variant="contained"
@@ -222,18 +224,18 @@ export function DisciplinaryReportsPage() {
           onClick={openCreate}
           disabled={!selectedInstitutionId || academicYears.length === 0}
         >
-          Nuevo reporte
+          {t('disciplinaryReports.new')}
         </Button>
       </Box>
 
       {!selectedInstitutionId ? (
-        <Alert severity="info">Selecciona una institución.</Alert>
+        <Alert severity="info">{t('disciplinaryReports.selectInstitution')}</Alert>
       ) : null}
 
       <Paper className="p-3 flex flex-wrap gap-2 items-end">
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -245,12 +247,12 @@ export function DisciplinaryReportsPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Buscar
+          {t('common.search')}
         </Button>
         <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Año</InputLabel>
+          <InputLabel>{t('disciplinaryReports.year')}</InputLabel>
           <Select
-            label="Año"
+            label={t('disciplinaryReports.year')}
             value={filterYearId ?? ''}
             onChange={(e) => {
               const v = e.target.value === '' ? null : e.target.value
@@ -258,7 +260,7 @@ export function DisciplinaryReportsPage() {
               setFilterPeriodId(null)
             }}
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('disciplinaryReports.all')}</MenuItem>
             {academicYears.map((y) => (
               <MenuItem key={y.id} value={y.id}>
                 {yearLabel(y)}
@@ -267,15 +269,15 @@ export function DisciplinaryReportsPage() {
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 160 }} disabled={!filterYearId}>
-          <InputLabel>Período</InputLabel>
+          <InputLabel>{t('disciplinaryReports.period')}</InputLabel>
           <Select
-            label="Período"
+            label={t('disciplinaryReports.period')}
             value={filterPeriodId ?? ''}
             onChange={(e) =>
               setFilterPeriodId(e.target.value === '' ? null : e.target.value)
             }
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('disciplinaryReports.all')}</MenuItem>
             {periodsForFilter.map((p) => (
               <MenuItem key={p.id} value={p.id}>
                 {p.name}
@@ -293,41 +295,41 @@ export function DisciplinaryReportsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Estudiante</TableCell>
-              <TableCell>Registrado por</TableCell>
-              <TableCell>Texto</TableCell>
+              <TableCell>{t('disciplinaryReports.student')}</TableCell>
+              <TableCell>{t('disciplinaryReports.createdBy')}</TableCell>
+              <TableCell>{t('disciplinaryReports.text')}</TableCell>
               <TableCell align="right" width={100} />
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4}>Cargando…</TableCell>
+                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
               </TableRow>
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4}>Sin registros.</TableCell>
+                <TableCell colSpan={4}>{t('common.none')}</TableCell>
               </TableRow>
             ) : (
               rows.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>{row.student_name}</TableCell>
-                  <TableCell>{row.created_by_name ?? '—'}</TableCell>
+                  <TableCell>{row.created_by_name ?? '-'}</TableCell>
                   <TableCell className="max-w-md truncate">
-                    {row.report_text ?? '—'}
+                    {row.report_text ?? '-'}
                   </TableCell>
                   <TableCell align="right">
                     <IconButton
                       size="small"
                       onClick={() => openEdit(row)}
-                      aria-label="editar"
+                      aria-label={t('disciplinaryReports.edit')}
                     >
                       <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton
                       size="small"
                       onClick={() => setDeleteTarget(row)}
-                      aria-label="eliminar"
+                      aria-label={t('disciplinaryReports.delete')}
                     >
                       <DeleteOutlineIcon fontSize="small" />
                     </IconButton>
@@ -341,7 +343,7 @@ export function DisciplinaryReportsPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar reporte' : 'Nuevo reporte disciplinario'}
+          {editing ? t('disciplinaryReports.editDialog') : t('disciplinaryReports.newDialog')}
         </DialogTitle>
         <form
           onSubmit={form.handleSubmit((v) => {
@@ -362,9 +364,9 @@ export function DisciplinaryReportsPage() {
             {formError ? <Alert severity="error">{formError}</Alert> : null}
             {!editing ? (
               <FormControl fullWidth required>
-                <InputLabel>Año lectivo</InputLabel>
+                <InputLabel>{t('disciplinaryReports.academicYear')}</InputLabel>
                 <Select
-                  label="Año lectivo"
+                  label={t('disciplinaryReports.academicYear')}
                   value={dialogYearId ?? ''}
                   onChange={(e) => {
                     const v = e.target.value
@@ -385,7 +387,7 @@ export function DisciplinaryReportsPage() {
                 <Box className="flex gap-2 items-end">
                   <TextField
                     size="small"
-                    label="Buscar estudiante"
+                    label={t('disciplinaryReports.searchStudent')}
                     fullWidth
                     value={studentSearchInput}
                     onChange={(e) => setStudentSearchInput(e.target.value)}
@@ -402,7 +404,7 @@ export function DisciplinaryReportsPage() {
                       setAppliedStudentSearch(studentSearchInput)
                     }
                   >
-                    Buscar
+                    {t('common.search')}
                   </Button>
                 </Box>
                 <Controller
@@ -420,7 +422,7 @@ export function DisciplinaryReportsPage() {
                       renderInput={(params: AutocompleteRenderInputParams) => (
                         <TextField
                           {...params}
-                          label="Estudiante"
+                          label={t('disciplinaryReports.student')}
                           error={!!fieldState.error}
                           helperText={fieldState.error?.message}
                           required
@@ -432,7 +434,7 @@ export function DisciplinaryReportsPage() {
               </Box>
             ) : (
               <TextField
-                label="Estudiante"
+                label={t('disciplinaryReports.student')}
                 value={editing.student_name}
                 disabled
                 fullWidth
@@ -443,9 +445,9 @@ export function DisciplinaryReportsPage() {
               control={form.control}
               render={({ field }) => (
                 <FormControl fullWidth required disabled={!dialogYearId}>
-                  <InputLabel>Período</InputLabel>
+                  <InputLabel>{t('disciplinaryReports.period')}</InputLabel>
                   <Select
-                    label="Período"
+                    label={t('disciplinaryReports.period')}
                     value={field.value}
                     onChange={field.onChange}
                   >
@@ -459,7 +461,7 @@ export function DisciplinaryReportsPage() {
               )}
             />
             <TextField
-              label="Descripción del reporte"
+              label={t('disciplinaryReports.reportDescription')}
               fullWidth
               multiline
               minRows={4}
@@ -467,9 +469,9 @@ export function DisciplinaryReportsPage() {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={closeDialog}>Cancelar</Button>
+            <Button onClick={closeDialog}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
@@ -479,10 +481,10 @@ export function DisciplinaryReportsPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
       >
-        <DialogTitle>Eliminar reporte</DialogTitle>
-        <DialogContent>¿Eliminar este reporte disciplinario?</DialogContent>
+        <DialogTitle>{t('disciplinaryReports.deleteDialog')}</DialogTitle>
+        <DialogContent>{t('disciplinaryReports.deletePrompt')}</DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -491,7 +493,7 @@ export function DisciplinaryReportsPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

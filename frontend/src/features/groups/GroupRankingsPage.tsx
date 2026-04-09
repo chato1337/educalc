@@ -1,5 +1,6 @@
 import { Alert, Box, Paper, Typography } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 
 import { apiClient } from '@/api/client'
@@ -8,6 +9,7 @@ import { queryKeys } from '@/api/queryKeys'
 import { PageHeader } from '@/components/PageHeader'
 
 export function GroupRankingsPage() {
+  const { t } = useTranslation()
   const { groupId } = useParams<{ groupId: string }>()
 
   const { data, isLoading, error } = useQuery({
@@ -22,25 +24,33 @@ export function GroupRankingsPage() {
   })
 
   if (!groupId) {
-    return <Alert severity="warning">ID de grupo no válido.</Alert>
+    return <Alert severity="warning">{t('groupRankings.invalidGroupId')}</Alert>
   }
 
   return (
     <Box className="p-4 md:p-6 max-w-4xl mx-auto w-full flex flex-col gap-4">
-      <PageHeader title="Ranking de estudiantes (grupo)" />
+      <PageHeader title={t('groupRankings.title')} />
       <Typography variant="body2">
         <Link to="/groups" className="text-blue-600 underline">
-          ← Listado de grupos
+          {`← ${t('groupRankings.groupsList')}`}
         </Link>
         {' · '}
-        Ruta API:{' '}
-        <code className="text-xs bg-gray-100 px-1 rounded">
+        {t('groupRankings.apiRoute')}{' '}
+        <Box
+          component="code"
+          sx={{
+            fontSize: 12,
+            bgcolor: 'action.hover',
+            px: 0.5,
+            borderRadius: 0.5,
+          }}
+        >
           GET /api/groups/{'{id}'}/students-rankings/
-        </code>
+        </Box>
       </Typography>
 
       {error ? <Alert severity="error">{getErrorMessage(error)}</Alert> : null}
-      {isLoading ? <Typography>Cargando…</Typography> : null}
+      {isLoading ? <Typography>{t('groupRankings.loading')}</Typography> : null}
 
       {data !== undefined && !isLoading ? (
         <Paper className="p-4 overflow-auto">

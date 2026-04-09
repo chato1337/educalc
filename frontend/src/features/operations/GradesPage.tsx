@@ -1,6 +1,7 @@
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import EditIcon from '@mui/icons-material/Edit'
+import FilterAltOffIcon from '@mui/icons-material/FilterAltOff'
 import SearchIcon from '@mui/icons-material/Search'
 import type { AutocompleteRenderInputParams } from '@mui/material/Autocomplete'
 import {
@@ -25,9 +26,11 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Typography,
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import {
   Controller,
   useForm,
@@ -81,6 +84,18 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
+type GradeRow = Grade & {
+  student_document_number: string
+  student_document_type: string
+  course_assignment_subject_name: string
+  course_assignment_subject_emphasis: string
+  course_assignment_teacher_name: string
+  course_assignment_group_name: string
+  course_assignment_academic_year_year: number
+  academic_period_name: string
+  academic_period_number: number
+}
+
 function bodyFromValues(v: FormValues) {
   const body: Record<string, unknown> = {
     student: v.student,
@@ -92,6 +107,13 @@ function bodyFromValues(v: FormValues) {
   if (v.definitive_grade && v.definitive_grade !== '')
     body.definitive_grade = v.definitive_grade
   return body
+}
+
+function getDocumentTypeAbbr(documentType: string): string {
+  const normalized = documentType.trim()
+  if (!normalized) return ''
+  const [left] = normalized.split(':', 1)
+  return left.trim()
 }
 
 function parseScaleBound(s: string): number | null {
@@ -147,6 +169,7 @@ function courseAssignmentsForStudentGroups(
 }
 
 export function GradesPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
@@ -156,10 +179,18 @@ export function GradesPage() {
   const [filterAssignmentId, setFilterAssignmentId] = useState<string | null>(
     null,
   )
+  const [filterStudentDocument, setFilterStudentDocument] = useState('')
+  const [filterSubjectText, setFilterSubjectText] = useState('')
+  const [filterTeacherText, setFilterTeacherText] = useState('')
+  const [filterGroupName, setFilterGroupName] = useState<string | null>(null)
+  const [filterStudentDocExact, setFilterStudentDocExact] = useState('')
+  const [filterTeacherDocExact, setFilterTeacherDocExact] = useState('')
+  const [filterPeriodNumberExact, setFilterPeriodNumberExact] = useState('')
+  const [ordering, setOrdering] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogYearId, setDialogYearId] = useState<string | null>(null)
-  const [editing, setEditing] = useState<Grade | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<Grade | null>(null)
+  const [editing, setEditing] = useState<GradeRow | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<GradeRow | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [studentSearchInput, setStudentSearchInput] = useState('')
   const [appliedStudentSearch, setAppliedStudentSearch] = useState('')
@@ -179,17 +210,63 @@ export function GradesPage() {
     academic_period: filterPeriodId ?? undefined,
     course_assignment: filterAssignmentId ?? undefined,
     search: appliedSearch || undefined,
+    student__document_number: filterStudentDocExact.trim() || undefined,
+    course_assignment__teacher__document_number:
+      filterTeacherDocExact.trim() || undefined,
+    academic_period__number: filterPeriodNumberExact.trim() || undefined,
+    ordering: ordering || undefined,
   }
 
   const { data: rows = [], isLoading, error } = useQuery({
     queryKey: queryKeys.grades(listParams),
     queryFn: async () => {
-      const { data } = await apiClient.get<Grade[]>('/api/grades/', {
+      const { data } = await apiClient.get<GradeRow[]>('/api/grades/', {
         params: listParams,
       })
       return data
     },
   })
+
+  const groupFilterOptions = useMemo(() => {
+    const names = new Set(
+      rows
+        .map((r) => r.course_assignment_group_name)
+        .filter((v): v is string => Boolean(v)),
+    )
+    return Array.from(names).sort((a, b) => a.localeCompare(b))
+  }, [rows])
+
+  const filteredRows = useMemo(() => {
+    const docNeedle = filterStudentDocument.trim().toLowerCase()
+    const subjectNeedle = filterSubjectText.trim().toLowerCase()
+    const teacherNeedle = filterTeacherText.trim().toLowerCase()
+    const groupNeedle = filterGroupName ?? null
+
+    return rows.filter((row) => {
+      if (docNeedle) {
+        const doc = `${row.student_document_type} ${row.student_document_number}`.toLowerCase()
+        if (!doc.includes(docNeedle)) return false
+      }
+      if (subjectNeedle) {
+        const subject = `${row.course_assignment_subject_name} ${row.course_assignment_subject_emphasis}`.toLowerCase()
+        if (!subject.includes(subjectNeedle)) return false
+      }
+      if (teacherNeedle) {
+        if (!row.course_assignment_teacher_name.toLowerCase().includes(teacherNeedle))
+          return false
+      }
+      if (groupNeedle && row.course_assignment_group_name !== groupNeedle) {
+        return false
+      }
+      return true
+    })
+  }, [
+    rows,
+    filterStudentDocument,
+    filterSubjectText,
+    filterTeacherText,
+    filterGroupName,
+  ])
 
   const { data: gradingScales = [] } = useGradingScalesForInstitution(
     selectedInstitutionId,
@@ -375,7 +452,7 @@ export function GradesPage() {
     setDialogOpen(true)
   }
 
-  function openEdit(row: Grade) {
+  function openEdit(row: GradeRow) {
     setEditing(row)
     setFormError(null)
     form.reset({
@@ -419,8 +496,8 @@ export function GradesPage() {
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
       <Box className="flex flex-wrap justify-between items-center gap-2">
         <PageHeader
-          title="Calificaciones"
-          subtitle="Notas numéricas por estudiante, asignación y período."
+          title={t('grades.title')}
+          subtitle={t('grades.subtitle')}
         />
         <Button
           variant="contained"
@@ -428,20 +505,20 @@ export function GradesPage() {
           onClick={openCreate}
           disabled={!selectedInstitutionId || academicYears.length === 0}
         >
-          Nueva calificación
+          {t('grades.new')}
         </Button>
       </Box>
 
       {!selectedInstitutionId ? (
         <Alert severity="info">
-          Selecciona una institución para usar años y escalas.
+          {t('grades.selectInstitution')}
         </Alert>
       ) : null}
 
       <Paper className="p-3 flex flex-wrap gap-2 items-end">
         <TextField
           size="small"
-          label="Buscar"
+          label={t('common.search')}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -453,12 +530,47 @@ export function GradesPage() {
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
         >
-          Buscar
+          {t('common.search')}
         </Button>
-        <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Año (filtro)</InputLabel>
+        <TextField
+          size="small"
+          label={t('grades.documentLocal')}
+          value={filterStudentDocument}
+          onChange={(e) => setFilterStudentDocument(e.target.value)}
+        />
+        <TextField
+          size="small"
+          label={t('grades.subjectLocal')}
+          value={filterSubjectText}
+          onChange={(e) => setFilterSubjectText(e.target.value)}
+        />
+        <TextField
+          size="small"
+          label={t('grades.teacherLocal')}
+          value={filterTeacherText}
+          onChange={(e) => setFilterTeacherText(e.target.value)}
+        />
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <InputLabel>{t('grades.groupLocal')}</InputLabel>
           <Select
-            label="Año (filtro)"
+            label={t('grades.groupLocal')}
+            value={filterGroupName ?? ''}
+            onChange={(e) =>
+              setFilterGroupName(e.target.value === '' ? null : e.target.value)
+            }
+          >
+            <MenuItem value="">{t('grades.all')}</MenuItem>
+            {groupFilterOptions.map((groupName) => (
+              <MenuItem key={groupName} value={groupName}>
+                {groupName}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <InputLabel>{t('grades.yearFilter')}</InputLabel>
+          <Select
+            label={t('grades.yearFilter')}
             value={filterYearId ?? ''}
             onChange={(e) => {
               const v = e.target.value === '' ? null : e.target.value
@@ -467,7 +579,7 @@ export function GradesPage() {
               setFilterAssignmentId(null)
             }}
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('grades.all')}</MenuItem>
             {academicYears.map((y) => (
               <MenuItem key={y.id} value={y.id}>
                 {yearLabel(y)}
@@ -476,15 +588,15 @@ export function GradesPage() {
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 160 }} disabled={!filterYearId}>
-          <InputLabel>Período</InputLabel>
+          <InputLabel>{t('grades.period')}</InputLabel>
           <Select
-            label="Período"
+            label={t('grades.period')}
             value={filterPeriodId ?? ''}
             onChange={(e) =>
               setFilterPeriodId(e.target.value === '' ? null : e.target.value)
             }
           >
-            <MenuItem value="">(todos)</MenuItem>
+            <MenuItem value="">{t('grades.all')}</MenuItem>
             {periodsForFilter.map((p) => (
               <MenuItem key={p.id} value={p.id}>
                 {p.name}
@@ -497,9 +609,9 @@ export function GradesPage() {
           sx={{ minWidth: 200 }}
           disabled={!filterYearId}
         >
-          <InputLabel>Asignación</InputLabel>
+          <InputLabel>{t('grades.assignment')}</InputLabel>
           <Select
-            label="Asignación"
+            label={t('grades.assignment')}
             value={filterAssignmentId ?? ''}
             onChange={(e) =>
               setFilterAssignmentId(
@@ -507,7 +619,7 @@ export function GradesPage() {
               )
             }
           >
-            <MenuItem value="">(todas)</MenuItem>
+            <MenuItem value="">{t('grades.allFem')}</MenuItem>
             {assignmentsForFilter.map((a) => (
               <MenuItem key={a.id} value={a.id}>
                 {a.subject_name} — {a.group_name}
@@ -515,6 +627,65 @@ export function GradesPage() {
             ))}
           </Select>
         </FormControl>
+        <TextField
+          size="small"
+          label={t('grades.studentDocExact')}
+          value={filterStudentDocExact}
+          onChange={(e) => setFilterStudentDocExact(e.target.value)}
+        />
+        <TextField
+          size="small"
+          label={t('grades.teacherDocExact')}
+          value={filterTeacherDocExact}
+          onChange={(e) => setFilterTeacherDocExact(e.target.value)}
+        />
+        <TextField
+          size="small"
+          label={t('grades.periodNumberExact')}
+          value={filterPeriodNumberExact}
+          onChange={(e) => setFilterPeriodNumberExact(e.target.value)}
+          sx={{ maxWidth: 180 }}
+        />
+        <FormControl size="small" sx={{ minWidth: 210 }}>
+          <InputLabel>{t('grades.order')}</InputLabel>
+          <Select
+            label={t('grades.order')}
+            value={ordering}
+            onChange={(e) => setOrdering(String(e.target.value))}
+          >
+            <MenuItem value="">{t('grades.defaultOrder')}</MenuItem>
+            <MenuItem value="student__full_name">{t('grades.studentAsc')}</MenuItem>
+            <MenuItem value="-student__full_name">{t('grades.studentDesc')}</MenuItem>
+            <MenuItem value="academic_period__name">{t('grades.periodAsc')}</MenuItem>
+            <MenuItem value="-academic_period__name">{t('grades.periodDesc')}</MenuItem>
+            <MenuItem value="numerical_grade">{t('grades.gradeAsc')}</MenuItem>
+            <MenuItem value="-numerical_grade">{t('grades.gradeDesc')}</MenuItem>
+          </Select>
+        </FormControl>
+        <Button
+          variant="text"
+          startIcon={<FilterAltOffIcon />}
+          onClick={() => {
+            setSearchInput('')
+            setAppliedSearch('')
+            setFilterYearId(null)
+            setFilterPeriodId(null)
+            setFilterAssignmentId(null)
+            setFilterStudentDocument('')
+            setFilterSubjectText('')
+            setFilterTeacherText('')
+            setFilterGroupName(null)
+            setFilterStudentDocExact('')
+            setFilterTeacherDocExact('')
+            setFilterPeriodNumberExact('')
+            setOrdering('')
+          }}
+        >
+          {t('common.clear')}
+        </Button>
+        <Typography variant="caption" color="text.secondary" sx={{ width: '100%' }}>
+          {t('grades.globalSearchHint')}
+        </Typography>
       </Paper>
 
       {error ? (
@@ -525,43 +696,59 @@ export function GradesPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Estudiante</TableCell>
-              <TableCell>Asignación (id)</TableCell>
-              <TableCell>Nota</TableCell>
-              <TableCell>Nivel</TableCell>
+              <TableCell>{t('grades.student')}</TableCell>
+              <TableCell>{t('grades.document')}</TableCell>
+              <TableCell>{t('grades.subject')}</TableCell>
+              <TableCell>{t('grades.group')}</TableCell>
+              <TableCell>{t('grades.teacher')}</TableCell>
+              <TableCell>{t('grades.period')}</TableCell>
+              <TableCell>{t('grades.grade')}</TableCell>
+              <TableCell>{t('grades.level')}</TableCell>
               <TableCell align="right" width={100}>
-                Acciones
+                {t('common.actions')}
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5}>Cargando…</TableCell>
+                <TableCell colSpan={8}>{t('common.loading')}</TableCell>
               </TableRow>
-            ) : rows.length === 0 ? (
+            ) : filteredRows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5}>Sin registros.</TableCell>
+                <TableCell colSpan={8}>{t('common.none')}</TableCell>
               </TableRow>
             ) : (
-              rows.map((row) => (
+              filteredRows.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>{row.student_name}</TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {row.course_assignment.slice(0, 8)}…
+                  <TableCell className="whitespace-nowrap">
+                    {getDocumentTypeAbbr(row.student_document_type)}{' '}
+                    {row.student_document_number}
+                  </TableCell>
+                  <TableCell>
+                    {row.course_assignment_subject_name}
+                    {row.course_assignment_subject_emphasis
+                      ? ` (${row.course_assignment_subject_emphasis})`
+                      : ''}
+                  </TableCell>
+                  <TableCell>{row.course_assignment_group_name}</TableCell>
+                  <TableCell>{row.course_assignment_teacher_name}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {row.academic_period_name} ({row.course_assignment_academic_year_year})
                   </TableCell>
                   <TableCell>{row.numerical_grade}</TableCell>
-                  <TableCell>{row.performance_level_name ?? '—'}</TableCell>
+                  <TableCell>{row.performance_level_name ?? '-'}</TableCell>
                   <TableCell align="right">
                     <IconButton
-                      aria-label="editar"
+                      aria-label={t('grades.edit')}
                       size="small"
                       onClick={() => openEdit(row)}
                     >
                       <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton
-                      aria-label="eliminar"
+                      aria-label={t('grades.delete')}
                       size="small"
                       onClick={() => setDeleteTarget(row)}
                     >
@@ -577,16 +764,16 @@ export function GradesPage() {
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editing ? 'Editar calificación' : 'Nueva calificación'}
+          {editing ? t('grades.editGrade') : t('grades.newGrade')}
         </DialogTitle>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1">
             {formError ? <Alert severity="error">{formError}</Alert> : null}
             {!editing ? (
               <FormControl fullWidth required>
-                <InputLabel>Año lectivo (formulario)</InputLabel>
+                <InputLabel>{t('grades.yearForm')}</InputLabel>
                 <Select
-                  label="Año lectivo (formulario)"
+                  label={t('grades.yearForm')}
                   value={dialogYearId ?? ''}
                   onChange={(e) => {
                     const v = e.target.value
@@ -608,7 +795,7 @@ export function GradesPage() {
                 <Box className="flex gap-2 items-end">
                   <TextField
                     size="small"
-                    label="Buscar estudiante"
+                    label={t('grades.searchStudent')}
                     fullWidth
                     value={studentSearchInput}
                     onChange={(e) => setStudentSearchInput(e.target.value)}
@@ -625,7 +812,7 @@ export function GradesPage() {
                       setAppliedStudentSearch(studentSearchInput)
                     }
                   >
-                    Buscar
+                    {t('common.search')}
                   </Button>
                 </Box>
                 <Controller
@@ -644,7 +831,7 @@ export function GradesPage() {
                       renderInput={(params: AutocompleteRenderInputParams) => (
                         <TextField
                           {...params}
-                          label="Estudiante"
+                          label={t('grades.student')}
                           error={!!fieldState.error}
                           helperText={fieldState.error?.message}
                           required
@@ -656,7 +843,7 @@ export function GradesPage() {
               </Box>
             ) : (
               <TextField
-                label="Estudiante"
+                label={t('grades.student')}
                 value={editing.student_name}
                 disabled
                 fullWidth
@@ -722,7 +909,7 @@ export function GradesPage() {
                     renderInput={(params: AutocompleteRenderInputParams) => (
                       <TextField
                         {...params}
-                        label="Asignación docente–curso"
+                        label={t('grades.teacherCourseAssignment')}
                         error={!!fieldState.error}
                         helperText={
                           helperParts.length > 0
@@ -746,9 +933,9 @@ export function GradesPage() {
                   required
                   disabled={!dialogYearId}
                 >
-                  <InputLabel>Período</InputLabel>
+                  <InputLabel>{t('grades.period')}</InputLabel>
                   <Select
-                    label="Período"
+                    label={t('grades.period')}
                     value={field.value}
                     onChange={field.onChange}
                   >
@@ -762,7 +949,7 @@ export function GradesPage() {
               )}
             />
             <TextField
-              label="Nota numérica"
+              label={t('grades.numericalGrade')}
               fullWidth
               required
               {...form.register('numerical_grade')}
@@ -774,36 +961,44 @@ export function GradesPage() {
               control={form.control}
               render={({ field }) => (
                 <FormControl fullWidth>
-                  <InputLabel>Escala (opcional)</InputLabel>
+                  <InputLabel>{t('grades.scaleOptional')}</InputLabel>
                   <Select
-                    label="Escala (opcional)"
+                    label={t('grades.scaleOptional')}
                     value={field.value || ''}
                     onChange={(e) => {
                       const v = String(e.target.value)
                       field.onChange(v === '' ? '' : v)
                     }}
                   >
-                    <MenuItem value="">(ninguna)</MenuItem>
+                    <MenuItem value="">{t('grades.noneScale')}</MenuItem>
                     {gradingScales.map((s: GradingScale) => (
                       <MenuItem key={s.id} value={s.id}>
                         {s.name}{' '}
-                        <span className="text-gray-500 text-xs">
+                        <Box component="span" sx={{ color: 'text.secondary', fontSize: 12 }}>
                           ({s.min_score}–{s.max_score})
-                        </span>
+                        </Box>
                       </MenuItem>
                     ))}
                   </Select>
                   {gradingScales.length > 0 ? (
-                    <span className="text-xs text-gray-500 px-3.5 pt-0.5 block">
-                      Se elige automáticamente según la nota y los rangos de cada
-                      nivel; puedes cambiarla manualmente.
-                    </span>
+                    <Box
+                      component="span"
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: 12,
+                        px: 1.75,
+                        pt: 0.5,
+                        display: 'block',
+                      }}
+                    >
+                      {t('grades.scaleHelp')}
+                    </Box>
                   ) : null}
                 </FormControl>
               )}
             />
             <TextField
-              label="Nota definitiva (opcional)"
+              label={t('grades.finalGradeOptional')}
               fullWidth
               {...form.register('definitive_grade')}
               error={!!form.formState.errors.definitive_grade}
@@ -811,9 +1006,9 @@ export function GradesPage() {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={closeDialog}>Cancelar</Button>
+            <Button onClick={closeDialog}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained" disabled={pending}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogActions>
         </form>
@@ -823,12 +1018,12 @@ export function GradesPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
       >
-        <DialogTitle>Eliminar calificación</DialogTitle>
+        <DialogTitle>{t('grades.deleteGrade')}</DialogTitle>
         <DialogContent>
-          ¿Eliminar la nota de {deleteTarget?.student_name}?
+          {t('grades.deletePrompt', { student: deleteTarget?.student_name ?? '' })}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
           <Button
             color="error"
             variant="contained"
@@ -837,7 +1032,7 @@ export function GradesPage() {
               deleteTarget && deleteMutation.mutate(deleteTarget.id)
             }
           >
-            Eliminar
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>
