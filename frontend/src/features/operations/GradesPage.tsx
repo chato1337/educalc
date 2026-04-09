@@ -402,6 +402,24 @@ export function GradesPage() {
     form.setValue,
   ])
 
+  useEffect(() => {
+    if (!dialogOpen || !!editing) return
+    if (!appliedStudentSearch.trim()) return
+    if (studentOptions.length !== 1) return
+    const only = studentOptions[0]
+    if (!only?.id) return
+    if (form.getValues('student') !== only.id) {
+      form.setValue('student', only.id, { shouldDirty: true })
+    }
+  }, [
+    dialogOpen,
+    editing,
+    appliedStudentSearch,
+    studentOptions,
+    form.getValues,
+    form.setValue,
+  ])
+
   const createMutation = useMutation({
     mutationFn: (body: Record<string, unknown>) =>
       apiClient.post<Grade>('/api/grades/', body),
@@ -814,6 +832,18 @@ export function GradesPage() {
                   >
                     {t('common.search')}
                   </Button>
+                </Box>
+                <Box
+                  component="span"
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: 12,
+                    px: 0.25,
+                  }}
+                >
+                  Busca por documento o nombre/apellidos del estudiante. Si la
+                  búsqueda devuelve un único resultado, se selecciona
+                  automáticamente.
                 </Box>
                 <Controller
                   name="student"
