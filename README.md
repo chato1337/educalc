@@ -25,7 +25,7 @@ El repositorio es un **monorepo** con backend, frontend y documentación en la c
 
 - **Python** 3.9+ (el `Pipfile` fija 3.9; puedes usar una versión compatible con el lockfile).
 - **pipenv** (recomendado) o entorno virtual + dependencias equivalentes al `Pipfile`.
-- **Node.js** y **bun** o **npm** (el frontend usa `bun` en los scripts habituales; también puedes usar `npm install` / `npm run dev`).
+- **Bun** (gestor de paquetes y runner de scripts del frontend).
 - **PostgreSQL** (opcional; si no, usa `DB_ENGINE=sqlite` en el `.env` del backend).
 
 ## Puesta en marcha

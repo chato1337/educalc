@@ -9,7 +9,7 @@ Documento para **retomar el trabajo sin contexto previo**. Complementa el plan e
 ## Cómo arrancar
 
 1. **Backend** en `http://127.0.0.1:8000` (o ajusta proxy / `VITE_API_BASE_URL`).
-2. **Frontend:** desde `frontend/`, `npm run dev` (Vite). Por defecto las peticiones a `/api` se proxifican al backend (ver `vite.config.ts`).
+2. **Frontend:** desde `frontend/`, `bun run dev` (Vite). Por defecto las peticiones a `/api` se proxifican al backend (ver `vite.config.ts`).
 3. **Login:** `/login` — credenciales del usuario Django; la API devuelve JWT (`access`, `refresh`) y `user` con `role`, `institution_id`, etc. (ver `backend/core/auth_views.py`).
 
 **Variables:** copia `.env.example` → `.env` solo si necesitas un origen API explícito (p. ej. despliegue sin proxy).
@@ -20,7 +20,7 @@ Documento para **retomar el trabajo sin contexto previo**. Complementa el plan e
 
 | Fase | Estado | Qué quedó hecho |
 |------|--------|------------------|
-| **0 — Bootstrap** | Hecho | Dependencias: React Router 7, TanStack Query, Zustand, MUI 7 + iconos, Tailwind 4 (`@tailwindcss/vite`), Axios, RHF + Zod + resolvers. Tipos OpenAPI generados en `src/types/openapi.d.ts` (`npm run generate:api-types`). Proveedores en `src/app/providers.tsx`. Alias `@/` → `src/` (Vite + `tsconfig.app.json`). |
+| **0 — Bootstrap** | Hecho | Dependencias: React Router 7, TanStack Query, Zustand, MUI 7 + iconos, Tailwind 4 (`@tailwindcss/vite`), Axios, RHF + Zod + resolvers. Tipos OpenAPI generados en `src/types/openapi.d.ts` (`bun run generate:api-types`). Proveedores en `src/app/providers.tsx`. Alias `@/` → `src/` (Vite + `tsconfig.app.json`). |
 | **1 — Auth y shell** | Hecho | `loginApi.ts` (sin ciclo con `apiClient`), `meApi.ts` (`GET /api/auth/me/`). `authStore` con `persist` localStorage (`educalc-auth`). `apiClient` con Bearer + refresh en 401 (`rawClient` para login/refresh). `ProtectedRoute` + `AdminLayout` (Drawer, AppBar, selector de institución, logout). Navegación en `src/app/navConfig.ts`. |
 | **2 — Instituciones** | Hecho | `InstitutionsPage`: listado, crear/editar (dialog + RHF/Zod), eliminar. `CampusesPage`: CRUD; listado filtrado por institución seleccionada en barra; formulario con Autocomplete de institución. |
 | **3 — Estructura académica** | Hecho (CRUD) | **Pantallas dedicadas** en `src/features/academic-structure/`: `AcademicYearsPage`, `AcademicPeriodsPage`, `GradeLevelsPage`, `GroupsPage`, `AcademicAreasPage`, `SubjectsPage` (tabla + diálogo crear/editar + eliminar, RHF + Zod). Referencias reutilizables: `academicQueries.ts` (`useInstitutionsReference`, `useAcademicYearsQuery`, `useCampusesForInstitution`, `useGradeLevelsQuery`, `useAcademicAreasQuery`). Esas rutas **ya no** usan `GenericListPage` (se quitaron de `resourceConfig.ts`). **Grupos:** filtros por año/sede/nivel; enlace «Ranking» → `/groups/:id/rankings`. |
@@ -66,7 +66,7 @@ Documento para **retomar el trabajo sin contexto previo**. Complementa el plan e
 Tras cambios en `backend/docs/openapi/schema.json`:
 
 ```bash
-cd frontend && npm run generate:api-types
+cd frontend && bun run generate:api-types
 ```
 
 ---

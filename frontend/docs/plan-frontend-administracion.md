@@ -139,7 +139,7 @@ Persistencia con `zustand/middleware` (`persist`) solo para tokens si el equipo 
 
 - Instalar: `react-router-dom`, `@tanstack/react-query`, `zustand`, `@mui/material`, `@emotion/react`, `@emotion/styled`, `@mui/icons-material`, Tailwind + integración con Vite, y opcionalmente `axios`, `openapi-typescript`, `react-hook-form`, `zod`, `@hookform/resolvers`.
 - Configurar proveedores en `main.tsx` / `app/providers.tsx`: `QueryClientProvider`, `ThemeProvider` + `CssBaseline`, `BrowserRouter`.
-- Añadir scripts npm: `generate:api-types` si se usa openapi-typescript.
+- Añadir script de Bun: `generate:api-types` si se usa openapi-typescript.
 
 ### Fase 1 — Autenticación y shell
 
