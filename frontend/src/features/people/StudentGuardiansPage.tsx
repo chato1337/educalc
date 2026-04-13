@@ -33,12 +33,15 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
+import { fetchReferenceListResults } from '@/api/list'
 import { getErrorMessage } from '@/api/errors'
+import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
+import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel'
 import { PageHeader } from '@/components/PageHeader'
 import type { Parent, Student, StudentGuardian } from '@/types/schemas'
 
@@ -72,33 +75,23 @@ export function StudentGuardiansPage() {
     ordering: ordering || undefined,
   }
 
-  const { data: rows = [], isLoading, error } = useQuery({
+  const listQuery = useInfiniteList<StudentGuardian>({
     queryKey: ['student-guardians', 'list', listParams],
-    queryFn: async () => {
-      const { data } = await apiClient.get<StudentGuardian[]>(
-        '/api/student-guardians/',
-        {
-          params: listParams,
-        },
-      )
-      return data
-    },
+    url: '/api/student-guardians/',
+    params: listParams,
   })
+  const rows = useMemo(() => flatInfinitePages(listQuery.data), [listQuery.data])
+  const isLoading = listQuery.isLoading
+  const error = listQuery.error
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', 'pick-guardian'],
-    queryFn: async () => {
-      const { data } = await apiClient.get<Student[]>('/api/students/')
-      return data
-    },
+    queryFn: async () => fetchReferenceListResults<Student>('/api/students/'),
     enabled: dialogOpen,
   })
   const { data: parents = [] } = useQuery({
     queryKey: ['parents', 'pick-guardian'],
-    queryFn: async () => {
-      const { data } = await apiClient.get<Parent[]>('/api/parents/')
-      return data
-    },
+    queryFn: async () => fetchReferenceListResults<Parent>('/api/parents/'),
     enabled: dialogOpen,
   })
 
@@ -313,6 +306,17 @@ export function StudentGuardiansPage() {
                 </TableCell>
               </TableRow>
             ))}
+            {!isLoading && rows.length > 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} sx={{ border: 0, p: 0 }}>
+                  <InfiniteScrollSentinel
+                    onLoadMore={() => void listQuery.fetchNextPage()}
+                    hasMore={listQuery.hasNextPage ?? false}
+                    isLoadingMore={listQuery.isFetchingNextPage}
+                  />
+                </TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>

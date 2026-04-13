@@ -36,15 +36,18 @@ import {
   useWatch,
   type Resolver,
 } from 'react-hook-form'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
+import { fetchReferenceListResults } from '@/api/list'
 import { getErrorMessage } from '@/api/errors'
+import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
 import {
   useAcademicYearsQuery,
 } from '@/features/academic-structure/academicQueries'
+import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel'
 import { PageHeader } from '@/components/PageHeader'
 import { useUiStore } from '@/stores/uiStore'
 import type {
@@ -85,29 +88,21 @@ export function GradeDirectorsPage() {
   )
   const { data: teachers = [] } = useQuery({
     queryKey: ['teachers', 'for-grade-directors'],
-    queryFn: async () => {
-      const { data } = await apiClient.get<Teacher[]>('/api/teachers/')
-      return data
-    },
+    queryFn: async () => fetchReferenceListResults<Teacher>('/api/teachers/'),
   })
 
   const { data: groups = [] } = useQuery({
     queryKey: ['groups', 'for-gd', filterYearId],
-    queryFn: async () => {
-      const { data } = await apiClient.get<Group[]>('/api/groups/', {
+    queryFn: async () =>
+      fetchReferenceListResults<Group>('/api/groups/', {
         params: filterYearId ? { academic_year: filterYearId } : undefined,
-      })
-      return data
-    },
+      }),
     enabled: !!filterYearId,
   })
 
   const { data: groupsForForm = [] } = useQuery({
     queryKey: ['groups', 'form-gd', dialogOpen],
-    queryFn: async () => {
-      const { data } = await apiClient.get<Group[]>('/api/groups/')
-      return data
-    },
+    queryFn: async () => fetchReferenceListResults<Group>('/api/groups/'),
     enabled: dialogOpen,
   })
 
@@ -122,16 +117,14 @@ export function GradeDirectorsPage() {
     ordering: ordering || undefined,
   }
 
-  const { data: rows = [], isLoading, error } = useQuery({
+  const listQuery = useInfiniteList<GradeDirector>({
     queryKey: ['grade-directors', 'list', listParams],
-    queryFn: async () => {
-      const { data } = await apiClient.get<GradeDirector[]>(
-        '/api/grade-directors/',
-        { params: listParams },
-      )
-      return data
-    },
+    url: '/api/grade-directors/',
+    params: listParams,
   })
+  const rows = useMemo(() => flatInfinitePages(listQuery.data), [listQuery.data])
+  const isLoading = listQuery.isLoading
+  const error = listQuery.error
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,
@@ -424,6 +417,17 @@ export function GradeDirectorsPage() {
                 </TableCell>
               </TableRow>
             ))}
+            {!isLoading && rows.length > 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} sx={{ border: 0, p: 0 }}>
+                  <InfiniteScrollSentinel
+                    onLoadMore={() => void listQuery.fetchNextPage()}
+                    hasMore={listQuery.hasNextPage ?? false}
+                    isLoadingMore={listQuery.isFetchingNextPage}
+                  />
+                </TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>

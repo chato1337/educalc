@@ -31,13 +31,16 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
+import { fetchReferenceListResults } from '@/api/list'
 import { getErrorMessage } from '@/api/errors'
+import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
 import { useInstitutionsReference } from '@/features/academic-structure/academicQueries'
+import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel'
 import { PageHeader } from '@/components/PageHeader'
 import type { Parent, RoleEnum, Teacher, UserProfile } from '@/types/schemas'
 import type { Institution } from '@/types/schemas'
@@ -97,18 +100,12 @@ export function UsersPage() {
   const { data: institutions = [] } = useInstitutionsReference()
   const { data: teachers = [] } = useQuery({
     queryKey: ['teachers', 'pick'],
-    queryFn: async () => {
-      const { data } = await apiClient.get<Teacher[]>('/api/teachers/')
-      return data
-    },
+    queryFn: async () => fetchReferenceListResults<Teacher>('/api/teachers/'),
     enabled: dialogOpen,
   })
   const { data: parents = [] } = useQuery({
     queryKey: ['parents', 'pick'],
-    queryFn: async () => {
-      const { data } = await apiClient.get<Parent[]>('/api/parents/')
-      return data
-    },
+    queryFn: async () => fetchReferenceListResults<Parent>('/api/parents/'),
     enabled: dialogOpen,
   })
 
@@ -122,15 +119,14 @@ export function UsersPage() {
     ordering: ordering || undefined,
   }
 
-  const { data: rows = [], isLoading, error } = useQuery({
+  const listQuery = useInfiniteList<UserProfile>({
     queryKey: ['users', 'list', listParams],
-    queryFn: async () => {
-      const { data } = await apiClient.get<UserProfile[]>('/api/users/', {
-        params: listParams,
-      })
-      return data
-    },
+    url: '/api/users/',
+    params: listParams,
   })
+  const rows = useMemo(() => flatInfinitePages(listQuery.data), [listQuery.data])
+  const isLoading = listQuery.isLoading
+  const error = listQuery.error
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,
@@ -390,6 +386,17 @@ export function UsersPage() {
                 </TableCell>
               </TableRow>
             ))}
+            {!isLoading && rows.length > 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} sx={{ border: 0, p: 0 }}>
+                  <InfiniteScrollSentinel
+                    onLoadMore={() => void listQuery.fetchNextPage()}
+                    hasMore={listQuery.hasNextPage ?? false}
+                    isLoadingMore={listQuery.isFetchingNextPage}
+                  />
+                </TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>

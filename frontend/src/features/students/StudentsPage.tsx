@@ -19,14 +19,16 @@ import {
   Typography,
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
-import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
-import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
-import { queryKeys } from '@/api/queryKeys'
+import {
+  flatInfinitePages,
+  useInfiniteList,
+} from '@/api/useInfiniteList'
+import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel'
 import { PageHeader } from '@/components/PageHeader'
 import type { Student } from '@/types/schemas'
 
@@ -51,15 +53,17 @@ export function StudentsPage() {
     ordering: ordering || undefined,
   }
 
-  const { data: rows = [], isLoading, error } = useQuery({
-    queryKey: queryKeys.students(JSON.stringify(params)),
-    queryFn: async () => {
-      const { data } = await apiClient.get<Student[]>('/api/students/', {
-        params,
-      })
-      return data
-    },
+  const listQuery = useInfiniteList<Student>({
+    queryKey: ['students', 'list'],
+    url: '/api/students/',
+    params,
   })
+  const rows = useMemo(
+    () => flatInfinitePages(listQuery.data),
+    [listQuery.data],
+  )
+  const isLoading = listQuery.isLoading
+  const error = listQuery.error
 
   return (
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
@@ -219,6 +223,17 @@ export function StudentsPage() {
                 </TableCell>
               </TableRow>
             ))}
+            {!isLoading && rows.length > 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} sx={{ border: 0, p: 0 }}>
+                  <InfiniteScrollSentinel
+                    onLoadMore={() => void listQuery.fetchNextPage()}
+                    hasMore={listQuery.hasNextPage ?? false}
+                    isLoadingMore={listQuery.isFetchingNextPage}
+                  />
+                </TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>

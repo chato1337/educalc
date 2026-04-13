@@ -58,6 +58,7 @@ from .models import (
     Teacher,
     UserProfile,
 )
+from .pagination import StandardLimitOffsetPagination
 from .permissions import IsAdminUser
 from .serializers import (
     BulkLoadFileSerializer,
@@ -135,6 +136,37 @@ def bulk_csv_load_schema(*, summary: str, description: str, tags: list, request_
     )
 
 
+def _openapi_limit_offset_parameters():
+    """Query parameters for ``StandardLimitOffsetPagination`` (global list pagination)."""
+    default_lim = StandardLimitOffsetPagination.default_limit
+    max_lim = StandardLimitOffsetPagination.max_limit
+    return [
+        OpenApiParameter(
+            name="limit",
+            type=int,
+            location=OpenApiParameter.QUERY,
+            required=False,
+            description=(
+                "Maximum number of items in the `results` array for this page. "
+                f"If omitted, defaults to {default_lim}. Cannot exceed {max_lim}."
+            ),
+        ),
+        OpenApiParameter(
+            name="offset",
+            type=int,
+            location=OpenApiParameter.QUERY,
+            required=False,
+            description="Number of items to skip from the beginning of the filtered, ordered queryset.",
+        ),
+    ]
+
+
+OPENAPI_LIST_PAGINATION_DESCRIPTION = (
+    "Paginated list: response JSON has `count`, `next`, `previous`, and `results` "
+    "(array of resources). Use `limit` and `offset` to page through `results`."
+)
+
+
 def schema_viewset(
     tags: list,
     description: str = "",
@@ -143,7 +175,7 @@ def schema_viewset(
 ):
     """Decorator for ViewSet OpenAPI schema."""
     list_description = description
-    list_parameters = []
+    list_parameters = list(_openapi_limit_offset_parameters())
 
     if search_fields:
         search_description = (
@@ -183,6 +215,12 @@ def schema_viewset(
                     description=f"Filter by exact value of `{field}`.",
                 )
             )
+
+    list_description = (
+        f"{list_description} {OPENAPI_LIST_PAGINATION_DESCRIPTION}".strip()
+        if list_description
+        else OPENAPI_LIST_PAGINATION_DESCRIPTION
+    )
 
     return extend_schema_view(
         list=extend_schema(
@@ -857,8 +895,10 @@ class StudentGuardianViewSet(viewsets.ModelViewSet):
         "course_assignment__subject__name, course_assignment__teacher__full_name, course_assignment__teacher__document_number, "
         "course_assignment__group__name, academic_period__name. "
         "Available exact-match filters via query params: student, student__document_number, course_assignment, "
-        "course_assignment__teacher__document_number, academic_period, academic_period__number.",
+        "course_assignment__teacher__document_number, academic_period, academic_period__number. "
+        + OPENAPI_LIST_PAGINATION_DESCRIPTION,
         parameters=[
+            *_openapi_limit_offset_parameters(),
             OpenApiParameter(
                 name="search",
                 type=str,
@@ -1145,8 +1185,10 @@ class DisciplinaryReportViewSet(viewsets.ModelViewSet):
         tags=["School Records"],
         description="Text search available through query param `search`. Supported fields: student__document_number, "
         "student__full_name, group__name, group__grade_level__name, institution__name, institution__dane_code, campus__name. "
-        "Available exact-match filters via query params: student, student__document_number, academic_year, academic_year__year, institution, institution__dane_code.",
+        "Available exact-match filters via query params: student, student__document_number, academic_year, academic_year__year, institution, institution__dane_code. "
+        + OPENAPI_LIST_PAGINATION_DESCRIPTION,
         parameters=[
+            *_openapi_limit_offset_parameters(),
             OpenApiParameter(
                 name="search",
                 type=str,
@@ -1202,8 +1244,10 @@ class SchoolRecordViewSet(viewsets.ModelViewSet):
         tags=["Academic Indicators Reports"],
         description="Text search available through query param `search`. Supported fields: student__document_number, "
         "student__full_name, group__name, academic_period__name, grade_director__full_name, grade_director__document_number. "
-        "Available exact-match filters via query params: student, student__document_number, academic_period, academic_period__number, grade_director, grade_director__document_number.",
+        "Available exact-match filters via query params: student, student__document_number, academic_period, academic_period__number, grade_director, grade_director__document_number. "
+        + OPENAPI_LIST_PAGINATION_DESCRIPTION,
         parameters=[
+            *_openapi_limit_offset_parameters(),
             OpenApiParameter(
                 name="search",
                 type=str,

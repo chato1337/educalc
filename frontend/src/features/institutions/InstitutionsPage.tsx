@@ -20,8 +20,8 @@ import {
   TextField,
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -29,6 +29,11 @@ import { z } from 'zod'
 import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
+import {
+  flatInfinitePages,
+  useInfiniteList,
+} from '@/api/useInfiniteList'
+import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel'
 import { PageHeader } from '@/components/PageHeader'
 import type { Institution } from '@/types/schemas'
 
@@ -56,13 +61,16 @@ export function InstitutionsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Institution | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
 
-  const { data: rows = [], isLoading, error } = useQuery({
+  const listQuery = useInfiniteList<Institution>({
     queryKey: queryKeys.institutions(),
-    queryFn: async () => {
-      const { data } = await apiClient.get<Institution[]>('/api/institutions/')
-      return data
-    },
+    url: '/api/institutions/',
   })
+  const rows = useMemo(
+    () => flatInfinitePages(listQuery.data),
+    [listQuery.data],
+  )
+  const isLoading = listQuery.isLoading
+  const error = listQuery.error
 
   const form = useForm<InstitutionForm>({
     resolver: zodResolver(institutionSchema),
@@ -196,6 +204,17 @@ export function InstitutionsPage() {
                 </TableCell>
               </TableRow>
             ))}
+            {!isLoading && rows.length > 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} sx={{ border: 0, p: 0 }}>
+                  <InfiniteScrollSentinel
+                    onLoadMore={() => void listQuery.fetchNextPage()}
+                    hasMore={listQuery.hasNextPage ?? false}
+                    isLoadingMore={listQuery.isFetchingNextPage}
+                  />
+                </TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>

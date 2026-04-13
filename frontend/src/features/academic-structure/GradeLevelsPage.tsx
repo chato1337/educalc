@@ -23,15 +23,20 @@ import {
   TextField,
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type { Resolver } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
+import {
+  flatInfinitePages,
+  useInfiniteList,
+} from '@/api/useInfiniteList'
+import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel'
 import { useInstitutionsReference } from '@/features/academic-structure/academicQueries'
 import { PageHeader } from '@/components/PageHeader'
 import { useUiStore } from '@/stores/uiStore'
@@ -74,20 +79,21 @@ export function GradeLevelsPage() {
       ? { institution: selectedInstitutionId, search: appliedSearch || undefined }
       : { search: appliedSearch || undefined }
 
-  const { data: rows = [], isLoading, error } = useQuery({
+  const listQuery = useInfiniteList<GradeLevel>({
     queryKey: [
       'grade-levels',
       'list',
       { institution: selectedInstitutionId, search: appliedSearch },
     ],
-    queryFn: async () => {
-      const { data } = await apiClient.get<GradeLevel[]>(
-        '/api/grade-levels/',
-        { params: listParams },
-      )
-      return data
-    },
+    url: '/api/grade-levels/',
+    params: listParams,
   })
+  const rows = useMemo(
+    () => flatInfinitePages(listQuery.data),
+    [listQuery.data],
+  )
+  const isLoading = listQuery.isLoading
+  const error = listQuery.error
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,
@@ -256,6 +262,17 @@ export function GradeLevelsPage() {
                 </TableCell>
               </TableRow>
             ))}
+            {!isLoading && rows.length > 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} sx={{ border: 0, p: 0 }}>
+                  <InfiniteScrollSentinel
+                    onLoadMore={() => void listQuery.fetchNextPage()}
+                    hasMore={listQuery.hasNextPage ?? false}
+                    isLoadingMore={listQuery.isFetchingNextPage}
+                  />
+                </TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>

@@ -21,19 +21,20 @@ import {
   TextField,
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, type Resolver } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { z } from 'zod'
 
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
+import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
+import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel'
 import { PageHeader } from '@/components/PageHeader'
 import {
   createGradingScale,
   deleteGradingScale,
-  fetchGradingScalesList,
   patchGradingScale,
   type GradingScaleRequest,
   type PatchedGradingScaleRequest,
@@ -102,13 +103,19 @@ export function GradingScalesPage() {
         }
       : { search: appliedSearch.trim() || undefined }
 
-  const { data: rows = [], isLoading, error } = useQuery({
-    queryKey: queryKeys.gradingScales(
-      selectedInstitutionId,
-      appliedSearch || undefined,
-    ),
-    queryFn: () => fetchGradingScalesList(listParams),
+  const listQuery = useInfiniteList<GradingScale>({
+    queryKey: [
+      ...queryKeys.gradingScales(
+        selectedInstitutionId,
+        appliedSearch || undefined,
+      ),
+    ],
+    url: '/api/grading-scales/',
+    params: listParams,
   })
+  const rows = useMemo(() => flatInfinitePages(listQuery.data), [listQuery.data])
+  const isLoading = listQuery.isLoading
+  const error = listQuery.error
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,
@@ -268,36 +275,47 @@ export function GradingScalesPage() {
               <TableRow>
                 <TableCell colSpan={5}>{t('common.loading')}</TableCell>
               </TableRow>
-            ) : rows.length === 0 ? (
+            ) : null}
+            {!isLoading && rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5}>{t('common.none')}</TableCell>
               </TableRow>
-            ) : (
-              rows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell>{row.code}</TableCell>
-                  <TableCell>{row.name}</TableCell>
-                  <TableCell>{row.min_score}</TableCell>
-                  <TableCell>{row.max_score}</TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      aria-label={t('gradingScales.edit')}
-                      size="small"
-                      onClick={() => openEdit(row)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      aria-label={t('gradingScales.delete')}
-                      size="small"
-                      onClick={() => setDeleteTarget(row)}
-                    >
-                      <DeleteOutlineIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
+            ) : null}
+            {rows.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell>{row.code}</TableCell>
+                <TableCell>{row.name}</TableCell>
+                <TableCell>{row.min_score}</TableCell>
+                <TableCell>{row.max_score}</TableCell>
+                <TableCell align="right">
+                  <IconButton
+                    aria-label={t('gradingScales.edit')}
+                    size="small"
+                    onClick={() => openEdit(row)}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    aria-label={t('gradingScales.delete')}
+                    size="small"
+                    onClick={() => setDeleteTarget(row)}
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+            {!isLoading && rows.length > 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} sx={{ border: 0, p: 0 }}>
+                  <InfiniteScrollSentinel
+                    onLoadMore={() => void listQuery.fetchNextPage()}
+                    hasMore={listQuery.hasNextPage ?? false}
+                    isLoadingMore={listQuery.isFetchingNextPage}
+                  />
+                </TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>

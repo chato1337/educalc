@@ -9,7 +9,7 @@
         "/api/academic-areas/": {
             "get": {
                 "operationId": "academic_areas_list",
-                "description": "Broad category of knowledge Text search available through query param `search`. Supported fields: name, code, description. Available exact-match filters via query params: institution, institution__dane_code, name, code.",
+                "description": "Broad category of knowledge Text search available through query param `search`. Supported fields: name, code, description. Available exact-match filters via query params: institution, institution__dane_code, name, code. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Academic Areas",
                 "parameters": [
                     {
@@ -38,11 +38,27 @@
                     },
                     {
                         "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
                         "name": "name",
                         "schema": {
                             "type": "string"
                         },
                         "description": "Filter by exact value of `name`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -78,10 +94,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/AcademicArea"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedAcademicAreaList"
                                 }
                             }
                         },
@@ -459,7 +472,7 @@
         "/api/academic-indicators/": {
             "get": {
                 "operationId": "academic_indicators_list",
-                "description": "Qualitative achievement descriptor for a student Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number, performance_level.",
+                "description": "Qualitative achievement descriptor for a student Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number, performance_level. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Academic Indicators",
                 "parameters": [
                     {
@@ -493,6 +506,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `course_assignment__teacher__document_number`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -552,10 +581,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/AcademicIndicator"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedAcademicIndicatorList"
                                 }
                             }
                         },
@@ -614,7 +640,7 @@
         "/api/academic-indicators-reports/": {
             "get": {
                 "operationId": "academic_indicators_reports_list",
-                "description": "Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, academic_period__name, grade_director__full_name, grade_director__document_number. Available exact-match filters via query params: student, student__document_number, academic_period, academic_period__number, grade_director, grade_director__document_number.",
+                "description": "Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, academic_period__name, grade_director__full_name, grade_director__document_number. Available exact-match filters via query params: student, student__document_number, academic_period, academic_period__number, grade_director, grade_director__document_number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Academic Indicators Reports",
                 "parameters": [
                     {
@@ -648,6 +674,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `grade_director__document_number`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -699,10 +741,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/AcademicIndicatorsReport"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedAcademicIndicatorsReportList"
                                 }
                             }
                         },
@@ -1094,7 +1133,7 @@
         "/api/academic-periods/": {
             "get": {
                 "operationId": "academic_periods_list",
-                "description": "Evaluation period (P1, P2, P3, P4) Text search available through query param `search`. Supported fields: name, =number, =academic_year__year. Available exact-match filters via query params: academic_year, academic_year__year, number, name.",
+                "description": "Evaluation period (P1, P2, P3, P4) Text search available through query param `search`. Supported fields: name, =number, =academic_year__year. Available exact-match filters via query params: academic_year, academic_year__year, number, name. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Academic Periods",
                 "parameters": [
                     {
@@ -1115,6 +1154,14 @@
                     },
                     {
                         "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
                         "name": "name",
                         "schema": {
                             "type": "string"
@@ -1128,6 +1175,14 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `number`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -1163,10 +1218,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/AcademicPeriod"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedAcademicPeriodList"
                                 }
                             }
                         },
@@ -1467,7 +1519,7 @@
         "/api/academic-years/": {
             "get": {
                 "operationId": "academic_years_list",
-                "description": "Academic/school year Text search available through query param `search`. Supported fields: =year, institution__name. Available exact-match filters via query params: institution, institution__dane_code, year, is_active.",
+                "description": "Academic/school year Text search available through query param `search`. Supported fields: =year, institution__name. Available exact-match filters via query params: institution, institution__dane_code, year, is_active. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Academic Years",
                 "parameters": [
                     {
@@ -1493,6 +1545,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `is_active`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -1536,10 +1604,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/AcademicYear"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedAcademicYearList"
                                 }
                             }
                         },
@@ -1788,7 +1853,7 @@
         "/api/attendances/": {
             "get": {
                 "operationId": "attendances_list",
-                "description": "Absences per subject and period Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number.",
+                "description": "Absences per subject and period Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Attendance",
                 "parameters": [
                     {
@@ -1822,6 +1887,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `course_assignment__teacher__document_number`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -1873,10 +1954,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Attendance"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedAttendanceList"
                                 }
                             }
                         },
@@ -2323,7 +2401,7 @@
         "/api/campuses/": {
             "get": {
                 "operationId": "campuses_list",
-                "description": "Campus or sede of an institution Text search available through query param `search`. Supported fields: name, code, institution__name, institution__dane_code. Available exact-match filters via query params: institution, institution__dane_code, name, code.",
+                "description": "Campus or sede of an institution Text search available through query param `search`. Supported fields: name, code, institution__name, institution__dane_code. Available exact-match filters via query params: institution, institution__dane_code, name, code. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Campuses",
                 "parameters": [
                     {
@@ -2352,11 +2430,27 @@
                     },
                     {
                         "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
                         "name": "name",
                         "schema": {
                             "type": "string"
                         },
                         "description": "Filter by exact value of `name`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -2392,10 +2486,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Campus"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedCampusList"
                                 }
                             }
                         },
@@ -2644,7 +2735,7 @@
         "/api/course-assignments/": {
             "get": {
                 "operationId": "course_assignments_list",
-                "description": "Teacher assigned to a subject in a group for an academic year Text search available through query param `search`. Supported fields: subject__name, subject__emphasis, teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: subject, subject__name, teacher, teacher__document_number, group, group__name, academic_year, academic_year__year.",
+                "description": "Teacher assigned to a subject in a group for an academic year Text search available through query param `search`. Supported fields: subject__name, subject__emphasis, teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: subject, subject__name, teacher, teacher__document_number, group, group__name, academic_year, academic_year__year. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Course Assignments",
                 "parameters": [
                     {
@@ -2678,6 +2769,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `group__name`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -2745,10 +2852,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/CourseAssignment"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedCourseAssignmentList"
                                 }
                             }
                         },
@@ -3097,7 +3201,7 @@
         "/api/disciplinary-reports/": {
             "get": {
                 "operationId": "disciplinary_reports_list",
-                "description": "Qualitative disciplinary/behavior report Text search available through query param `search`. Supported fields: student__document_number, student__full_name, report_text, created_by__full_name, created_by__document_number. Available exact-match filters via query params: student, student__document_number, academic_period, academic_period__number, created_by, created_by__document_number.",
+                "description": "Qualitative disciplinary/behavior report Text search available through query param `search`. Supported fields: student__document_number, student__full_name, report_text, created_by__full_name, created_by__document_number. Available exact-match filters via query params: student, student__document_number, academic_period, academic_period__number, created_by, created_by__document_number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Disciplinary Reports",
                 "parameters": [
                     {
@@ -3131,6 +3235,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `created_by__document_number`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -3182,10 +3302,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/DisciplinaryReport"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedDisciplinaryReportList"
                                 }
                             }
                         },
@@ -3486,7 +3603,7 @@
         "/api/enrollments/": {
             "get": {
                 "operationId": "enrollments_list",
-                "description": "Student-group enrollment for an academic year Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, =academic_year__year, status. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_year, academic_year__year, status.",
+                "description": "Student-group enrollment for an academic year Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, =academic_year__year, status. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_year, academic_year__year, status. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Enrollments",
                 "parameters": [
                     {
@@ -3520,6 +3637,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `group__name`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -3579,10 +3712,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Enrollment"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedEnrollmentList"
                                 }
                             }
                         },
@@ -3831,7 +3961,7 @@
         "/api/grade-directors/": {
             "get": {
                 "operationId": "grade_directors_list",
-                "description": "Homeroom teacher for a group Text search available through query param `search`. Supported fields: teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: teacher, teacher__document_number, group, group__name, academic_year, academic_year__year.",
+                "description": "Homeroom teacher for a group Text search available through query param `search`. Supported fields: teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: teacher, teacher__document_number, group, group__name, academic_year, academic_year__year. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Grade Directors",
                 "parameters": [
                     {
@@ -3865,6 +3995,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `group__name`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -3916,10 +4062,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/GradeDirector"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedGradeDirectorList"
                                 }
                             }
                         },
@@ -4220,7 +4363,7 @@
         "/api/grade-levels/": {
             "get": {
                 "operationId": "grade_levels_list",
-                "description": "Grade level (e.g. SEXTO, PRIMERO) Text search available through query param `search`. Supported fields: name. Available exact-match filters via query params: institution, institution__dane_code, name, level_order.",
+                "description": "Grade level (e.g. SEXTO, PRIMERO) Text search available through query param `search`. Supported fields: name. Available exact-match filters via query params: institution, institution__dane_code, name, level_order. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Grade Levels",
                 "parameters": [
                     {
@@ -4249,11 +4392,27 @@
                     },
                     {
                         "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
                         "name": "name",
                         "schema": {
                             "type": "string"
                         },
                         "description": "Filter by exact value of `name`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -4289,10 +4448,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/GradeLevel"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedGradeLevelList"
                                 }
                             }
                         },
@@ -4541,7 +4697,7 @@
         "/api/grades/": {
             "get": {
                 "operationId": "grades_list",
-                "description": "Student grades with enriched context: student identity, course assignment (subject, teacher, group, academic year), and academic period. Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, course_assignment__teacher__document_number, course_assignment__group__name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number.",
+                "description": "Student grades with enriched context: student identity, course assignment (subject, teacher, group, academic year), and academic period. Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, course_assignment__teacher__document_number, course_assignment__group__name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Grades",
                 "parameters": [
                     {
@@ -4575,6 +4731,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `course_assignment__teacher__document_number`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -4626,10 +4798,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Grade"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedGradeList"
                                 }
                             }
                         },
@@ -4931,7 +5100,7 @@
         "/api/grading-scales/": {
             "get": {
                 "operationId": "grading_scales_list",
-                "description": "Performance levels per Decreto 1290 Text search available through query param `search`. Supported fields: code, name, description. Available exact-match filters via query params: institution, institution__dane_code, code, name.",
+                "description": "Performance levels per Decreto 1290 Text search available through query param `search`. Supported fields: code, name, description. Available exact-match filters via query params: institution, institution__dane_code, code, name. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Grading Scales",
                 "parameters": [
                     {
@@ -4960,11 +5129,27 @@
                     },
                     {
                         "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
                         "name": "name",
                         "schema": {
                             "type": "string"
                         },
                         "description": "Filter by exact value of `name`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -5000,10 +5185,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/GradingScale"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedGradingScaleList"
                                 }
                             }
                         },
@@ -5304,7 +5486,7 @@
         "/api/groups/": {
             "get": {
                 "operationId": "groups_list",
-                "description": "Student group within a grade Text search available through query param `search`. Supported fields: name, grade_level__name, campus__name, =academic_year__year. Available exact-match filters via query params: grade_level, grade_level__name, academic_year, academic_year__year, campus, campus__name, name.",
+                "description": "Student group within a grade Text search available through query param `search`. Supported fields: name, grade_level__name, campus__name, =academic_year__year. Available exact-match filters via query params: grade_level, grade_level__name, academic_year, academic_year__year, campus, campus__name, name. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Groups",
                 "parameters": [
                     {
@@ -5357,11 +5539,27 @@
                     },
                     {
                         "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
                         "name": "name",
                         "schema": {
                             "type": "string"
                         },
                         "description": "Filter by exact value of `name`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -5397,10 +5595,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Group"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedGroupList"
                                 }
                             }
                         },
@@ -5698,7 +5893,7 @@
         "/api/institutions/": {
             "get": {
                 "operationId": "institutions_list",
-                "description": "Educational institutions at corporate level Text search available through query param `search`. Supported fields: name, dane_code, nit. Available exact-match filters via query params: dane_code, nit, name.",
+                "description": "Educational institutions at corporate level Text search available through query param `search`. Supported fields: name, dane_code, nit. Available exact-match filters via query params: dane_code, nit, name. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Institutions",
                 "parameters": [
                     {
@@ -5708,6 +5903,14 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `dane_code`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
                     },
                     {
                         "in": "query",
@@ -5724,6 +5927,14 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `nit`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -5759,10 +5970,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Institution"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedInstitutionList"
                                 }
                             }
                         },
@@ -6011,7 +6219,7 @@
         "/api/parents/": {
             "get": {
                 "operationId": "parents_list",
-                "description": "Parent or guardian of a student Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. Available exact-match filters via query params: document_type, document_number, email, kinship.",
+                "description": "Parent or guardian of a student Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. Available exact-match filters via query params: document_type, document_number, email, kinship. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Parents",
                 "parameters": [
                     {
@@ -6047,6 +6255,22 @@
                         "description": "Filter by exact value of `kinship`."
                     },
                     {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
+                    },
+                    {
                         "name": "ordering",
                         "required": false,
                         "in": "query",
@@ -6080,10 +6304,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Parent"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedParentList"
                                 }
                             }
                         },
@@ -6384,7 +6605,7 @@
         "/api/performance-summaries/": {
             "get": {
                 "operationId": "performance_summaries_list",
-                "description": "Student average and rank per period Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, academic_period__name. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_period, academic_period__number.",
+                "description": "Student average and rank per period Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, academic_period__name. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_period, academic_period__number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Performance Summaries",
                 "parameters": [
                     {
@@ -6418,6 +6639,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `group__name`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -6469,10 +6706,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/PerformanceSummary"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedPerformanceSummaryList"
                                 }
                             }
                         },
@@ -6773,7 +7007,7 @@
         "/api/school-records/": {
             "get": {
                 "operationId": "school_records_list",
-                "description": "Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, institution__name, institution__dane_code, campus__name. Available exact-match filters via query params: student, student__document_number, academic_year, academic_year__year, institution, institution__dane_code.",
+                "description": "Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, institution__name, institution__dane_code, campus__name. Available exact-match filters via query params: student, student__document_number, academic_year, academic_year__year, institution, institution__dane_code. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List School Records",
                 "parameters": [
                     {
@@ -6807,6 +7041,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `institution__dane_code`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -6858,10 +7108,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/SchoolRecord"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedSchoolRecordList"
                                 }
                             }
                         },
@@ -7011,7 +7258,7 @@
         "/api/student-guardians/": {
             "get": {
                 "operationId": "student_guardians_list",
-                "description": "Student-parent/guardian relationship Text search available through query param `search`. Supported fields: student__document_number, student__full_name, parent__document_number, parent__full_name, parent__email. Available exact-match filters via query params: student, student__document_number, parent, parent__document_number, is_primary.",
+                "description": "Student-parent/guardian relationship Text search available through query param `search`. Supported fields: student__document_number, student__full_name, parent__document_number, parent__full_name, parent__email. Available exact-match filters via query params: student, student__document_number, parent, parent__document_number, is_primary. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Student Guardians",
                 "parameters": [
                     {
@@ -7021,6 +7268,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `is_primary`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -7088,10 +7351,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/StudentGuardian"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedStudentGuardianList"
                                 }
                             }
                         },
@@ -7392,7 +7652,7 @@
         "/api/students/": {
             "get": {
                 "operationId": "students_list",
-                "description": "Student data Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name. Available exact-match filters via query params: document_type, document_number, gender, sisben, stratum.",
+                "description": "Student data Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name. Available exact-match filters via query params: document_type, document_number, gender, sisben, stratum. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Students",
                 "parameters": [
                     {
@@ -7418,6 +7678,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `gender`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -7469,10 +7745,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Student"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedStudentList"
                                 }
                             }
                         },
@@ -7815,7 +8088,7 @@
         "/api/subjects/": {
             "get": {
                 "operationId": "subjects_list",
-                "description": "Subject/course with optional emphasis Text search available through query param `search`. Supported fields: name, emphasis, academic_area__name, institution__name. Available exact-match filters via query params: academic_area, academic_area__name, institution, institution__dane_code, name, emphasis.",
+                "description": "Subject/course with optional emphasis Text search available through query param `search`. Supported fields: name, emphasis, academic_area__name, institution__name. Available exact-match filters via query params: academic_area, academic_area__name, institution, institution__dane_code, name, emphasis. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Subjects",
                 "parameters": [
                     {
@@ -7860,11 +8133,27 @@
                     },
                     {
                         "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
                         "name": "name",
                         "schema": {
                             "type": "string"
                         },
                         "description": "Filter by exact value of `name`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -7900,10 +8189,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Subject"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedSubjectList"
                                 }
                             }
                         },
@@ -8204,7 +8490,7 @@
         "/api/teachers/": {
             "get": {
                 "operationId": "teachers_list",
-                "description": "Teacher/faculty information Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. Available exact-match filters via query params: document_type, document_number, email, specialty.",
+                "description": "Teacher/faculty information Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. Available exact-match filters via query params: document_type, document_number, email, specialty. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Teachers",
                 "parameters": [
                     {
@@ -8230,6 +8516,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `email`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -8273,10 +8575,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Teacher"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedTeacherList"
                                 }
                             }
                         },
@@ -8629,7 +8928,7 @@
         "/api/users/": {
             "get": {
                 "operationId": "users_list",
-                "description": "User profile for RBAC (Admin only) Text search available through query param `search`. Supported fields: user__username, user__email, teacher__document_number, teacher__full_name, parent__document_number, parent__full_name, institution__name. Available exact-match filters via query params: role, institution, institution__dane_code, user__username, user__email.",
+                "description": "User profile for RBAC (Admin only) Text search available through query param `search`. Supported fields: user__username, user__email, teacher__document_number, teacher__full_name, parent__document_number, parent__full_name, institution__name. Available exact-match filters via query params: role, institution, institution__dane_code, user__username, user__email. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Users",
                 "parameters": [
                     {
@@ -8647,6 +8946,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `institution__dane_code`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
                     },
                     {
                         "name": "ordering",
@@ -8706,10 +9021,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/UserProfile"
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedUserProfileList"
                                 }
                             }
                         },
@@ -10613,6 +10925,750 @@
                     "role",
                     "username"
                 ]
+            },
+            "PaginatedAcademicAreaList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AcademicArea"
+                        }
+                    }
+                }
+            },
+            "PaginatedAcademicIndicatorList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AcademicIndicator"
+                        }
+                    }
+                }
+            },
+            "PaginatedAcademicIndicatorsReportList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AcademicIndicatorsReport"
+                        }
+                    }
+                }
+            },
+            "PaginatedAcademicPeriodList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AcademicPeriod"
+                        }
+                    }
+                }
+            },
+            "PaginatedAcademicYearList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AcademicYear"
+                        }
+                    }
+                }
+            },
+            "PaginatedAttendanceList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Attendance"
+                        }
+                    }
+                }
+            },
+            "PaginatedCampusList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Campus"
+                        }
+                    }
+                }
+            },
+            "PaginatedCourseAssignmentList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CourseAssignment"
+                        }
+                    }
+                }
+            },
+            "PaginatedDisciplinaryReportList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DisciplinaryReport"
+                        }
+                    }
+                }
+            },
+            "PaginatedEnrollmentList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Enrollment"
+                        }
+                    }
+                }
+            },
+            "PaginatedGradeDirectorList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GradeDirector"
+                        }
+                    }
+                }
+            },
+            "PaginatedGradeLevelList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GradeLevel"
+                        }
+                    }
+                }
+            },
+            "PaginatedGradeList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Grade"
+                        }
+                    }
+                }
+            },
+            "PaginatedGradingScaleList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GradingScale"
+                        }
+                    }
+                }
+            },
+            "PaginatedGroupList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Group"
+                        }
+                    }
+                }
+            },
+            "PaginatedInstitutionList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Institution"
+                        }
+                    }
+                }
+            },
+            "PaginatedParentList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Parent"
+                        }
+                    }
+                }
+            },
+            "PaginatedPerformanceSummaryList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PerformanceSummary"
+                        }
+                    }
+                }
+            },
+            "PaginatedSchoolRecordList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SchoolRecord"
+                        }
+                    }
+                }
+            },
+            "PaginatedStudentGuardianList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StudentGuardian"
+                        }
+                    }
+                }
+            },
+            "PaginatedStudentList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Student"
+                        }
+                    }
+                }
+            },
+            "PaginatedSubjectList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Subject"
+                        }
+                    }
+                }
+            },
+            "PaginatedTeacherList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Teacher"
+                        }
+                    }
+                }
+            },
+            "PaginatedUserProfileList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/UserProfile"
+                        }
+                    }
+                }
             },
             "Parent": {
                 "type": "object",

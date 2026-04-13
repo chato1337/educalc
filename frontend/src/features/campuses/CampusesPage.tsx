@@ -24,13 +24,19 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm } from 'react-hook-form'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
+import { fetchReferenceListResults } from '@/api/list'
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
+import {
+  flatInfinitePages,
+  useInfiniteList,
+} from '@/api/useInfiniteList'
+import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel'
 import { PageHeader } from '@/components/PageHeader'
 import { useUiStore } from '@/stores/uiStore'
 import type { Campus } from '@/types/schemas'
@@ -61,10 +67,8 @@ export function CampusesPage() {
 
   const { data: institutions = [] } = useQuery({
     queryKey: queryKeys.institutions(),
-    queryFn: async () => {
-      const { data } = await apiClient.get<Institution[]>('/api/institutions/')
-      return data
-    },
+    queryFn: async () =>
+      fetchReferenceListResults<Institution>('/api/institutions/'),
   })
 
   const listParams =
@@ -72,15 +76,17 @@ export function CampusesPage() {
       ? { institution: selectedInstitutionId }
       : undefined
 
-  const { data: rows = [], isLoading, error } = useQuery({
+  const listQuery = useInfiniteList<Campus>({
     queryKey: queryKeys.campuses(selectedInstitutionId, undefined),
-    queryFn: async () => {
-      const { data } = await apiClient.get<Campus[]>('/api/campuses/', {
-        params: listParams,
-      })
-      return data
-    },
+    url: '/api/campuses/',
+    params: listParams,
   })
+  const rows = useMemo(
+    () => flatInfinitePages(listQuery.data),
+    [listQuery.data],
+  )
+  const isLoading = listQuery.isLoading
+  const error = listQuery.error
 
   const form = useForm<CampusForm>({
     resolver: zodResolver(campusSchema),
@@ -229,6 +235,17 @@ export function CampusesPage() {
                 </TableCell>
               </TableRow>
             ))}
+            {!isLoading && rows.length > 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} sx={{ border: 0, p: 0 }}>
+                  <InfiniteScrollSentinel
+                    onLoadMore={() => void listQuery.fetchNextPage()}
+                    hasMore={listQuery.hasNextPage ?? false}
+                    isLoadingMore={listQuery.isFetchingNextPage}
+                  />
+                </TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>

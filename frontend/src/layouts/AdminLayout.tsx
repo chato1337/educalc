@@ -33,7 +33,7 @@ import {
   useNavigate,
 } from 'react-router-dom'
 
-import { apiClient } from '@/api/client'
+import { fetchReferenceListResults } from '@/api/list'
 import { queryKeys } from '@/api/queryKeys'
 import { APP_NAME } from '@/app/appName'
 import { filterNavSectionsForRole, navSections } from '@/app/navConfig'
@@ -87,10 +87,8 @@ export function AdminLayout() {
 
   const { data: institutions = [] } = useQuery({
     queryKey: queryKeys.institutions(),
-    queryFn: async () => {
-      const { data } = await apiClient.get<Institution[]>('/api/institutions/')
-      return data
-    },
+    queryFn: async () =>
+      fetchReferenceListResults<Institution>('/api/institutions/'),
   })
 
   useEffect(() => {

@@ -13,7 +13,7 @@ export interface paths {
         };
         /**
          * List Academic Areas
-         * @description Broad category of knowledge Text search available through query param `search`. Supported fields: name, code, description. Available exact-match filters via query params: institution, institution__dane_code, name, code.
+         * @description Broad category of knowledge Text search available through query param `search`. Supported fields: name, code, description. Available exact-match filters via query params: institution, institution__dane_code, name, code. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["academic_areas_list"];
         put?: never;
@@ -94,7 +94,7 @@ export interface paths {
         };
         /**
          * List Academic Indicators
-         * @description Qualitative achievement descriptor for a student Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number, performance_level.
+         * @description Qualitative achievement descriptor for a student Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number, performance_level. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["academic_indicators_list"];
         put?: never;
@@ -115,7 +115,7 @@ export interface paths {
         };
         /**
          * List Academic Indicators Reports
-         * @description Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, academic_period__name, grade_director__full_name, grade_director__document_number. Available exact-match filters via query params: student, student__document_number, academic_period, academic_period__number, grade_director, grade_director__document_number.
+         * @description Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, academic_period__name, grade_director__full_name, grade_director__document_number. Available exact-match filters via query params: student, student__document_number, academic_period, academic_period__number, grade_director, grade_director__document_number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["academic_indicators_reports_list"];
         put?: never;
@@ -219,7 +219,7 @@ export interface paths {
         };
         /**
          * List Academic Periods
-         * @description Evaluation period (P1, P2, P3, P4) Text search available through query param `search`. Supported fields: name, =number, =academic_year__year. Available exact-match filters via query params: academic_year, academic_year__year, number, name.
+         * @description Evaluation period (P1, P2, P3, P4) Text search available through query param `search`. Supported fields: name, =number, =academic_year__year. Available exact-match filters via query params: academic_year, academic_year__year, number, name. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["academic_periods_list"];
         put?: never;
@@ -280,7 +280,7 @@ export interface paths {
         };
         /**
          * List Academic Years
-         * @description Academic/school year Text search available through query param `search`. Supported fields: =year, institution__name. Available exact-match filters via query params: institution, institution__dane_code, year, is_active.
+         * @description Academic/school year Text search available through query param `search`. Supported fields: =year, institution__name. Available exact-match filters via query params: institution, institution__dane_code, year, is_active. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["academic_years_list"];
         put?: never;
@@ -321,7 +321,7 @@ export interface paths {
         };
         /**
          * List Attendance
-         * @description Absences per subject and period Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number.
+         * @description Absences per subject and period Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["attendances_list"];
         put?: never;
@@ -442,7 +442,7 @@ export interface paths {
         };
         /**
          * List Campuses
-         * @description Campus or sede of an institution Text search available through query param `search`. Supported fields: name, code, institution__name, institution__dane_code. Available exact-match filters via query params: institution, institution__dane_code, name, code.
+         * @description Campus or sede of an institution Text search available through query param `search`. Supported fields: name, code, institution__name, institution__dane_code. Available exact-match filters via query params: institution, institution__dane_code, name, code. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["campuses_list"];
         put?: never;
@@ -483,7 +483,7 @@ export interface paths {
         };
         /**
          * List Course Assignments
-         * @description Teacher assigned to a subject in a group for an academic year Text search available through query param `search`. Supported fields: subject__name, subject__emphasis, teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: subject, subject__name, teacher, teacher__document_number, group, group__name, academic_year, academic_year__year.
+         * @description Teacher assigned to a subject in a group for an academic year Text search available through query param `search`. Supported fields: subject__name, subject__emphasis, teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: subject, subject__name, teacher, teacher__document_number, group, group__name, academic_year, academic_year__year. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["course_assignments_list"];
         put?: never;
@@ -535,6 +535,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dashboard/kpis/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dashboard KPIs
+         * @description Aggregated record counts aligned with core models. Optional query ``institution`` (UUID) filters for ADMIN only; COORDINATOR scope is always the user's institution.
+         */
+        get: operations["dashboard_kpis_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/disciplinary-reports/": {
         parameters: {
             query?: never;
@@ -544,7 +564,7 @@ export interface paths {
         };
         /**
          * List Disciplinary Reports
-         * @description Qualitative disciplinary/behavior report Text search available through query param `search`. Supported fields: student__document_number, student__full_name, report_text, created_by__full_name, created_by__document_number. Available exact-match filters via query params: student, student__document_number, academic_period, academic_period__number, created_by, created_by__document_number.
+         * @description Qualitative disciplinary/behavior report Text search available through query param `search`. Supported fields: student__document_number, student__full_name, report_text, created_by__full_name, created_by__document_number. Available exact-match filters via query params: student, student__document_number, academic_period, academic_period__number, created_by, created_by__document_number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["disciplinary_reports_list"];
         put?: never;
@@ -605,7 +625,7 @@ export interface paths {
         };
         /**
          * List Enrollments
-         * @description Student-group enrollment for an academic year Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, =academic_year__year, status. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_year, academic_year__year, status.
+         * @description Student-group enrollment for an academic year Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, =academic_year__year, status. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_year, academic_year__year, status. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["enrollments_list"];
         put?: never;
@@ -646,7 +666,7 @@ export interface paths {
         };
         /**
          * List Grade Directors
-         * @description Homeroom teacher for a group Text search available through query param `search`. Supported fields: teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: teacher, teacher__document_number, group, group__name, academic_year, academic_year__year.
+         * @description Homeroom teacher for a group Text search available through query param `search`. Supported fields: teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: teacher, teacher__document_number, group, group__name, academic_year, academic_year__year. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["grade_directors_list"];
         put?: never;
@@ -707,7 +727,7 @@ export interface paths {
         };
         /**
          * List Grade Levels
-         * @description Grade level (e.g. SEXTO, PRIMERO) Text search available through query param `search`. Supported fields: name. Available exact-match filters via query params: institution, institution__dane_code, name, level_order.
+         * @description Grade level (e.g. SEXTO, PRIMERO) Text search available through query param `search`. Supported fields: name. Available exact-match filters via query params: institution, institution__dane_code, name, level_order. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["grade_levels_list"];
         put?: never;
@@ -748,7 +768,7 @@ export interface paths {
         };
         /**
          * List Grades
-         * @description Student grades with enriched context: student identity, course assignment (subject, teacher, group, academic year), and academic period. Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, course_assignment__teacher__document_number, course_assignment__group__name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number.
+         * @description Student grades with enriched context: student identity, course assignment (subject, teacher, group, academic year), and academic period. Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, course_assignment__teacher__document_number, course_assignment__group__name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["grades_list"];
         put?: never;
@@ -812,7 +832,7 @@ export interface paths {
         };
         /**
          * List Grading Scales
-         * @description Performance levels per Decreto 1290 Text search available through query param `search`. Supported fields: code, name, description. Available exact-match filters via query params: institution, institution__dane_code, code, name.
+         * @description Performance levels per Decreto 1290 Text search available through query param `search`. Supported fields: code, name, description. Available exact-match filters via query params: institution, institution__dane_code, code, name. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["grading_scales_list"];
         put?: never;
@@ -873,7 +893,7 @@ export interface paths {
         };
         /**
          * List Groups
-         * @description Student group within a grade Text search available through query param `search`. Supported fields: name, grade_level__name, campus__name, =academic_year__year. Available exact-match filters via query params: grade_level, grade_level__name, academic_year, academic_year__year, campus, campus__name, name.
+         * @description Student group within a grade Text search available through query param `search`. Supported fields: name, grade_level__name, campus__name, =academic_year__year. Available exact-match filters via query params: grade_level, grade_level__name, academic_year, academic_year__year, campus, campus__name, name. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["groups_list"];
         put?: never;
@@ -934,7 +954,7 @@ export interface paths {
         };
         /**
          * List Institutions
-         * @description Educational institutions at corporate level Text search available through query param `search`. Supported fields: name, dane_code, nit. Available exact-match filters via query params: dane_code, nit, name.
+         * @description Educational institutions at corporate level Text search available through query param `search`. Supported fields: name, dane_code, nit. Available exact-match filters via query params: dane_code, nit, name. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["institutions_list"];
         put?: never;
@@ -975,7 +995,7 @@ export interface paths {
         };
         /**
          * List Parents
-         * @description Parent or guardian of a student Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. Available exact-match filters via query params: document_type, document_number, email, kinship.
+         * @description Parent or guardian of a student Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. Available exact-match filters via query params: document_type, document_number, email, kinship. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["parents_list"];
         put?: never;
@@ -1036,7 +1056,7 @@ export interface paths {
         };
         /**
          * List Performance Summaries
-         * @description Student average and rank per period Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, academic_period__name. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_period, academic_period__number.
+         * @description Student average and rank per period Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, academic_period__name. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_period, academic_period__number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["performance_summaries_list"];
         put?: never;
@@ -1097,7 +1117,7 @@ export interface paths {
         };
         /**
          * List School Records
-         * @description Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, institution__name, institution__dane_code, campus__name. Available exact-match filters via query params: student, student__document_number, academic_year, academic_year__year, institution, institution__dane_code.
+         * @description Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, institution__name, institution__dane_code, campus__name. Available exact-match filters via query params: student, student__document_number, academic_year, academic_year__year, institution, institution__dane_code. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["school_records_list"];
         put?: never;
@@ -1161,7 +1181,7 @@ export interface paths {
         };
         /**
          * List Student Guardians
-         * @description Student-parent/guardian relationship Text search available through query param `search`. Supported fields: student__document_number, student__full_name, parent__document_number, parent__full_name, parent__email. Available exact-match filters via query params: student, student__document_number, parent, parent__document_number, is_primary.
+         * @description Student-parent/guardian relationship Text search available through query param `search`. Supported fields: student__document_number, student__full_name, parent__document_number, parent__full_name, parent__email. Available exact-match filters via query params: student, student__document_number, parent, parent__document_number, is_primary. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["student_guardians_list"];
         put?: never;
@@ -1222,7 +1242,7 @@ export interface paths {
         };
         /**
          * List Students
-         * @description Student data Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name. Available exact-match filters via query params: document_type, document_number, gender, sisben, stratum.
+         * @description Student data Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name. Available exact-match filters via query params: document_type, document_number, gender, sisben, stratum. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["students_list"];
         put?: never;
@@ -1303,7 +1323,7 @@ export interface paths {
         };
         /**
          * List Subjects
-         * @description Subject/course with optional emphasis Text search available through query param `search`. Supported fields: name, emphasis, academic_area__name, institution__name. Available exact-match filters via query params: academic_area, academic_area__name, institution, institution__dane_code, name, emphasis.
+         * @description Subject/course with optional emphasis Text search available through query param `search`. Supported fields: name, emphasis, academic_area__name, institution__name. Available exact-match filters via query params: academic_area, academic_area__name, institution, institution__dane_code, name, emphasis. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["subjects_list"];
         put?: never;
@@ -1364,7 +1384,7 @@ export interface paths {
         };
         /**
          * List Teachers
-         * @description Teacher/faculty information Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. Available exact-match filters via query params: document_type, document_number, email, specialty.
+         * @description Teacher/faculty information Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. Available exact-match filters via query params: document_type, document_number, email, specialty. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["teachers_list"];
         put?: never;
@@ -1445,7 +1465,7 @@ export interface paths {
         };
         /**
          * List Users
-         * @description User profile for RBAC (Admin only) Text search available through query param `search`. Supported fields: user__username, user__email, teacher__document_number, teacher__full_name, parent__document_number, parent__full_name, institution__name. Available exact-match filters via query params: role, institution, institution__dane_code, user__username, user__email.
+         * @description User profile for RBAC (Admin only) Text search available through query param `search`. Supported fields: user__username, user__email, teacher__document_number, teacher__full_name, parent__document_number, parent__full_name, institution__name. Available exact-match filters via query params: role, institution, institution__dane_code, user__username, user__email. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["users_list"];
         put?: never;
@@ -1719,6 +1739,50 @@ export interface components {
             username: string;
             password: string;
         };
+        DashboardKpisCounts: {
+            institutions: number;
+            campuses: number;
+            academic_years: number;
+            academic_years_active: number;
+            grade_levels: number;
+            academic_areas: number;
+            subjects: number;
+            grading_scales: number;
+            groups: number;
+            academic_periods: number;
+            students: number;
+            teachers: number;
+            parents: number;
+            enrollments: number;
+            enrollments_active: number;
+            course_assignments: number;
+            grade_directors: number;
+            grades: number;
+            attendances: number;
+            academic_indicators: number;
+            performance_summaries: number;
+            disciplinary_reports: number;
+            school_records: number;
+            academic_indicators_reports: number;
+            student_guardians: number;
+        };
+        DashboardKpisResponse: {
+            /**
+             * @description How counts were scoped for the current user.
+             *
+             *     * `global` - global
+             *     * `institution` - institution
+             *     * `teacher` - teacher
+             *     * `parent` - parent
+             *     * `none` - none
+             */
+            scope: components["schemas"]["ScopeEnum"];
+            /** @description Institution UUID when scope is institution; null otherwise. */
+            institution_id?: string | null;
+            counts: components["schemas"]["DashboardKpisCounts"];
+            /** @description When ``academic_period`` query is set: object with expected_slots, filled_slots, pending_slots, pending_students (distinct), period ids/names; otherwise null. */
+            grades_period?: unknown;
+        };
         DisciplinaryReport: {
             /** Format: uuid */
             readonly id: string;
@@ -1955,6 +2019,366 @@ export interface components {
             role: string | null;
             /** @description UUID of the institution the user belongs to (if any) */
             institution_id: string | null;
+        };
+        PaginatedAcademicAreaList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["AcademicArea"][];
+        };
+        PaginatedAcademicIndicatorList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["AcademicIndicator"][];
+        };
+        PaginatedAcademicIndicatorsReportList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["AcademicIndicatorsReport"][];
+        };
+        PaginatedAcademicPeriodList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["AcademicPeriod"][];
+        };
+        PaginatedAcademicYearList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["AcademicYear"][];
+        };
+        PaginatedAttendanceList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["Attendance"][];
+        };
+        PaginatedCampusList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["Campus"][];
+        };
+        PaginatedCourseAssignmentList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["CourseAssignment"][];
+        };
+        PaginatedDisciplinaryReportList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["DisciplinaryReport"][];
+        };
+        PaginatedEnrollmentList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["Enrollment"][];
+        };
+        PaginatedGradeDirectorList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["GradeDirector"][];
+        };
+        PaginatedGradeLevelList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["GradeLevel"][];
+        };
+        PaginatedGradeList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["Grade"][];
+        };
+        PaginatedGradingScaleList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["GradingScale"][];
+        };
+        PaginatedGroupList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["Group"][];
+        };
+        PaginatedInstitutionList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["Institution"][];
+        };
+        PaginatedParentList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["Parent"][];
+        };
+        PaginatedPerformanceSummaryList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["PerformanceSummary"][];
+        };
+        PaginatedSchoolRecordList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["SchoolRecord"][];
+        };
+        PaginatedStudentGuardianList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["StudentGuardian"][];
+        };
+        PaginatedStudentList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["Student"][];
+        };
+        PaginatedSubjectList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["Subject"][];
+        };
+        PaginatedTeacherList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["Teacher"][];
+        };
+        PaginatedUserProfileList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["UserProfile"][];
         };
         Parent: {
             /** Format: uuid */
@@ -2294,6 +2718,15 @@ export interface components {
             generated_at: string;
         };
         /**
+         * @description * `global` - global
+         *     * `institution` - institution
+         *     * `teacher` - teacher
+         *     * `parent` - parent
+         *     * `none` - none
+         * @enum {string}
+         */
+        ScopeEnum: "global" | "institution" | "teacher" | "parent" | "none";
+        /**
          * @description * `active` - Active
          *     * `withdrawn` - Withdrawn
          *     * `graduated` - Graduated
@@ -2480,8 +2913,12 @@ export interface operations {
                 institution?: string;
                 /** @description Filter by exact value of `institution__dane_code`. */
                 institution__dane_code?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
                 /** @description Filter by exact value of `name`. */
                 name?: string;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: name, code, description. */
@@ -2498,7 +2935,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AcademicArea"][];
+                    "application/json": components["schemas"]["PaginatedAcademicAreaList"];
                 };
             };
         };
@@ -2705,6 +3142,10 @@ export interface operations {
                 course_assignment?: string;
                 /** @description Filter by exact value of `course_assignment__teacher__document_number`. */
                 course_assignment__teacher__document_number?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Filter by exact value of `performance_level`. */
@@ -2727,7 +3168,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AcademicIndicator"][];
+                    "application/json": components["schemas"]["PaginatedAcademicIndicatorList"];
                 };
             };
         };
@@ -2768,6 +3209,10 @@ export interface operations {
                 grade_director?: string;
                 /** @description Filter by exact value of `grade_director__document_number`. */
                 grade_director__document_number?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: student__document_number, student__full_name, group__name, academic_period__name, grade_director__full_name, grade_director__document_number. */
@@ -2788,7 +3233,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AcademicIndicatorsReport"][];
+                    "application/json": components["schemas"]["PaginatedAcademicIndicatorsReportList"];
                 };
             };
         };
@@ -3005,10 +3450,14 @@ export interface operations {
                 academic_year?: string;
                 /** @description Filter by exact value of `academic_year__year`. */
                 academic_year__year?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
                 /** @description Filter by exact value of `name`. */
                 name?: string;
                 /** @description Filter by exact value of `number`. */
                 number?: string;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: name, =number, =academic_year__year. */
@@ -3025,7 +3474,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AcademicPeriod"][];
+                    "application/json": components["schemas"]["PaginatedAcademicPeriodList"];
                 };
             };
         };
@@ -3200,6 +3649,10 @@ export interface operations {
                 institution__dane_code?: string;
                 /** @description Filter by exact value of `is_active`. */
                 is_active?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: =year, institution__name. */
@@ -3218,7 +3671,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AcademicYear"][];
+                    "application/json": components["schemas"]["PaginatedAcademicYearList"];
                 };
             };
         };
@@ -3358,6 +3811,10 @@ export interface operations {
                 course_assignment?: string;
                 /** @description Filter by exact value of `course_assignment__teacher__document_number`. */
                 course_assignment__teacher__document_number?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, academic_period__name. */
@@ -3378,7 +3835,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Attendance"][];
+                    "application/json": components["schemas"]["PaginatedAttendanceList"];
                 };
             };
         };
@@ -3624,8 +4081,12 @@ export interface operations {
                 institution?: string;
                 /** @description Filter by exact value of `institution__dane_code`. */
                 institution__dane_code?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
                 /** @description Filter by exact value of `name`. */
                 name?: string;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: name, code, institution__name, institution__dane_code. */
@@ -3642,7 +4103,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Campus"][];
+                    "application/json": components["schemas"]["PaginatedCampusList"];
                 };
             };
         };
@@ -3782,6 +4243,10 @@ export interface operations {
                 group?: string;
                 /** @description Filter by exact value of `group__name`. */
                 group__name?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: subject__name, subject__emphasis, teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. */
@@ -3806,7 +4271,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CourseAssignment"][];
+                    "application/json": components["schemas"]["PaginatedCourseAssignmentList"];
                 };
             };
         };
@@ -3972,6 +4437,30 @@ export interface operations {
             };
         };
     };
+    dashboard_kpis_retrieve: {
+        parameters: {
+            query?: {
+                /** @description Academic period UUID. When set, ``grades_period`` includes pending grade slots/students for active enrollments in that year (scoped by role). */
+                academic_period?: string;
+                /** @description Institution UUID (ADMIN only). Omit for global totals. */
+                institution?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardKpisResponse"];
+                };
+            };
+        };
+    };
     disciplinary_reports_list: {
         parameters: {
             query?: {
@@ -3983,6 +4472,10 @@ export interface operations {
                 created_by?: string;
                 /** @description Filter by exact value of `created_by__document_number`. */
                 created_by__document_number?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: student__document_number, student__full_name, report_text, created_by__full_name, created_by__document_number. */
@@ -4003,7 +4496,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DisciplinaryReport"][];
+                    "application/json": components["schemas"]["PaginatedDisciplinaryReportList"];
                 };
             };
         };
@@ -4180,6 +4673,10 @@ export interface operations {
                 group?: string;
                 /** @description Filter by exact value of `group__name`. */
                 group__name?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: student__document_number, student__full_name, group__name, group__grade_level__name, =academic_year__year, status. */
@@ -4202,7 +4699,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Enrollment"][];
+                    "application/json": components["schemas"]["PaginatedEnrollmentList"];
                 };
             };
         };
@@ -4342,6 +4839,10 @@ export interface operations {
                 group?: string;
                 /** @description Filter by exact value of `group__name`. */
                 group__name?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. */
@@ -4362,7 +4863,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GradeDirector"][];
+                    "application/json": components["schemas"]["PaginatedGradeDirectorList"];
                 };
             };
         };
@@ -4537,8 +5038,12 @@ export interface operations {
                 institution__dane_code?: string;
                 /** @description Filter by exact value of `level_order`. */
                 level_order?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
                 /** @description Filter by exact value of `name`. */
                 name?: string;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: name. */
@@ -4555,7 +5060,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GradeLevel"][];
+                    "application/json": components["schemas"]["PaginatedGradeLevelList"];
                 };
             };
         };
@@ -4695,6 +5200,10 @@ export interface operations {
                 course_assignment?: string;
                 /** @description Filter by exact value of `course_assignment__teacher__document_number`. */
                 course_assignment__teacher__document_number?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, course_assignment__teacher__document_number, course_assignment__group__name, academic_period__name. */
@@ -4715,7 +5224,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Grade"][];
+                    "application/json": components["schemas"]["PaginatedGradeList"];
                 };
             };
         };
@@ -4890,8 +5399,12 @@ export interface operations {
                 institution?: string;
                 /** @description Filter by exact value of `institution__dane_code`. */
                 institution__dane_code?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
                 /** @description Filter by exact value of `name`. */
                 name?: string;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: code, name, description. */
@@ -4908,7 +5421,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GradingScale"][];
+                    "application/json": components["schemas"]["PaginatedGradingScaleList"];
                 };
             };
         };
@@ -5089,8 +5602,12 @@ export interface operations {
                 grade_level?: string;
                 /** @description Filter by exact value of `grade_level__name`. */
                 grade_level__name?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
                 /** @description Filter by exact value of `name`. */
                 name?: string;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: name, grade_level__name, campus__name, =academic_year__year. */
@@ -5107,7 +5624,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Group"][];
+                    "application/json": components["schemas"]["PaginatedGroupList"];
                 };
             };
         };
@@ -5265,10 +5782,14 @@ export interface operations {
             query?: {
                 /** @description Filter by exact value of `dane_code`. */
                 dane_code?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
                 /** @description Filter by exact value of `name`. */
                 name?: string;
                 /** @description Filter by exact value of `nit`. */
                 nit?: string;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: name, dane_code, nit. */
@@ -5285,7 +5806,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Institution"][];
+                    "application/json": components["schemas"]["PaginatedInstitutionList"];
                 };
             };
         };
@@ -5425,6 +5946,10 @@ export interface operations {
                 email?: string;
                 /** @description Filter by exact value of `kinship`. */
                 kinship?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. */
@@ -5441,7 +5966,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Parent"][];
+                    "application/json": components["schemas"]["PaginatedParentList"];
                 };
             };
         };
@@ -5618,6 +6143,10 @@ export interface operations {
                 group?: string;
                 /** @description Filter by exact value of `group__name`. */
                 group__name?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: student__document_number, student__full_name, group__name, group__grade_level__name, academic_period__name. */
@@ -5638,7 +6167,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PerformanceSummary"][];
+                    "application/json": components["schemas"]["PaginatedPerformanceSummaryList"];
                 };
             };
         };
@@ -5815,6 +6344,10 @@ export interface operations {
                 institution?: string;
                 /** @description Filter by exact value of `institution__dane_code`. */
                 institution__dane_code?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: student__document_number, student__full_name, group__name, group__grade_level__name, institution__name, institution__dane_code, campus__name. */
@@ -5835,7 +6368,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SchoolRecord"][];
+                    "application/json": components["schemas"]["PaginatedSchoolRecordList"];
                 };
             };
         };
@@ -5914,6 +6447,10 @@ export interface operations {
             query?: {
                 /** @description Filter by exact value of `is_primary`. */
                 is_primary?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Filter by exact value of `parent`. */
@@ -5938,7 +6475,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StudentGuardian"][];
+                    "application/json": components["schemas"]["PaginatedStudentGuardianList"];
                 };
             };
         };
@@ -6113,6 +6650,10 @@ export interface operations {
                 document_type?: string;
                 /** @description Filter by exact value of `gender`. */
                 gender?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: document_number, full_name, first_name, second_name, first_last_name, second_last_name. */
@@ -6133,7 +6674,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Student"][];
+                    "application/json": components["schemas"]["PaginatedStudentList"];
                 };
             };
         };
@@ -6334,8 +6875,12 @@ export interface operations {
                 institution?: string;
                 /** @description Filter by exact value of `institution__dane_code`. */
                 institution__dane_code?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
                 /** @description Filter by exact value of `name`. */
                 name?: string;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: name, emphasis, academic_area__name, institution__name. */
@@ -6352,7 +6897,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Subject"][];
+                    "application/json": components["schemas"]["PaginatedSubjectList"];
                 };
             };
         };
@@ -6527,6 +7072,10 @@ export interface operations {
                 document_type?: string;
                 /** @description Filter by exact value of `email`. */
                 email?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Search text across: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. */
@@ -6545,7 +7094,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Teacher"][];
+                    "application/json": components["schemas"]["PaginatedTeacherList"];
                 };
             };
         };
@@ -6755,6 +7304,10 @@ export interface operations {
                 institution?: string;
                 /** @description Filter by exact value of `institution__dane_code`. */
                 institution__dane_code?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description Filter by exact value of `role`. */
@@ -6777,7 +7330,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserProfile"][];
+                    "application/json": components["schemas"]["PaginatedUserProfileList"];
                 };
             };
         };

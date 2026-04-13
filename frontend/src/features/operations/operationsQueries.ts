@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { apiClient } from '@/api/client'
+import { fetchReferenceListResults } from '@/api/list'
 import { queryKeys } from '@/api/queryKeys'
 import { fetchGradingScalesList } from '@/features/operations/gradingScalesApi'
 import {
@@ -23,15 +23,10 @@ export { useAcademicYearsQuery, useCampusesForInstitution, useGradeLevelsQuery }
 export function useAcademicPeriodsForYear(academicYearId: string | null) {
   return useQuery({
     queryKey: queryKeys.academicPeriods(academicYearId, undefined),
-    queryFn: async () => {
-      const { data } = await apiClient.get<AcademicPeriod[]>(
-        '/api/academic-periods/',
-        {
-          params: academicYearId ? { academic_year: academicYearId } : undefined,
-        },
-      )
-      return data
-    },
+    queryFn: async () =>
+      fetchReferenceListResults<AcademicPeriod>('/api/academic-periods/', {
+        params: academicYearId ? { academic_year: academicYearId } : undefined,
+      }),
     enabled: !!academicYearId,
   })
 }
@@ -54,12 +49,8 @@ export function useGroupsForFilters(
   }
   return useQuery({
     queryKey: queryKeys.groups(listParams, search),
-    queryFn: async () => {
-      const { data } = await apiClient.get<Group[]>('/api/groups/', {
-        params: listParams,
-      })
-      return data
-    },
+    queryFn: async () =>
+      fetchReferenceListResults<Group>('/api/groups/', { params: listParams }),
     enabled: (options?.enabled ?? true) && !!institutionId,
   })
 }
@@ -72,10 +63,7 @@ export function useSubjectsForInstitution(institutionId: string | null) {
         institutionId != null && institutionId !== ''
           ? { institution: institutionId }
           : undefined
-      const { data } = await apiClient.get<Subject[]>('/api/subjects/', {
-        params,
-      })
-      return data
+      return fetchReferenceListResults<Subject>('/api/subjects/', { params })
     },
     enabled: institutionId != null && institutionId !== '',
   })
@@ -84,12 +72,10 @@ export function useSubjectsForInstitution(institutionId: string | null) {
 export function useTeachersSearch(search: string) {
   return useQuery({
     queryKey: queryKeys.teachers(search),
-    queryFn: async () => {
-      const { data } = await apiClient.get<Teacher[]>('/api/teachers/', {
+    queryFn: async () =>
+      fetchReferenceListResults<Teacher>('/api/teachers/', {
         params: search ? { search } : undefined,
-      })
-      return data
-    },
+      }),
   })
 }
 
@@ -99,13 +85,10 @@ export function useCourseAssignmentsList(
 ) {
   return useQuery({
     queryKey: queryKeys.courseAssignments(params),
-    queryFn: async () => {
-      const { data } = await apiClient.get<CourseAssignment[]>(
-        '/api/course-assignments/',
-        { params },
-      )
-      return data
-    },
+    queryFn: async () =>
+      fetchReferenceListResults<CourseAssignment>('/api/course-assignments/', {
+        params,
+      }),
     enabled: options?.enabled ?? true,
   })
 }
@@ -127,14 +110,12 @@ export function useGradingScalesForInstitution(institutionId: string | null) {
 export function useStudentsSearch(appliedSearch: string) {
   return useQuery({
     queryKey: queryKeys.students(appliedSearch),
-    queryFn: async () => {
-      const { data } = await apiClient.get<Student[]>('/api/students/', {
+    queryFn: async () =>
+      fetchReferenceListResults<Student>('/api/students/', {
         params: appliedSearch.trim()
           ? { search: appliedSearch.trim() }
           : undefined,
-      })
-      return data
-    },
+      }),
   })
 }
 
@@ -144,13 +125,10 @@ export function useGradeDirectorsList(
 ) {
   return useQuery({
     queryKey: queryKeys.gradeDirectors(params),
-    queryFn: async () => {
-      const { data } = await apiClient.get<GradeDirector[]>(
-        '/api/grade-directors/',
-        { params },
-      )
-      return data
-    },
+    queryFn: async () =>
+      fetchReferenceListResults<GradeDirector>('/api/grade-directors/', {
+        params,
+      }),
     enabled: options?.enabled ?? true,
   })
 }

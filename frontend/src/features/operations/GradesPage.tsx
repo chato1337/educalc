@@ -41,8 +41,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
+import { fetchReferenceListResults } from '@/api/list'
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
+import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
+import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel'
 import { PageHeader } from '@/components/PageHeader'
 import { useAcademicYearsQuery } from '@/features/academic-structure/academicQueries'
 import {
@@ -207,10 +210,30 @@ export function GradesPage() {
     { enabled: !!filterYearId },
   )
 
+  const mergedSearch = useMemo(() => {
+    const parts = [
+      appliedSearch,
+      filterStudentDocument,
+      filterSubjectText,
+      filterTeacherText,
+      filterGroupName || '',
+    ]
+      .map((p) => p.trim())
+      .filter(Boolean)
+    const joined = parts.join(' ')
+    return joined || undefined
+  }, [
+    appliedSearch,
+    filterStudentDocument,
+    filterSubjectText,
+    filterTeacherText,
+    filterGroupName,
+  ])
+
   const listParams = {
     academic_period: filterPeriodId ?? undefined,
     course_assignment: filterAssignmentId ?? undefined,
-    search: appliedSearch || undefined,
+    search: mergedSearch,
     student__document_number: filterStudentDocExact.trim() || undefined,
     course_assignment__teacher__document_number:
       filterTeacherDocExact.trim() || undefined,
@@ -218,15 +241,14 @@ export function GradesPage() {
     ordering: ordering || undefined,
   }
 
-  const { data: rows = [], isLoading, error } = useQuery({
+  const listQuery = useInfiniteList<GradeRow>({
     queryKey: queryKeys.grades(listParams),
-    queryFn: async () => {
-      const { data } = await apiClient.get<GradeRow[]>('/api/grades/', {
-        params: listParams,
-      })
-      return data
-    },
+    url: '/api/grades/',
+    params: listParams,
   })
+  const rows = useMemo(() => flatInfinitePages(listQuery.data), [listQuery.data])
+  const isLoading = listQuery.isLoading
+  const error = listQuery.error
 
   const groupFilterOptions = useMemo(() => {
     const names = new Set(
@@ -236,38 +258,6 @@ export function GradesPage() {
     )
     return Array.from(names).sort((a, b) => a.localeCompare(b))
   }, [rows])
-
-  const filteredRows = useMemo(() => {
-    const docNeedle = filterStudentDocument.trim().toLowerCase()
-    const subjectNeedle = filterSubjectText.trim().toLowerCase()
-    const teacherNeedle = filterTeacherText.trim().toLowerCase()
-    const groupNeedle = filterGroupName ?? null
-
-    return rows.filter((row) => {
-      if (docNeedle) {
-        const doc = `${row.student_document_type} ${row.student_document_number}`.toLowerCase()
-        if (!doc.includes(docNeedle)) return false
-      }
-      if (subjectNeedle) {
-        const subject = `${row.course_assignment_subject_name} ${row.course_assignment_subject_emphasis}`.toLowerCase()
-        if (!subject.includes(subjectNeedle)) return false
-      }
-      if (teacherNeedle) {
-        if (!row.course_assignment_teacher_name.toLowerCase().includes(teacherNeedle))
-          return false
-      }
-      if (groupNeedle && row.course_assignment_group_name !== groupNeedle) {
-        return false
-      }
-      return true
-    })
-  }, [
-    rows,
-    filterStudentDocument,
-    filterSubjectText,
-    filterTeacherText,
-    filterGroupName,
-  ])
 
   const { data: gradingScales = [] } = useGradingScalesForInstitution(
     selectedInstitutionId,
@@ -322,16 +312,14 @@ export function GradesPage() {
       academic_year: dialogYearId ?? undefined,
       status: 'active',
     }),
-    queryFn: async () => {
-      const { data } = await apiClient.get<Enrollment[]>('/api/enrollments/', {
+    queryFn: async () =>
+      fetchReferenceListResults<Enrollment>('/api/enrollments/', {
         params: {
           student: dialogStudentId,
           academic_year: dialogYearId!,
           status: 'active',
         },
-      })
-      return data
-    },
+      }),
     enabled: needStudentEnrollments,
   })
   const enrollmentsForDialog = enrollmentsRaw ?? []
@@ -731,52 +719,63 @@ export function GradesPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8}>{t('common.loading')}</TableCell>
+                <TableCell colSpan={9}>{t('common.loading')}</TableCell>
               </TableRow>
-            ) : filteredRows.length === 0 ? (
+            ) : null}
+            {!isLoading && rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8}>{t('common.none')}</TableCell>
+                <TableCell colSpan={9}>{t('common.none')}</TableCell>
               </TableRow>
-            ) : (
-              filteredRows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell>{row.student_name}</TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {getDocumentTypeAbbr(row.student_document_type)}{' '}
-                    {row.student_document_number}
-                  </TableCell>
-                  <TableCell>
-                    {row.course_assignment_subject_name}
-                    {row.course_assignment_subject_emphasis
-                      ? ` (${row.course_assignment_subject_emphasis})`
-                      : ''}
-                  </TableCell>
-                  <TableCell>{row.course_assignment_group_name}</TableCell>
-                  <TableCell>{row.course_assignment_teacher_name}</TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {row.academic_period_name} ({row.course_assignment_academic_year_year})
-                  </TableCell>
-                  <TableCell>{row.numerical_grade}</TableCell>
-                  <TableCell>{row.performance_level_name ?? '-'}</TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      aria-label={t('grades.edit')}
-                      size="small"
-                      onClick={() => openEdit(row)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      aria-label={t('grades.delete')}
-                      size="small"
-                      onClick={() => setDeleteTarget(row)}
-                    >
-                      <DeleteOutlineIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
+            ) : null}
+            {rows.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell>{row.student_name}</TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {getDocumentTypeAbbr(row.student_document_type)}{' '}
+                  {row.student_document_number}
+                </TableCell>
+                <TableCell>
+                  {row.course_assignment_subject_name}
+                  {row.course_assignment_subject_emphasis
+                    ? ` (${row.course_assignment_subject_emphasis})`
+                    : ''}
+                </TableCell>
+                <TableCell>{row.course_assignment_group_name}</TableCell>
+                <TableCell>{row.course_assignment_teacher_name}</TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {row.academic_period_name} ({row.course_assignment_academic_year_year})
+                </TableCell>
+                <TableCell>{row.numerical_grade}</TableCell>
+                <TableCell>{row.performance_level_name ?? '-'}</TableCell>
+                <TableCell align="right">
+                  <IconButton
+                    aria-label={t('grades.edit')}
+                    size="small"
+                    onClick={() => openEdit(row)}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    aria-label={t('grades.delete')}
+                    size="small"
+                    onClick={() => setDeleteTarget(row)}
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+            {!isLoading && rows.length > 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} sx={{ border: 0, p: 0 }}>
+                  <InfiniteScrollSentinel
+                    onLoadMore={() => void listQuery.fetchNextPage()}
+                    hasMore={listQuery.hasNextPage ?? false}
+                    isLoadingMore={listQuery.isFetchingNextPage}
+                  />
+                </TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>

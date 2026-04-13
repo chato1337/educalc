@@ -27,15 +27,17 @@ import {
   TextField,
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
+import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
+import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel'
 import { PageHeader } from '@/components/PageHeader'
 import { useAcademicYearsQuery } from '@/features/academic-structure/academicQueries'
 import {
@@ -95,16 +97,14 @@ export function CourseAssignmentsPage() {
     search: appliedSearch || undefined,
   }
 
-  const { data: rows = [], isLoading, error } = useQuery({
+  const listQuery = useInfiniteList<CourseAssignment>({
     queryKey: queryKeys.courseAssignments(listParams),
-    queryFn: async () => {
-      const { data } = await apiClient.get<CourseAssignment[]>(
-        '/api/course-assignments/',
-        { params: listParams },
-      )
-      return data
-    },
+    url: '/api/course-assignments/',
+    params: listParams,
   })
+  const rows = useMemo(() => flatInfinitePages(listQuery.data), [listQuery.data])
+  const isLoading = listQuery.isLoading
+  const error = listQuery.error
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,
@@ -320,36 +320,47 @@ export function CourseAssignmentsPage() {
               <TableRow>
                 <TableCell colSpan={5}>{t('common.loading')}</TableCell>
               </TableRow>
-            ) : rowsFiltered.length === 0 ? (
+            ) : null}
+            {!isLoading && rowsFiltered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5}>{t('common.none')}</TableCell>
               </TableRow>
-            ) : (
-              rowsFiltered.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell>{row.subject_name}</TableCell>
-                  <TableCell>{row.teacher_name}</TableCell>
-                  <TableCell>{row.group_name}</TableCell>
-                  <TableCell>{row.academic_year_year}</TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      aria-label={t('courseAssignments.edit')}
-                      size="small"
-                      onClick={() => openEdit(row)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      aria-label={t('courseAssignments.delete')}
-                      size="small"
-                      onClick={() => setDeleteTarget(row)}
-                    >
-                      <DeleteOutlineIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
+            ) : null}
+            {rowsFiltered.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell>{row.subject_name}</TableCell>
+                <TableCell>{row.teacher_name}</TableCell>
+                <TableCell>{row.group_name}</TableCell>
+                <TableCell>{row.academic_year_year}</TableCell>
+                <TableCell align="right">
+                  <IconButton
+                    aria-label={t('courseAssignments.edit')}
+                    size="small"
+                    onClick={() => openEdit(row)}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    aria-label={t('courseAssignments.delete')}
+                    size="small"
+                    onClick={() => setDeleteTarget(row)}
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+            {!isLoading && rows.length > 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} sx={{ border: 0, p: 0 }}>
+                  <InfiniteScrollSentinel
+                    onLoadMore={() => void listQuery.fetchNextPage()}
+                    hasMore={listQuery.hasNextPage ?? false}
+                    isLoadingMore={listQuery.isFetchingNextPage}
+                  />
+                </TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>

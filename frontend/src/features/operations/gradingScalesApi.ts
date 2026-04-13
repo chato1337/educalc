@@ -1,4 +1,5 @@
 import { apiClient } from '@/api/client'
+import { fetchReferenceListResults } from '@/api/list'
 import type { components, operations } from '@/types/openapi'
 
 export type GradingScale = components['schemas']['GradingScale']
@@ -14,10 +15,9 @@ export type GradingScalesListParams = NonNullable<
 export async function fetchGradingScalesList(
   params?: GradingScalesListParams,
 ): Promise<GradingScale[]> {
-  const { data } = await apiClient.get<GradingScale[]>('/api/grading-scales/', {
+  return fetchReferenceListResults<GradingScale>('/api/grading-scales/', {
     params,
   })
-  return data
 }
 
 export async function createGradingScale(

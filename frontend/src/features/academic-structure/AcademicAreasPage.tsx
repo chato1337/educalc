@@ -23,14 +23,19 @@ import {
   TextField,
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm } from 'react-hook-form'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
+import {
+  flatInfinitePages,
+  useInfiniteList,
+} from '@/api/useInfiniteList'
+import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel'
 import { useInstitutionsReference } from '@/features/academic-structure/academicQueries'
 import { PageHeader } from '@/components/PageHeader'
 import { useUiStore } from '@/stores/uiStore'
@@ -70,20 +75,21 @@ export function AcademicAreasPage() {
       ? { institution: selectedInstitutionId, search: appliedSearch || undefined }
       : { search: appliedSearch || undefined }
 
-  const { data: rows = [], isLoading, error } = useQuery({
+  const listQuery = useInfiniteList<AcademicArea>({
     queryKey: [
       'academic-areas',
       'list',
       { institution: selectedInstitutionId, search: appliedSearch },
     ],
-    queryFn: async () => {
-      const { data } = await apiClient.get<AcademicArea[]>(
-        '/api/academic-areas/',
-        { params: listParams },
-      )
-      return data
-    },
+    url: '/api/academic-areas/',
+    params: listParams,
   })
+  const rows = useMemo(
+    () => flatInfinitePages(listQuery.data),
+    [listQuery.data],
+  )
+  const isLoading = listQuery.isLoading
+  const error = listQuery.error
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -251,6 +257,17 @@ export function AcademicAreasPage() {
                 </TableCell>
               </TableRow>
             ))}
+            {!isLoading && rows.length > 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} sx={{ border: 0, p: 0 }}>
+                  <InfiniteScrollSentinel
+                    onLoadMore={() => void listQuery.fetchNextPage()}
+                    hasMore={listQuery.hasNextPage ?? false}
+                    isLoadingMore={listQuery.isFetchingNextPage}
+                  />
+                </TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>
