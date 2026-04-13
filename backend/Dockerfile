@@ -5,8 +5,21 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
+# WeasyPrint (PDF boletín): GObject/Pango/Cairo en runtime (no vienen en slim).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc libpq-dev \
+    && apt-get install -y --no-install-recommends \
+        gcc \
+        libpq-dev \
+        libglib2.0-0 \
+        libcairo2 \
+        libpango-1.0-0 \
+        libpangocairo-1.0-0 \
+        libpangoft2-1.0-0 \
+        libharfbuzz0b \
+        libgdk-pixbuf-2.0-0 \
+        libffi-dev \
+        shared-mime-info \
+        fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 COPY Pipfile Pipfile.lock ./
