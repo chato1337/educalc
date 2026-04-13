@@ -548,6 +548,83 @@
   "dashboard": {
     "title": "Inicio",
     "subtitle": "Panel de administración enlazado a la API {{appName}} (OpenAPI en backend/docs/openapi/schema.json).",
+    "kpis": {
+      "title": "Indicadores",
+      "subtitle": "Conteos por entidad según tu rol; los administradores pueden acotar por la institución seleccionada en la barra superior.",
+      "detailTitle": "Detalle por categoría",
+      "loading": "Cargando indicadores…",
+      "error": "No se pudieron cargar los indicadores.",
+      "gradesPeriod": {
+        "title": "Calificaciones por periodo",
+        "hint": "Elige año lectivo y periodo para ver cuántos estudiantes siguen sin al menos una nota registrada en alguna asignatura (matrícula activa × asignaciones del grupo).",
+        "year": "Año lectivo",
+        "period": "Periodo",
+        "activeYear": "activo",
+        "pickPeriod": "Selecciona año y periodo para calcular pendientes de calificación.",
+        "unavailableProfile": "Tu usuario no tiene ámbito docente o de institución para este indicador.",
+        "pendingStudents": "{{count}} estudiante(s) con al menos una calificación pendiente en {{period}}.",
+        "noPendingStudents": "Ningún estudiante pendiente por calificar en {{period}} (en el ámbito mostrado).",
+        "pendingSlots": "{{count}} huecos de nota sin registrar (pares estudiante–asignatura)",
+        "filledLine": "{{filled}} de {{expected}} huecos ya tienen nota"
+      },
+      "chartsHint": "Gráficos (Chart.js): métricas con mayor volumen y composición de matrícula y personas.",
+      "charts": {
+        "barTitle": "Mayor volumen operativo",
+        "barDataset": "Registros",
+        "enrollmentTitle": "Matrículas",
+        "enrollmentActive": "Activas",
+        "enrollmentOther": "Otras (retirado, graduado, etc.)",
+        "peopleTitle": "Personas (estudiantes / docentes / acudientes)",
+        "gradesPeriodTitle": "Notas del periodo (huecos)",
+        "gradesFilledSlots": "Calificaciones registradas",
+        "gradesPendingSlots": "Huecos sin nota",
+        "gradesPeriodStudentsLine": "{{count}} estudiante(s) con al menos un hueco pendiente",
+        "noData": "No hay cifras suficientes para graficar en este ámbito."
+      },
+      "scopeLabel": "Ámbito",
+      "scope": {
+        "global": "Todas las instituciones",
+        "institution": "Institución",
+        "teacher": "Tus cursos y grupos asignados",
+        "parent": "Tus estudiantes vinculados",
+        "none": "Sin datos de ámbito"
+      },
+      "sections": {
+        "structure": "Estructura y calendario",
+        "curriculum": "Currículo y asignación docente",
+        "people": "Personas y vínculos",
+        "enrollmentEval": "Matrícula y evaluación",
+        "records": "Expedientes e informes"
+      },
+      "labels": {
+        "institutions": "Instituciones",
+        "campuses": "Sedes",
+        "academic_years": "Años lectivos",
+        "academic_years_active": "Años lectivos activos",
+        "grade_levels": "Grados",
+        "academic_areas": "Núcleos temáticos",
+        "subjects": "Asignaturas",
+        "grading_scales": "Escalas de valoración",
+        "groups": "Grupos",
+        "academic_periods": "Periodos académicos",
+        "students": "Estudiantes",
+        "teachers": "Docentes",
+        "parents": "Acudientes",
+        "enrollments": "Matrículas",
+        "enrollments_active": "Matrículas activas",
+        "course_assignments": "Asignaciones docente-curso",
+        "grade_directors": "Directores de grupo",
+        "grades": "Registros de calificación",
+        "attendances": "Registros de asistencia",
+        "academic_indicators": "Indicadores académicos",
+        "performance_summaries": "Resúmenes de desempeño",
+        "disciplinary_reports": "Reportes disciplinarios",
+        "school_records": "Libros finales de calificaciones",
+        "academic_indicators_reports": "Informes de indicadores",
+        "student_guardians": "Vínculos estudiante–acudiente"
+      }
+    },
+    "shortcutsTitle": "Accesos rápidos",
     "shortcuts": {
       "institutions": {
         "title": "Instituciones",

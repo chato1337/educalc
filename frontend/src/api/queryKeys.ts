@@ -1,5 +1,9 @@
 export const queryKeys = {
   me: ['auth', 'me'] as const,
+  dashboardKpis: (
+    institutionId?: string | null,
+    academicPeriodId?: string | null,
+  ) => ['dashboard', 'kpis', { institutionId, academicPeriodId }] as const,
   institutions: (search?: string) => ['institutions', { search }] as const,
   institution: (id: string) => ['institutions', id] as const,
   campuses: (institutionId?: string | null, search?: string) =>

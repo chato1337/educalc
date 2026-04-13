@@ -14,6 +14,7 @@ from drf_spectacular.views import (
 from rest_framework.routers import DefaultRouter
 
 from core.auth_views import LoginView, MeView, RefreshTokenView
+from core.dashboard_views import DashboardKPIsView
 from core.academic_grades_report_views import AcademicGradesBulletinPdfView
 from core.report_views import (
     AcademicIndicatorsReportByStudentPeriodView,
@@ -82,6 +83,7 @@ urlpatterns = [
     path("api/auth/login/", LoginView.as_view(), name="token_obtain_pair"),
     path("api/auth/refresh/", RefreshTokenView.as_view(), name="token_refresh"),
     path("api/auth/me/", MeView.as_view(), name="me"),
+    path("api/dashboard/kpis/", DashboardKPIsView.as_view(), name="dashboard-kpis"),
     # Composite report endpoints (must be before router to avoid pk conflict)
     path(
         "api/school-records/<uuid:student_id>/<uuid:academic_year_id>/",

@@ -23,7 +23,7 @@ import {
   useTheme,
 } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
-import { Suspense, useEffect, useMemo } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   matchPath,
@@ -59,7 +59,14 @@ export function AdminLayout() {
   const { t } = useTranslation()
   const theme = useTheme()
   const location = useLocation()
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'), {
+    noSsr: true,
+  })
+  const isCoarsePointer = useMediaQuery('(pointer: coarse)', {
+    noSsr: true,
+  })
+  const appBarRef = useRef<HTMLDivElement>(null)
+  const [appBarHeightPx, setAppBarHeightPx] = useState(64)
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
@@ -89,6 +96,16 @@ export function AdminLayout() {
   useEffect(() => {
     if (isMobile) setDrawerOpen(false)
   }, [isMobile, setDrawerOpen])
+
+  useLayoutEffect(() => {
+    const el = appBarRef.current
+    if (!el) return
+    const measure = () => setAppBarHeightPx(el.getBoundingClientRect().height)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     if (institutions.length === 0) return
@@ -128,7 +145,11 @@ export function AdminLayout() {
         </Typography>
       </Toolbar>
       <Divider />
-      <List component="nav" dense className="flex-1 overflow-auto py-0">
+      <List
+        component="nav"
+        dense={!isMobile}
+        className="flex-1 overflow-auto py-0"
+      >
         {navSectionsFiltered.map((section) => (
           <Box key={section.titleKey}>
             <ListItemText
@@ -175,6 +196,7 @@ export function AdminLayout() {
   return (
     <Box className="flex min-h-screen w-full">
       <AppBar
+        ref={appBarRef}
         position="fixed"
         sx={{
           width: {
@@ -185,73 +207,161 @@ export function AdminLayout() {
           ml: { md: drawerOpen ? `${drawerWidth}px` : 0 },
         }}
       >
-        <Toolbar className="gap-2 flex-wrap">
-          <IconButton
-            color="inherit"
-            edge="start"
-            onClick={() => setDrawerOpen(!drawerOpen)}
-            aria-label={
-              drawerOpen
-                ? isMobile
-                  ? t('adminLayout.closeMenu')
-                  : t('adminLayout.hideSidebar')
-                : isMobile
-                  ? t('adminLayout.openMenu')
-                  : t('adminLayout.showSidebar')
-            }
+        {isMobile ? (
+          <Box
+            className="flex flex-col gap-2 px-2 py-2 w-full box-border"
+            sx={{ touchAction: 'manipulation' }}
           >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="body2" className="flex-1 min-w-[120px]">
-            {currentUserLabel}
-            <Box component="span" sx={{ opacity: 0.85 }}>
-              {` · ${appRoleLabelEs(effectiveRole)}`}
+            <Box className="flex items-center gap-1 min-w-0 w-full">
+              <IconButton
+                color="inherit"
+                edge="start"
+                size="medium"
+                sx={{ flexShrink: 0 }}
+                onClick={() => setDrawerOpen(!drawerOpen)}
+                aria-label={
+                  drawerOpen
+                    ? t('adminLayout.closeMenu')
+                    : t('adminLayout.openMenu')
+                }
+              >
+                <MenuIcon />
+              </IconButton>
+              <Typography
+                variant="body2"
+                className="min-w-0 flex-1"
+                noWrap
+                title={`${currentUserLabel} · ${appRoleLabelEs(effectiveRole)}`}
+              >
+                {currentUserLabel}
+                <Box component="span" sx={{ opacity: 0.85 }}>
+                  {` · ${appRoleLabelEs(effectiveRole)}`}
+                </Box>
+              </Typography>
+              <Tooltip
+                title={
+                  themeMode === 'dark'
+                    ? t('adminLayout.themeLight')
+                    : t('adminLayout.themeDark')
+                }
+                disableTouchListener={isCoarsePointer}
+                enterTouchDelay={0}
+              >
+                <IconButton
+                  color="inherit"
+                  onClick={toggleThemeMode}
+                  sx={{ flexShrink: 0 }}
+                  aria-label={
+                    themeMode === 'dark'
+                      ? t('adminLayout.themeLight')
+                      : t('adminLayout.themeDark')
+                  }
+                >
+                  {themeMode === 'dark' ? (
+                    <LightModeOutlinedIcon />
+                  ) : (
+                    <DarkModeOutlinedIcon />
+                  )}
+                </IconButton>
+              </Tooltip>
+              <IconButton
+                color="inherit"
+                sx={{ flexShrink: 0 }}
+                onClick={() => {
+                  logout()
+                  navigate('/login', { replace: true })
+                }}
+                aria-label={t('adminLayout.logout')}
+              >
+                <LogoutIcon />
+              </IconButton>
             </Box>
-          </Typography>
-          <Autocomplete
-            size="small"
-            className="min-w-[200px] max-w-full flex-1 md:flex-none md:min-w-[260px]"
-            options={institutions}
-            getOptionLabel={(o) => o.name}
-            value={selectedInstitution}
-            onChange={(_, v) => setSelectedInstitutionId(v?.id ?? null)}
-            renderInput={(params) => renderInstitutionField(params, t)}
-            isOptionEqualToValue={(a, b) => a.id === b.id}
-          />
-          <Tooltip
-            title={
-              themeMode === 'dark'
-                ? t('adminLayout.themeLight')
-                : t('adminLayout.themeDark')
-            }
-          >
+            <Autocomplete
+              size="small"
+              className="w-full"
+              sx={{ width: '100%', maxWidth: '100%' }}
+              options={institutions}
+              getOptionLabel={(o) => o.name}
+              value={selectedInstitution}
+              onChange={(_, v) => setSelectedInstitutionId(v?.id ?? null)}
+              renderInput={(params) =>
+                renderInstitutionField(params, t, { touchFriendlyInput: true })
+              }
+              isOptionEqualToValue={(a, b) => a.id === b.id}
+              slotProps={{
+                paper: {
+                  sx: { maxHeight: 'min(360px, 50vh)' },
+                },
+              }}
+            />
+          </Box>
+        ) : (
+          <Toolbar className="gap-2 flex-wrap" sx={{ touchAction: 'manipulation' }}>
             <IconButton
               color="inherit"
-              onClick={toggleThemeMode}
+              edge="start"
+              onClick={() => setDrawerOpen(!drawerOpen)}
               aria-label={
+                drawerOpen
+                  ? t('adminLayout.hideSidebar')
+                  : t('adminLayout.showSidebar')
+              }
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography variant="body2" className="flex-1 min-w-[120px]">
+              {currentUserLabel}
+              <Box component="span" sx={{ opacity: 0.85 }}>
+                {` · ${appRoleLabelEs(effectiveRole)}`}
+              </Box>
+            </Typography>
+            <Autocomplete
+              size="small"
+              className="min-w-[200px] max-w-full flex-1 md:flex-none md:min-w-[260px]"
+              options={institutions}
+              getOptionLabel={(o) => o.name}
+              value={selectedInstitution}
+              onChange={(_, v) => setSelectedInstitutionId(v?.id ?? null)}
+              renderInput={(params) => renderInstitutionField(params, t)}
+              isOptionEqualToValue={(a, b) => a.id === b.id}
+            />
+            <Tooltip
+              title={
                 themeMode === 'dark'
                   ? t('adminLayout.themeLight')
                   : t('adminLayout.themeDark')
               }
+              disableTouchListener={isCoarsePointer}
+              enterTouchDelay={0}
             >
-              {themeMode === 'dark' ? (
-                <LightModeOutlinedIcon />
-              ) : (
-                <DarkModeOutlinedIcon />
-              )}
+              <IconButton
+                color="inherit"
+                onClick={toggleThemeMode}
+                aria-label={
+                  themeMode === 'dark'
+                    ? t('adminLayout.themeLight')
+                    : t('adminLayout.themeDark')
+                }
+              >
+                {themeMode === 'dark' ? (
+                  <LightModeOutlinedIcon />
+                ) : (
+                  <DarkModeOutlinedIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+            <IconButton
+              color="inherit"
+              onClick={() => {
+                logout()
+                navigate('/login', { replace: true })
+              }}
+              aria-label={t('adminLayout.logout')}
+            >
+              <LogoutIcon />
             </IconButton>
-          </Tooltip>
-          <IconButton
-            color="inherit"
-            onClick={() => {
-              logout()
-              navigate('/login', { replace: true })
-            }}
-            aria-label={t('adminLayout.logout')}
-          >
-            <LogoutIcon />
-          </IconButton>
-        </Toolbar>
+          </Toolbar>
+        )}
       </AppBar>
 
       <Box component="nav" aria-label={t('adminLayout.mainNavigation')}>
@@ -295,7 +405,12 @@ export function AdminLayout() {
       <Box
         component="main"
         className="flex-1 flex flex-col min-w-0"
-        sx={{ flexGrow: 1, p: 0, mt: 8, bgcolor: 'background.default' }}
+        sx={{
+          flexGrow: 1,
+          p: 0,
+          mt: `${appBarHeightPx}px`,
+          bgcolor: 'background.default',
+        }}
       >
         <Suspense fallback={<RoutePageFallback />}>
           {routeBlocked && requiredRoles ? (
@@ -317,7 +432,19 @@ export function AdminLayout() {
 function renderInstitutionField(
   params: AutocompleteRenderInputParams,
   t: (key: string) => string,
+  options?: { touchFriendlyInput?: boolean },
 ) {
+  const prevStyle =
+    params.inputProps &&
+    typeof params.inputProps.style === 'object' &&
+    params.inputProps.style !== null &&
+    !Array.isArray(params.inputProps.style)
+      ? params.inputProps.style
+      : {}
+  const inputStyle =
+    options?.touchFriendlyInput === true
+      ? { ...prevStyle, fontSize: '1rem', paddingTop: 10, paddingBottom: 10 }
+      : { ...prevStyle }
   return (
     <TextField
       {...params}
@@ -327,6 +454,7 @@ function renderInstitutionField(
         htmlInput: {
           ...params.inputProps,
           'aria-label': t('adminLayout.filterByInstitution'),
+          style: inputStyle,
         },
       }}
     />
