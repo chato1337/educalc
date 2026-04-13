@@ -378,7 +378,7 @@ def build_bulletin_context(
     grade_badge = f"{group.grade_level.name} — {group.name}"
 
     return {
-        "institution_label": "Institución Educativa",
+        "institution_label": "(Art. 16 Decreto 1290 de 2009)",
         "institution_name": institution.name,
         "legal_line": legal_line,
         "logo_left_url": "http://cabildodecorinto.com/wp-content/uploads/2026/04/Screenshot_2026-04-12_at_6.12.43_PM-removebg-preview-1.png",
