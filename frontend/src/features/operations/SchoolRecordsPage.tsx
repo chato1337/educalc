@@ -313,7 +313,12 @@ export function SchoolRecordsPage() {
   const yearLabel = (y: AcademicYear) => String(y.year)
 
   const groupBulletinLabel = (g: Group) =>
-    `${g.name} (${g.academic_year_year}) — ${g.grade_level_name}`
+    `${g.name} (${g.academic_year_year}) — ${g.grade_level_name} · ${g.campus_name}`
+
+  const selectedBulletinGroup = useMemo(
+    () => groupsForBulletin.find((g) => g.id === bulletinGroupId) ?? null,
+    [groupsForBulletin, bulletinGroupId],
+  )
 
   return (
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
@@ -582,7 +587,13 @@ export function SchoolRecordsPage() {
               renderInput={(params: AutocompleteRenderInputParams) => (
                 <TextField
                   {...params}
-                  label={t('grades.bulletinGroup')}
+                  label={
+                    selectedBulletinGroup
+                      ? t('grades.bulletinGroupWithCampus', {
+                          campus: selectedBulletinGroup.campus_name,
+                        })
+                      : t('grades.bulletinGroup')
+                  }
                   size="small"
                 />
               )}

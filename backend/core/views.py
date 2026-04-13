@@ -729,6 +729,7 @@ class CourseAssignmentViewSet(viewsets.ModelViewSet):
         "subject__academic_area",
         "teacher",
         "group",
+        "group__campus",
         "academic_year",
     ).all()
     serializer_class = CourseAssignmentSerializer

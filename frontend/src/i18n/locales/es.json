@@ -321,12 +321,20 @@
     "bulletinScopeStudent": "Un estudiante",
     "bulletinScopeGroup": "Todo el grupo",
     "bulletinGroup": "Grupo (p. ej. 101)",
+    "bulletinGroupWithCampus": "Grupo — sede: {{campus}}",
     "bulletinYear": "Año lectivo",
     "bulletinPeriods": "Periodos (opcional)",
     "bulletinPeriodsHint": "Vacío = todos los periodos del año.",
     "downloadBulletin": "Descargar boletín",
     "downloadBulletinGroup": "Descargar PDF del grupo",
-    "bulletinDownloading": "Generando PDF…"
+    "bulletinDownloading": "Generando PDF…",
+    "addByGroup": "Agregar calificación por grupo",
+    "byGroupTitle": "Calificaciones por grupo",
+    "byGroupHint": "Elige grupo, asignatura y periodo. Haz doble clic o F2 en una celda de nota para editarla; al salir de la celda se guarda automáticamente.",
+    "byGroupSelectGroup": "Grupo",
+    "byGroupSelectSubject": "Asignatura",
+    "byGroupClose": "Cerrar",
+    "byGroupNeedNumericalFirst": "Primero ingresa la nota numérica; la definitiva requiere una calificación creada."
   },
   "academicIndicators": {
     "title": "Informes de indicadores",

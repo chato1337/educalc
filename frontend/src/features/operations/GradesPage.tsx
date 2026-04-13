@@ -21,6 +21,7 @@ import {
   Paper,
   Select,
   Tooltip,
+  Stack,
   TextField,
   Typography,
 } from '@mui/material'
@@ -57,6 +58,7 @@ import {
 } from '@/hooks/useMuiDataGridLocaleText'
 import { createServerSortHandlers } from '@/lib/dataGridServerSort'
 import { PageHeader } from '@/components/PageHeader'
+import { GradesByGroupModal } from '@/features/operations/GradesByGroupModal'
 import {
   useAcademicAreasQuery,
   useAcademicYearsQuery,
@@ -241,6 +243,7 @@ export function GradesPage() {
   const [filterPeriodNumberExact, setFilterPeriodNumberExact] = useState('')
   const [ordering, setOrdering] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [byGroupModalOpen, setByGroupModalOpen] = useState(false)
   const [dialogYearId, setDialogYearId] = useState<string | null>(null)
   const [editing, setEditing] = useState<GradeRow | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<GradeRow | null>(null)
@@ -691,15 +694,35 @@ export function GradesPage() {
           title={t('grades.title')}
           subtitle={t('grades.subtitle')}
         />
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={openCreate}
-          disabled={!selectedInstitutionId || academicYears.length === 0}
-        >
-          {t('grades.new')}
-        </Button>
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          {effectiveRole === 'TEACHER' &&
+          me?.teacher_id &&
+          (teacherAssignments?.length ?? 0) > 0 ? (
+            <Button
+              variant="outlined"
+              onClick={() => setByGroupModalOpen(true)}
+              disabled={!selectedInstitutionId}
+            >
+              {t('grades.addByGroup')}
+            </Button>
+          ) : null}
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={openCreate}
+            disabled={!selectedInstitutionId || academicYears.length === 0}
+          >
+            {t('grades.new')}
+          </Button>
+        </Stack>
       </Box>
+
+      <GradesByGroupModal
+        open={byGroupModalOpen}
+        onClose={() => setByGroupModalOpen(false)}
+        teacherAssignments={teacherAssignments ?? []}
+        gradingScales={gradingScales}
+      />
 
       {!selectedInstitutionId ? (
         <Alert severity="info">

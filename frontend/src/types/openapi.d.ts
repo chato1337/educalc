@@ -1759,7 +1759,10 @@ export interface components {
             readonly teacher_document_number: string;
             /** Format: uuid */
             group: string;
-            readonly group_name: string;
+            readonly             group_name: string;
+            /** Format: uuid */
+            readonly campus: string;
+            readonly campus_name: string;
             /** Format: uuid */
             academic_year: string;
             readonly academic_year_year: number;

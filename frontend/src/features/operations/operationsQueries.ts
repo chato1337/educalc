@@ -12,6 +12,8 @@ import {
 import type {
   AcademicPeriod,
   CourseAssignment,
+  Enrollment,
+  Grade,
   GradeDirector,
   Group,
   Student,
@@ -124,6 +126,46 @@ export function useTeacherCourseAssignments(
     queryFn: () => fetchAllCourseAssignmentsForTeacher(teacherId!),
     enabled: (options?.enabled ?? true) && Boolean(teacherId),
   })
+}
+
+const LARGE_PAGE = 500
+
+/** Lista completa de matrículas para filtros fijos (p. ej. un grupo y año). */
+export async function fetchAllEnrollments(
+  params: Record<string, string | undefined>,
+): Promise<Enrollment[]> {
+  let offset = 0
+  const all: Enrollment[] = []
+  for (;;) {
+    const { data } = await apiClient.get<PaginatedList<Enrollment>>(
+      '/api/enrollments/',
+      { params: { ...params, limit: LARGE_PAGE, offset } },
+    )
+    all.push(...data.results)
+    if (!data.next || data.results.length === 0) break
+    offset += LARGE_PAGE
+    if (offset > 20_000) break
+  }
+  return all
+}
+
+/** Todas las calificaciones que coinciden con filtros (paginado en servidor). */
+export async function fetchAllGrades(
+  params: Record<string, string | undefined>,
+): Promise<Grade[]> {
+  let offset = 0
+  const all: Grade[] = []
+  for (;;) {
+    const { data } = await apiClient.get<PaginatedList<Grade>>(
+      '/api/grades/',
+      { params: { ...params, limit: LARGE_PAGE, offset } },
+    )
+    all.push(...data.results)
+    if (!data.next || data.results.length === 0) break
+    offset += LARGE_PAGE
+    if (offset > 20_000) break
+  }
+  return all
 }
 
 export function useGradingScalesForInstitution(institutionId: string | null) {

@@ -10141,6 +10141,15 @@
                         "type": "string",
                         "readOnly": true
                     },
+                    "campus": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "campus_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
                     "academic_year": {
                         "type": "string",
                         "format": "uuid"
@@ -10163,6 +10172,8 @@
                 "required": [
                     "academic_year",
                     "academic_year_year",
+                    "campus",
+                    "campus_name",
                     "created_at",
                     "group",
                     "group_name",
