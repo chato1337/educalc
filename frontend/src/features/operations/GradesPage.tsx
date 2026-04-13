@@ -198,6 +198,7 @@ export function GradesPage() {
   const { data: academicYears = [] } = useAcademicYearsQuery(
     selectedInstitutionId,
   )
+
   const { data: periodsForFilter = [] } = useAcademicPeriodsForYear(
     filterYearId,
   )

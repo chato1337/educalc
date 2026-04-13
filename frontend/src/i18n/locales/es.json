@@ -236,7 +236,7 @@
   },
   "schoolRecords": {
     "title": "Libro final de calificaciones",
-    "subtitle": "Documentos generados por estudiante y año. Solo creación vía API (sin edición).",
+    "subtitle": "Consulta y generación del libro final, descarga de boletines en PDF y listado de registros.",
     "generateRecord": "Generar registro",
     "selectInstitution": "Selecciona una institución para listar y generar registros.",
     "queryOrCreate": "Consulta o generación por estudiante y año",
@@ -315,7 +315,18 @@
     "scaleHelp": "Se elige automáticamente según la nota y los rangos de cada nivel; puedes cambiarla manualmente.",
     "finalGradeOptional": "Nota definitiva (opcional)",
     "deleteGrade": "Eliminar calificación",
-    "deletePrompt": "¿Eliminar la nota de {{student}}?"
+    "deletePrompt": "¿Eliminar la nota de {{student}}?",
+    "bulletinTitle": "Boletín de calificaciones (PDF)",
+    "bulletinSubtitle": "Un estudiante o todo un grupo en un solo PDF (varias hojas). Misma API `GET /api/academic-grades/bulletin/`. Sin periodos elegidos = todos los del año.",
+    "bulletinScopeStudent": "Un estudiante",
+    "bulletinScopeGroup": "Todo el grupo",
+    "bulletinGroup": "Grupo (p. ej. 101)",
+    "bulletinYear": "Año lectivo",
+    "bulletinPeriods": "Periodos (opcional)",
+    "bulletinPeriodsHint": "Vacío = todos los periodos del año.",
+    "downloadBulletin": "Descargar boletín",
+    "downloadBulletinGroup": "Descargar PDF del grupo",
+    "bulletinDownloading": "Generando PDF…"
   },
   "academicIndicators": {
     "title": "Informes de indicadores",

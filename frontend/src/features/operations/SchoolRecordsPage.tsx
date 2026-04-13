@@ -1,5 +1,6 @@
 import AddIcon from '@mui/icons-material/Add'
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff'
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import SearchIcon from '@mui/icons-material/Search'
 import type { AutocompleteRenderInputParams } from '@mui/material/Autocomplete'
 import {
@@ -17,6 +18,8 @@ import {
   Paper,
   Select,
   Table,
+  ToggleButton,
+  ToggleButtonGroup,
   TableBody,
   TableCell,
   TableContainer,
@@ -28,7 +31,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
@@ -37,13 +40,16 @@ import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
 import { PageHeader } from '@/components/PageHeader'
 import { useAcademicYearsQuery } from '@/features/academic-structure/academicQueries'
+import { downloadGradesBulletinPdf } from '@/features/operations/gradesBulletinApi'
 import {
+  useAcademicPeriodsForYear,
   useCampusesForInstitution,
   useGroupsForFilters,
   useStudentsSearch,
 } from '@/features/operations/operationsQueries'
 import { useUiStore } from '@/stores/uiStore'
 import type {
+  AcademicPeriod,
   AcademicYear,
   Campus,
   Group,
@@ -60,6 +66,8 @@ const schema = z.object({
 })
 
 type FormValues = z.infer<typeof schema>
+
+type BulletinScope = 'student' | 'group'
 
 export function SchoolRecordsPage() {
   const { t } = useTranslation()
@@ -84,6 +92,16 @@ export function SchoolRecordsPage() {
     student: string
     year: string
   } | null>(null)
+  const [bulletinStudentSearchInput, setBulletinStudentSearchInput] =
+    useState('')
+  const [bulletinAppliedStudentSearch, setBulletinAppliedStudentSearch] =
+    useState('')
+  const [bulletinStudentId, setBulletinStudentId] = useState('')
+  const [bulletinYearId, setBulletinYearId] = useState('')
+  const [bulletinPeriodIds, setBulletinPeriodIds] = useState<string[]>([])
+  const [bulletinScope, setBulletinScope] = useState<BulletinScope>('student')
+  const [bulletinGroupId, setBulletinGroupId] = useState('')
+  const [bulletinError, setBulletinError] = useState<string | null>(null)
 
   const { data: academicYears = [] } = useAcademicYearsQuery(
     selectedInstitutionId,
@@ -116,6 +134,18 @@ export function SchoolRecordsPage() {
 
   const { data: studentOptions = [] } = useStudentsSearch(appliedStudentSearch)
   const { data: compStudentOptions = [] } = useStudentsSearch(compAppliedSearch)
+  const { data: bulletinStudentOptions = [] } = useStudentsSearch(
+    bulletinAppliedStudentSearch,
+  )
+  const { data: periodsForBulletin = [] } = useAcademicPeriodsForYear(
+    bulletinYearId || null,
+  )
+  const { data: groupsForBulletin = [] } = useGroupsForFilters(
+    selectedInstitutionId,
+    { academic_year: bulletinYearId || null },
+    undefined,
+    { enabled: !!selectedInstitutionId && !!bulletinYearId },
+  )
 
   const {
     data: compositeRecord,
@@ -159,6 +189,40 @@ export function SchoolRecordsPage() {
     { enabled: dialogOpen && !!dialogYearId },
   )
 
+  useEffect(() => {
+    if (!bulletinYearId && academicYears[0]?.id) {
+      setBulletinYearId(academicYears[0].id)
+    }
+  }, [academicYears, bulletinYearId])
+
+  useEffect(() => {
+    setBulletinPeriodIds([])
+    setBulletinGroupId('')
+  }, [bulletinYearId])
+
+  const downloadBulletinMutation = useMutation({
+    mutationFn: () => {
+      const period_ids =
+        bulletinPeriodIds.length > 0
+          ? bulletinPeriodIds.join(',')
+          : undefined
+      if (bulletinScope === 'student') {
+        return downloadGradesBulletinPdf({
+          student: bulletinStudentId,
+          academic_year: bulletinYearId,
+          period_ids,
+        })
+      }
+      return downloadGradesBulletinPdf({
+        group: bulletinGroupId,
+        academic_year: bulletinYearId,
+        period_ids,
+      })
+    },
+    onMutate: () => setBulletinError(null),
+    onError: (e) => setBulletinError(getErrorMessage(e)),
+  })
+
   const createMutation = useMutation({
     mutationFn: (body: Record<string, unknown>) =>
       apiClient.post<SchoolRecord>('/api/school-records/', body),
@@ -192,6 +256,9 @@ export function SchoolRecordsPage() {
   const pending = createMutation.isPending || form.formState.isSubmitting
 
   const yearLabel = (y: AcademicYear) => String(y.year)
+
+  const groupBulletinLabel = (g: Group) =>
+    `${g.name} (${g.academic_year_year}) — ${g.grade_level_name}`
 
   return (
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
@@ -329,6 +396,166 @@ export function SchoolRecordsPage() {
           </Alert>
         ) : null}
       </Paper>
+
+      {selectedInstitutionId && academicYears.length > 0 ? (
+        <Paper className="p-4 flex flex-col gap-3">
+          <Box>
+            <Typography variant="subtitle1" className="font-medium">
+              {t('grades.bulletinTitle')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {t('grades.bulletinSubtitle')}
+            </Typography>
+          </Box>
+          {bulletinError ? (
+            <Alert
+              severity="error"
+              onClose={() => setBulletinError(null)}
+            >
+              {bulletinError}
+            </Alert>
+          ) : null}
+          <ToggleButtonGroup
+            exclusive
+            value={bulletinScope}
+            onChange={(_, v: BulletinScope | null) => {
+              if (v != null) setBulletinScope(v)
+            }}
+            size="small"
+            color="primary"
+          >
+            <ToggleButton value="student">
+              {t('grades.bulletinScopeStudent')}
+            </ToggleButton>
+            <ToggleButton value="group">
+              {t('grades.bulletinScopeGroup')}
+            </ToggleButton>
+          </ToggleButtonGroup>
+          <Box className="flex flex-col gap-0.5">
+            <Box className="flex flex-wrap gap-2 items-start">
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel>{t('grades.bulletinYear')}</InputLabel>
+                <Select
+                  label={t('grades.bulletinYear')}
+                  value={bulletinYearId}
+                  onChange={(e) => setBulletinYearId(e.target.value)}
+                >
+                  {academicYears.map((y) => (
+                    <MenuItem key={y.id} value={y.id}>
+                      {yearLabel(y)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Autocomplete
+                multiple
+                sx={{ minWidth: 260, flex: 1 }}
+                options={periodsForBulletin}
+                getOptionLabel={(p: AcademicPeriod) => p.name}
+                value={periodsForBulletin.filter((p) =>
+                  bulletinPeriodIds.includes(p.id),
+                )}
+                onChange={(_, v) => setBulletinPeriodIds(v.map((p) => p.id))}
+                disabled={!bulletinYearId}
+                renderInput={(params: AutocompleteRenderInputParams) => (
+                  <TextField
+                    {...params}
+                    label={t('grades.bulletinPeriods')}
+                    size="small"
+                  />
+                )}
+                isOptionEqualToValue={(a, b) => a.id === b.id}
+              />
+            </Box>
+            <Typography variant="caption" color="text.secondary" sx={{ pl: 0.25 }}>
+              {t('grades.bulletinPeriodsHint')}
+            </Typography>
+          </Box>
+          {bulletinScope === 'student' ? (
+            <Box className="flex flex-wrap gap-2 items-center">
+              <TextField
+                size="small"
+                label={t('grades.searchStudent')}
+                value={bulletinStudentSearchInput}
+                onChange={(e) => setBulletinStudentSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    setBulletinAppliedStudentSearch(bulletinStudentSearchInput)
+                  }
+                }}
+                sx={{ minWidth: 200 }}
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() =>
+                  setBulletinAppliedStudentSearch(bulletinStudentSearchInput)
+                }
+              >
+                {t('common.search')}
+              </Button>
+              <Autocomplete
+                sx={{ minWidth: 260, flex: 1 }}
+                options={bulletinStudentOptions}
+                getOptionLabel={(o: Student) => o.full_name}
+                value={
+                  bulletinStudentOptions.find(
+                    (s) => s.id === bulletinStudentId,
+                  ) ?? null
+                }
+                onChange={(_, v) => setBulletinStudentId(v?.id ?? '')}
+                renderInput={(params: AutocompleteRenderInputParams) => (
+                  <TextField
+                    {...params}
+                    label={t('grades.student')}
+                    size="small"
+                  />
+                )}
+              />
+            </Box>
+          ) : (
+            <Autocomplete
+              sx={{ minWidth: 320, maxWidth: '100%' }}
+              options={groupsForBulletin}
+              getOptionLabel={(g: Group) => groupBulletinLabel(g)}
+              value={
+                groupsForBulletin.find((g) => g.id === bulletinGroupId) ?? null
+              }
+              onChange={(_, v) => setBulletinGroupId(v?.id ?? '')}
+              disabled={!bulletinYearId}
+              renderInput={(params: AutocompleteRenderInputParams) => (
+                <TextField
+                  {...params}
+                  label={t('grades.bulletinGroup')}
+                  size="small"
+                />
+              )}
+              isOptionEqualToValue={(a, b) => a.id === b.id}
+            />
+          )}
+          <Box>
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<PictureAsPdfIcon />}
+              disabled={
+                !bulletinYearId ||
+                downloadBulletinMutation.isPending ||
+                (bulletinScope === 'student' && !bulletinStudentId) ||
+                (bulletinScope === 'group' && !bulletinGroupId)
+              }
+              onClick={() => downloadBulletinMutation.mutate()}
+            >
+              {downloadBulletinMutation.isPending
+                ? t('grades.bulletinDownloading')
+                : bulletinScope === 'group'
+                  ? t('grades.downloadBulletinGroup')
+                  : t('grades.downloadBulletin')}
+            </Button>
+          </Box>
+        </Paper>
+      ) : null}
 
       <Paper className="p-3 flex flex-wrap gap-2 items-end">
         <TextField

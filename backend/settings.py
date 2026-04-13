@@ -193,6 +193,9 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
+# Permitir leer Content-Disposition en el front (axios) para nombres de archivo en descargas PDF
+CORS_EXPOSE_HEADERS = ["Content-Disposition"]
+
 # Django REST Framework
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",

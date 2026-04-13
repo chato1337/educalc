@@ -1,0 +1,135 @@
+<div class="boletin">
+
+  <div class="header">
+    <table class="escudo-row" role="presentation">
+      <tr>
+        <td class="escudo-side">
+          {% if logo_left_url %}
+          <img class="header-logo" src="{{ logo_left_url }}" alt="Logo Institución">
+          {% endif %}
+        </td>
+        <td class="header-center">
+          <div class="inst">{{ institution_label }}</div>
+          <div class="nombre">{{ institution_name }}</div>
+          <div class="registro">Registro Escolar de Valoración</div>
+          <div class="dane">{{ legal_line }}</div>
+        </td>
+        <td class="escudo-side">
+          {% if logo_right_url %}
+          <img class="header-logo" src="{{ logo_right_url }}" alt="Escudo">
+          {% endif %}
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="sede-bar">{{ campus_line }}</div>
+
+  <div class="estudiante-bar">
+    <div>
+      <div class="label">Estudiante</div>
+      <div class="value">{{ student_name }}</div>
+    </div>
+    <div class="grado-badge">{{ grade_badge }}</div>
+  </div>
+
+  <div class="tabla-titulo">{{ table_title }}</div>
+
+  <div class="tabla-wrap">
+    <table class="notas">
+      <thead>
+        <tr>
+          <th class="left" style="width:28%">Área / Asignatura</th>
+          <th class="left" style="width:22%">Docente</th>
+          {% for p in periods %}
+          <th>{{ p.name }}</th>
+          {% endfor %}
+          <th>DEF</th><th>SE</th><th>CE</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in grade_rows %}
+        <tr>
+          <td class="materia">{{ row.area_title }}<div class="sub">{{ row.subject_sub }}</div></td>
+          <td class="docente">{{ row.teacher }}</td>
+          {% for cell in row.period_cells %}
+          <td class="num {% if cell.css %}{{ cell.css }}{% endif %}">{{ cell.value }}</td>
+          {% endfor %}
+          <td class="num">{% if row.def_css %}<span class="def-badge {{ row.def_css }}">{{ row.def_value }}</span>{% else %}{{ row.def_value }}{% endif %}</td>
+          <td class="num">{{ row.se }}</td><td class="num">{{ row.ce }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="12" class="num">Sin asignaturas registradas para el grupo.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="resumen-grid">
+    <div class="resumen-block">
+      <div class="rtitle">Total inasistencia periódica y anual</div>
+      <table class="inas-table">
+        <tr>
+          <td></td>
+          {% for p in periods %}<td>{{ p.name }}</td>{% endfor %}
+          <td>Anual</td>
+        </tr>
+        <tr>
+          <td>Sin excusa</td>
+          {% for v in inas_unexcused %}<td>{{ v }}</td>{% endfor %}
+        </tr>
+        <tr>
+          <td>Con excusa</td>
+          {% for v in inas_excused %}<td>{{ v }}</td>{% endfor %}
+        </tr>
+      </table>
+    </div>
+    <div class="resumen-block">
+      <div class="rtitle">Puesto y promedio por periodo</div>
+      <table class="inas-table">
+        <tr><td></td>{% for p in periods %}<td>{{ p.name }}</td>{% endfor %}</tr>
+        <tr><td>Puesto</td>{% for v in rank_row %}<td>{{ v }}</td>{% endfor %}</tr>
+        <tr><td>Promedio</td>{% for v in avg_row %}<td>{{ v }}</td>{% endfor %}</tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="leyenda-bar">
+    <span>Escala:</span>
+    <span class="ley-badge" style="background:#d4f0e0;color:#1a6b3a">SP: Superior 4.60–5.00</span>
+    <span class="ley-badge" style="background:#dce8f8;color:#1a3a6b">AL: Alto 4.00–4.59</span>
+    <span class="ley-badge" style="background:#fdf0d0;color:#854f0b">BS: Básico 3.00–3.99</span>
+    <span class="ley-badge" style="background:#fce8e8;color:#a32d2d">BJ: Bajo 0.00–2.99</span>
+  </div>
+
+  <div class="indicadores">
+    <h3>Indicadores académicos</h3>
+    {% for ind in indicators %}
+    <div class="ind-item">
+      <div class="ind-materia">
+        <span class="ley-badge" style="{{ ind.badge_style }}">{{ ind.badge_code }}</span>
+        {{ ind.label }}
+      </div>
+      {% if ind.description %}
+      <div class="ind-desc">{{ ind.description }}</div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="ind-item"><div class="ind-desc">Sin indicadores registrados para los periodos seleccionados.</div></div>
+    {% endfor %}
+  </div>
+
+  <div class="disciplinario">
+    <div class="rtitle">Informe disciplinario</div>
+    <div style="min-height:50px; font-size:11px; color:#333; white-space:pre-wrap;">{{ disciplinary_text }}</div>
+  </div>
+
+  <div class="firma-area">
+    <div class="firma-box">
+      <div class="firma-linea"></div>
+      <div class="firma-nombre">{{ director_name }}</div>
+      <div class="firma-cargo">{{ director_title }}</div>
+    </div>
+  </div>
+
+</div>

@@ -14,6 +14,7 @@ from drf_spectacular.views import (
 from rest_framework.routers import DefaultRouter
 
 from core.auth_views import LoginView, MeView, RefreshTokenView
+from core.academic_grades_report_views import AcademicGradesBulletinPdfView
 from core.report_views import (
     AcademicIndicatorsReportByStudentPeriodView,
     SchoolRecordByStudentYearView,
@@ -91,6 +92,11 @@ urlpatterns = [
         "api/academic-indicators-reports/<uuid:student_id>/<uuid:period_id>/",
         AcademicIndicatorsReportByStudentPeriodView.as_view(),
         name="academic-indicators-report-by-student-period",
+    ),
+    path(
+        "api/academic-grades/bulletin/",
+        AcademicGradesBulletinPdfView.as_view(),
+        name="academic-grades-bulletin-pdf",
     ),
     # API
     path("api/", include(router.urls)),

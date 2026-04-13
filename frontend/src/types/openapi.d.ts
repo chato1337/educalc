@@ -65,6 +65,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/academic-grades/bulletin/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download bulletin PDF (grades)
+         * @description **Single student:** pass `student` + `academic_year` (active enrollment). **Whole group:** pass `group` + `academic_year` where the group belongs to that year — returns one PDF with one boletín per active student, in name order. Optional `period_ids` (comma-separated academic period UUIDs) limits columns. Provide **exactly one** of `student` or `group`. Query param `grade_level_ids` is ignored (reserved for compatibility).
+         */
+        get: operations["academic_grades_bulletin_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/academic-indicators/": {
         parameters: {
             query?: never;
@@ -2640,6 +2660,36 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    academic_grades_bulletin_retrieve: {
+        parameters: {
+            query: {
+                /** @description Academic year UUID (must match the group's year in group mode). */
+                academic_year: string;
+                /** @description Ignored. Reserved for future use. */
+                grade_level_ids?: string;
+                /** @description Group UUID (multi-boletín PDF for all active enrollments in that group; mutually exclusive with `student`). */
+                group?: string;
+                /** @description Comma-separated academic period UUIDs to include (subset of the year's periods). */
+                period_ids?: string;
+                /** @description Student UUID (single-boletín mode; mutually exclusive with `group`). */
+                student?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
                 };
             };
         };
