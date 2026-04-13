@@ -276,7 +276,16 @@ class AcademicPeriodSerializer(serializers.ModelSerializer):
 
 class CourseAssignmentSerializer(serializers.ModelSerializer):
     subject_name = serializers.CharField(source="subject.name", read_only=True)
+    subject_academic_area = serializers.UUIDField(
+        source="subject.academic_area_id", read_only=True
+    )
+    subject_academic_area_name = serializers.CharField(
+        source="subject.academic_area.name", read_only=True
+    )
     teacher_name = serializers.CharField(source="teacher.full_name", read_only=True)
+    teacher_document_number = serializers.CharField(
+        source="teacher.document_number", read_only=True
+    )
     group_name = serializers.CharField(source="group.name", read_only=True)
     academic_year_year = serializers.IntegerField(source="academic_year.year", read_only=True)
 
@@ -286,8 +295,11 @@ class CourseAssignmentSerializer(serializers.ModelSerializer):
             "id",
             "subject",
             "subject_name",
+            "subject_academic_area",
+            "subject_academic_area_name",
             "teacher",
             "teacher_name",
+            "teacher_document_number",
             "group",
             "group_name",
             "academic_year",

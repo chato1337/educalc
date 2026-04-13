@@ -548,6 +548,7 @@ class ParentViewSet(viewsets.ModelViewSet):
         "grade_level__name",
         "academic_year",
         "academic_year__year",
+        "academic_year__institution",
         "campus",
         "campus__name",
         "name",
@@ -559,11 +560,30 @@ class GroupViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = GroupSerializer
     permission_classes = [IsAuthenticated]
+    # Default ordering for list + stable pagination; OrderingFilter replaces this when ?ordering= is valid.
+    ordering = [
+        "academic_year__year",
+        "campus_id",
+        "grade_level__level_order",
+        "name",
+        "pk",
+    ]
+    ordering_fields = [
+        "name",
+        "pk",
+        "grade_level",
+        "grade_level__name",
+        "academic_year",
+        "academic_year__year",
+        "campus",
+        "campus__name",
+    ]
     filterset_fields = [
         "grade_level",
         "grade_level__name",
         "academic_year",
         "academic_year__year",
+        "academic_year__institution",
         "campus",
         "campus__name",
         "name",
@@ -705,7 +725,11 @@ class AcademicPeriodViewSet(viewsets.ModelViewSet):
 )
 class CourseAssignmentViewSet(viewsets.ModelViewSet):
     queryset = CourseAssignment.objects.select_related(
-        "subject", "teacher", "group", "academic_year"
+        "subject",
+        "subject__academic_area",
+        "teacher",
+        "group",
+        "academic_year",
     ).all()
     serializer_class = CourseAssignmentSerializer
     permission_classes = [IsAuthenticated]
@@ -895,6 +919,7 @@ class StudentGuardianViewSet(viewsets.ModelViewSet):
         "course_assignment__subject__name, course_assignment__teacher__full_name, course_assignment__teacher__document_number, "
         "course_assignment__group__name, academic_period__name. "
         "Available exact-match filters via query params: student, student__document_number, course_assignment, "
+        "course_assignment__group, course_assignment__group__name, course_assignment__subject__academic_area, "
         "course_assignment__teacher__document_number, academic_period, academic_period__number. "
         + OPENAPI_LIST_PAGINATION_DESCRIPTION,
         parameters=[
@@ -909,7 +934,16 @@ class StudentGuardianViewSet(viewsets.ModelViewSet):
             OpenApiParameter(name="student", type=str, location="query", required=False, description="Filter by exact value of `student`."),
             OpenApiParameter(name="student__document_number", type=str, location="query", required=False, description="Filter by exact value of `student__document_number`."),
             OpenApiParameter(name="course_assignment", type=str, location="query", required=False, description="Filter by exact value of `course_assignment`."),
+            OpenApiParameter(name="course_assignment__group", type=str, location="query", required=False, description="Filter by exact value of `course_assignment__group` (group id)."),
+            OpenApiParameter(name="course_assignment__group__name", type=str, location="query", required=False, description="Filter by exact value of `course_assignment__group__name`."),
             OpenApiParameter(name="course_assignment__teacher__document_number", type=str, location="query", required=False, description="Filter by exact value of `course_assignment__teacher__document_number`."),
+            OpenApiParameter(
+                name="course_assignment__subject__academic_area",
+                type=str,
+                location="query",
+                required=False,
+                description="Filter by exact value of `course_assignment__subject__academic_area` (academic area id).",
+            ),
             OpenApiParameter(name="academic_period", type=str, location="query", required=False, description="Filter by exact value of `academic_period`."),
             OpenApiParameter(name="academic_period__number", type=str, location="query", required=False, description="Filter by exact value of `academic_period__number`."),
         ],
@@ -929,6 +963,7 @@ class GradeViewSet(viewsets.ModelViewSet):
         "student",
         "course_assignment",
         "course_assignment__subject",
+        "course_assignment__subject__academic_area",
         "course_assignment__teacher",
         "course_assignment__group",
         "course_assignment__academic_year",
@@ -941,6 +976,9 @@ class GradeViewSet(viewsets.ModelViewSet):
         "student",
         "student__document_number",
         "course_assignment",
+        "course_assignment__group",
+        "course_assignment__group__name",
+        "course_assignment__subject__academic_area",
         "course_assignment__teacher__document_number",
         "academic_period",
         "academic_period__number",
@@ -981,6 +1019,7 @@ class GradeViewSet(viewsets.ModelViewSet):
         "student",
         "student__document_number",
         "course_assignment",
+        "course_assignment__subject__academic_area",
         "course_assignment__teacher__document_number",
         "academic_period",
         "academic_period__number",
@@ -988,7 +1027,12 @@ class GradeViewSet(viewsets.ModelViewSet):
 )
 class AttendanceViewSet(viewsets.ModelViewSet):
     queryset = Attendance.objects.select_related(
-        "student", "course_assignment", "academic_period"
+        "student",
+        "course_assignment",
+        "course_assignment__subject",
+        "course_assignment__subject__academic_area",
+        "course_assignment__teacher",
+        "academic_period",
     ).all()
     serializer_class = AttendanceSerializer
     permission_classes = [IsAuthenticated]
@@ -996,6 +1040,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         "student",
         "student__document_number",
         "course_assignment",
+        "course_assignment__subject__academic_area",
         "course_assignment__teacher__document_number",
         "academic_period",
         "academic_period__number",
@@ -1034,6 +1079,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         "student",
         "student__document_number",
         "course_assignment",
+        "course_assignment__subject__academic_area",
         "course_assignment__teacher__document_number",
         "academic_period",
         "academic_period__number",
@@ -1042,7 +1088,12 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 )
 class AcademicIndicatorViewSet(viewsets.ModelViewSet):
     queryset = AcademicIndicator.objects.select_related(
-        "student", "course_assignment", "academic_period"
+        "student",
+        "course_assignment",
+        "course_assignment__subject",
+        "course_assignment__subject__academic_area",
+        "course_assignment__teacher",
+        "academic_period",
     ).all()
     serializer_class = AcademicIndicatorSerializer
     permission_classes = [IsAuthenticated]
@@ -1050,6 +1101,7 @@ class AcademicIndicatorViewSet(viewsets.ModelViewSet):
         "student",
         "student__document_number",
         "course_assignment",
+        "course_assignment__subject__academic_area",
         "course_assignment__teacher__document_number",
         "academic_period",
         "academic_period__number",

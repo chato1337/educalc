@@ -27,7 +27,9 @@ import {
   TextField,
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+
+import { resolvedAppRole } from '@/app/roleMatrix'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -36,15 +38,21 @@ import { z } from 'zod'
 import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
+import { fetchMe } from '@/features/auth/meApi'
 import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
 import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
 import { PageHeader } from '@/components/PageHeader'
-import { useAcademicYearsQuery } from '@/features/academic-structure/academicQueries'
+import {
+  useAcademicAreasQuery,
+  useAcademicYearsQuery,
+} from '@/features/academic-structure/academicQueries'
 import {
   useAcademicPeriodsForYear,
   useCourseAssignmentsList,
   useStudentsSearch,
+  useTeacherCourseAssignments,
 } from '@/features/operations/operationsQueries'
+import { useTeacherScopeListDefaults } from '@/features/operations/useTeacherScopeListDefaults'
 import { useUiStore } from '@/stores/uiStore'
 import type {
   AcademicPeriod,
@@ -72,6 +80,10 @@ export function AttendancesPage() {
   const [appliedSearch, setAppliedSearch] = useState('')
   const [filterYearId, setFilterYearId] = useState<string | null>(null)
   const [filterPeriodId, setFilterPeriodId] = useState<string | null>(null)
+  const [filterAcademicAreaId, setFilterAcademicAreaId] = useState<string | null>(
+    null,
+  )
+  const [filterTeacherDocExact, setFilterTeacherDocExact] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogYearId, setDialogYearId] = useState<string | null>(null)
   const [editing, setEditing] = useState<Attendance | null>(null)
@@ -83,12 +95,61 @@ export function AttendancesPage() {
   const { data: academicYears = [] } = useAcademicYearsQuery(
     selectedInstitutionId,
   )
+
+  const { data: me } = useQuery({
+    queryKey: queryKeys.me,
+    queryFn: fetchMe,
+    staleTime: 60_000,
+  })
+  const effectiveRole = useMemo(
+    () => resolvedAppRole(me?.role ?? null),
+    [me?.role],
+  )
+  const { data: teacherAssignments } = useTeacherCourseAssignments(
+    me?.teacher_id,
+    {
+      enabled:
+        effectiveRole === 'TEACHER' &&
+        Boolean(me?.teacher_id) &&
+        Boolean(selectedInstitutionId),
+    },
+  )
+  const { data: academicAreas = [] } = useAcademicAreasQuery(
+    selectedInstitutionId,
+  )
+
+  useTeacherScopeListDefaults(
+    effectiveRole,
+    me?.teacher_id,
+    selectedInstitutionId,
+    academicYears,
+    teacherAssignments,
+    setFilterYearId,
+    setFilterTeacherDocExact,
+    setFilterAcademicAreaId,
+    () => {},
+  )
+
+  const academicAreaFilterOptions = useMemo(() => {
+    if (effectiveRole !== 'TEACHER' || !teacherAssignments?.length) {
+      return academicAreas
+    }
+    const ids = new Set(
+      teacherAssignments.map((a) => a.subject_academic_area),
+    )
+    return academicAreas.filter((a) => ids.has(a.id))
+  }, [academicAreas, effectiveRole, teacherAssignments])
+
   const { data: periodsForFilter = [] } = useAcademicPeriodsForYear(
     filterYearId,
   )
 
   const listParams = {
     academic_period: filterPeriodId ?? undefined,
+    course_assignment__subject__academic_area:
+      filterAcademicAreaId ?? undefined,
+    course_assignment__teacher__document_number:
+      filterTeacherDocExact.trim() || undefined,
     search: appliedSearch || undefined,
   }
 
@@ -256,6 +317,7 @@ export function AttendancesPage() {
               const v = e.target.value === '' ? null : e.target.value
               setFilterYearId(v)
               setFilterPeriodId(null)
+              setFilterAcademicAreaId(null)
             }}
           >
             <MenuItem value="">{t('attendances.all')}</MenuItem>
@@ -283,6 +345,30 @@ export function AttendancesPage() {
             ))}
           </Select>
         </FormControl>
+        <FormControl size="small" sx={{ minWidth: 170 }} disabled={!selectedInstitutionId}>
+          <InputLabel>{t('attendances.academicArea')}</InputLabel>
+          <Select
+            label={t('attendances.academicArea')}
+            value={filterAcademicAreaId ?? ''}
+            onChange={(e) =>
+              setFilterAcademicAreaId(e.target.value === '' ? null : e.target.value)
+            }
+          >
+            <MenuItem value="">{t('attendances.all')}</MenuItem>
+            {academicAreaFilterOptions.map((a) => (
+              <MenuItem key={a.id} value={a.id}>
+                {a.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <TextField
+          size="small"
+          label={t('attendances.teacherDocExact')}
+          value={filterTeacherDocExact}
+          onChange={(e) => setFilterTeacherDocExact(e.target.value)}
+          sx={{ minWidth: 180 }}
+        />
       </Paper>
 
       {error ? (

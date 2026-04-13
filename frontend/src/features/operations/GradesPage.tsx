@@ -2,6 +2,7 @@ import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import EditIcon from '@mui/icons-material/Edit'
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import SearchIcon from '@mui/icons-material/Search'
 import type { AutocompleteRenderInputParams } from '@mui/material/Autocomplete'
 import {
@@ -19,6 +20,7 @@ import {
   MenuItem,
   Paper,
   Select,
+  Tooltip,
   Table,
   TableBody,
   TableCell,
@@ -30,6 +32,8 @@ import {
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+
+import { resolvedAppRole } from '@/app/roleMatrix'
 import { useTranslation } from 'react-i18next'
 import {
   Controller,
@@ -44,16 +48,23 @@ import { apiClient } from '@/api/client'
 import { fetchReferenceListResults } from '@/api/list'
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
+import { fetchMe } from '@/features/auth/meApi'
 import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
 import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
 import { PageHeader } from '@/components/PageHeader'
-import { useAcademicYearsQuery } from '@/features/academic-structure/academicQueries'
+import {
+  useAcademicAreasQuery,
+  useAcademicYearsQuery,
+} from '@/features/academic-structure/academicQueries'
 import {
   useAcademicPeriodsForYear,
   useCourseAssignmentsList,
   useGradingScalesForInstitution,
+  useGroupsForFilters,
   useStudentsSearch,
+  useTeacherCourseAssignments,
 } from '@/features/operations/operationsQueries'
+import { useTeacherScopeListDefaults } from '@/features/operations/useTeacherScopeListDefaults'
 import { useUiStore } from '@/stores/uiStore'
 import type {
   AcademicPeriod,
@@ -62,6 +73,7 @@ import type {
   Enrollment,
   Grade,
   GradingScale,
+  Group,
   Student,
 } from '@/types/schemas'
 
@@ -110,6 +122,33 @@ function bodyFromValues(v: FormValues) {
   if (v.definitive_grade && v.definitive_grade !== '')
     body.definitive_grade = v.definitive_grade
   return body
+}
+
+/** Lista desplegable: grado, sección, sede y año para distinguir filas. */
+function groupFilterMenuLabel(g: Group): string {
+  const grade = g.grade_level_name?.trim() ?? ''
+  const name = g.name?.trim() ?? ''
+  const campus = g.campus_name?.trim() ?? ''
+  const year =
+    g.academic_year_year != null ? String(g.academic_year_year) : ''
+  let head = ''
+  if (grade && name) head = `${grade} — ${name}`
+  else head = name || grade || '—'
+  const extras = [campus, year].filter(Boolean)
+  if (extras.length === 0) return head
+  return `${head} (${extras.join(' · ')})`
+}
+
+/** Valor cerrado del Select: compacto; sede y nombre largo solo en tooltip / lista. */
+function groupFilterCompactLabel(g: Group): string {
+  const grade = g.grade_level_name?.trim() ?? ''
+  const name = g.name?.trim() ?? ''
+  const year =
+    g.academic_year_year != null ? String(g.academic_year_year) : ''
+  if (grade && name) {
+    return year ? `${grade} — ${name} · ${year}` : `${grade} — ${name}`
+  }
+  return name || grade || '—'
 }
 
 function getDocumentTypeAbbr(documentType: string): string {
@@ -182,10 +221,10 @@ export function GradesPage() {
   const [filterAssignmentId, setFilterAssignmentId] = useState<string | null>(
     null,
   )
-  const [filterStudentDocument, setFilterStudentDocument] = useState('')
-  const [filterSubjectText, setFilterSubjectText] = useState('')
-  const [filterTeacherText, setFilterTeacherText] = useState('')
-  const [filterGroupName, setFilterGroupName] = useState<string | null>(null)
+  const [filterGroupId, setFilterGroupId] = useState<string | null>(null)
+  const [filterAcademicAreaId, setFilterAcademicAreaId] = useState<string | null>(
+    null,
+  )
   const [filterStudentDocExact, setFilterStudentDocExact] = useState('')
   const [filterTeacherDocExact, setFilterTeacherDocExact] = useState('')
   const [filterPeriodNumberExact, setFilterPeriodNumberExact] = useState('')
@@ -202,6 +241,50 @@ export function GradesPage() {
     selectedInstitutionId,
   )
 
+  const { data: me } = useQuery({
+    queryKey: queryKeys.me,
+    queryFn: fetchMe,
+    staleTime: 60_000,
+  })
+  const effectiveRole = useMemo(
+    () => resolvedAppRole(me?.role ?? null),
+    [me?.role],
+  )
+  const { data: teacherAssignments } = useTeacherCourseAssignments(
+    me?.teacher_id,
+    {
+      enabled:
+        effectiveRole === 'TEACHER' &&
+        Boolean(me?.teacher_id) &&
+        Boolean(selectedInstitutionId),
+    },
+  )
+  const { data: academicAreas = [] } = useAcademicAreasQuery(
+    selectedInstitutionId,
+  )
+
+  useTeacherScopeListDefaults(
+    effectiveRole,
+    me?.teacher_id,
+    selectedInstitutionId,
+    academicYears,
+    teacherAssignments,
+    setFilterYearId,
+    setFilterTeacherDocExact,
+    setFilterAcademicAreaId,
+    setFilterGroupId,
+  )
+
+  const academicAreaFilterOptions = useMemo(() => {
+    if (effectiveRole !== 'TEACHER' || !teacherAssignments?.length) {
+      return academicAreas
+    }
+    const ids = new Set(
+      teacherAssignments.map((a) => a.subject_academic_area),
+    )
+    return academicAreas.filter((a) => ids.has(a.id))
+  }, [academicAreas, effectiveRole, teacherAssignments])
+
   const { data: periodsForFilter = [] } = useAcademicPeriodsForYear(
     filterYearId,
   )
@@ -210,30 +293,20 @@ export function GradesPage() {
     { enabled: !!filterYearId },
   )
 
-  const mergedSearch = useMemo(() => {
-    const parts = [
-      appliedSearch,
-      filterStudentDocument,
-      filterSubjectText,
-      filterTeacherText,
-      filterGroupName || '',
-    ]
-      .map((p) => p.trim())
-      .filter(Boolean)
-    const joined = parts.join(' ')
-    return joined || undefined
-  }, [
-    appliedSearch,
-    filterStudentDocument,
-    filterSubjectText,
-    filterTeacherText,
-    filterGroupName,
-  ])
+  const { data: groupsForFilter = [] } = useGroupsForFilters(
+    selectedInstitutionId,
+    { academic_year: filterYearId ?? undefined },
+    undefined,
+    { enabled: !!selectedInstitutionId },
+  )
 
   const listParams = {
     academic_period: filterPeriodId ?? undefined,
     course_assignment: filterAssignmentId ?? undefined,
-    search: mergedSearch,
+    course_assignment__group: filterGroupId ?? undefined,
+    course_assignment__subject__academic_area:
+      filterAcademicAreaId ?? undefined,
+    search: appliedSearch.trim() || undefined,
     student__document_number: filterStudentDocExact.trim() || undefined,
     course_assignment__teacher__document_number:
       filterTeacherDocExact.trim() || undefined,
@@ -249,15 +322,6 @@ export function GradesPage() {
   const rows = useMemo(() => flatInfinitePages(listQuery.data), [listQuery.data])
   const isLoading = listQuery.isLoading
   const error = listQuery.error
-
-  const groupFilterOptions = useMemo(() => {
-    const names = new Set(
-      rows
-        .map((r) => r.course_assignment_group_name)
-        .filter((v): v is string => Boolean(v)),
-    )
-    return Array.from(names).sort((a, b) => a.localeCompare(b))
-  }, [rows])
 
   const { data: gradingScales = [] } = useGradingScalesForInstitution(
     selectedInstitutionId,
@@ -522,7 +586,17 @@ export function GradesPage() {
         </Alert>
       ) : null}
 
-      <Paper className="p-3 flex flex-wrap gap-2 items-end">
+      <Paper
+        className="p-3"
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'flex-start',
+          gap: 1.5,
+          columnGap: 2,
+          rowGap: 1.25,
+        }}
+      >
         <TextField
           size="small"
           label={t('common.search')}
@@ -531,50 +605,20 @@ export function GradesPage() {
           onKeyDown={(e) => {
             if (e.key === 'Enter') setAppliedSearch(searchInput)
           }}
+          sx={{ minWidth: 160, flex: '1 1 160px', maxWidth: 280 }}
         />
         <Button
           variant="outlined"
           startIcon={<SearchIcon />}
           onClick={() => setAppliedSearch(searchInput)}
+          sx={{ mt: 0.25 }}
         >
           {t('common.search')}
         </Button>
-        <TextField
+        <FormControl
           size="small"
-          label={t('grades.documentLocal')}
-          value={filterStudentDocument}
-          onChange={(e) => setFilterStudentDocument(e.target.value)}
-        />
-        <TextField
-          size="small"
-          label={t('grades.subjectLocal')}
-          value={filterSubjectText}
-          onChange={(e) => setFilterSubjectText(e.target.value)}
-        />
-        <TextField
-          size="small"
-          label={t('grades.teacherLocal')}
-          value={filterTeacherText}
-          onChange={(e) => setFilterTeacherText(e.target.value)}
-        />
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>{t('grades.groupLocal')}</InputLabel>
-          <Select
-            label={t('grades.groupLocal')}
-            value={filterGroupName ?? ''}
-            onChange={(e) =>
-              setFilterGroupName(e.target.value === '' ? null : e.target.value)
-            }
-          >
-            <MenuItem value="">{t('grades.all')}</MenuItem>
-            {groupFilterOptions.map((groupName) => (
-              <MenuItem key={groupName} value={groupName}>
-                {groupName}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 140 }}>
+          sx={{ minWidth: 120, width: 140, flex: '0 0 auto' }}
+        >
           <InputLabel>{t('grades.yearFilter')}</InputLabel>
           <Select
             label={t('grades.yearFilter')}
@@ -584,12 +628,103 @@ export function GradesPage() {
               setFilterYearId(v)
               setFilterPeriodId(null)
               setFilterAssignmentId(null)
+              setFilterGroupId(null)
+              setFilterAcademicAreaId(null)
             }}
           >
             <MenuItem value="">{t('grades.all')}</MenuItem>
             {academicYears.map((y) => (
               <MenuItem key={y.id} value={y.id}>
                 {yearLabel(y)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 0.25,
+            minWidth: 200,
+            flex: '1 1 220px',
+            maxWidth: { xs: '100%', sm: 300 },
+          }}
+        >
+          <FormControl
+            size="small"
+            fullWidth
+            disabled={!selectedInstitutionId}
+            sx={{ minWidth: 0 }}
+          >
+            <InputLabel id="grades-group-filter-label" shrink>
+              {t('grades.groupFilter')}
+            </InputLabel>
+            <Select
+              labelId="grades-group-filter-label"
+              label={t('grades.groupFilter')}
+              notched
+              value={filterGroupId ?? ''}
+              onChange={(e) =>
+                setFilterGroupId(e.target.value === '' ? null : e.target.value)
+              }
+              displayEmpty
+              renderValue={(selected) => {
+                if (selected == null || selected === '') {
+                  return (
+                    <Typography variant="body2" color="text.secondary">
+                      {t('grades.all')}
+                    </Typography>
+                  )
+                }
+                const g = groupsForFilter.find((x) => x.id === selected)
+                if (!g) return selected
+                const full = groupFilterMenuLabel(g)
+                const short = groupFilterCompactLabel(g)
+                return (
+                  <Typography
+                    component="span"
+                    variant="body2"
+                    noWrap
+                    title={full}
+                    sx={{ display: 'block', maxWidth: '100%' }}
+                  >
+                    {short}
+                  </Typography>
+                )
+              }}
+              MenuProps={{ PaperProps: { sx: { maxHeight: 360 } } }}
+            >
+              <MenuItem value="">{t('grades.all')}</MenuItem>
+              {groupsForFilter.map((g) => (
+                <MenuItem key={g.id} value={g.id} title={groupFilterMenuLabel(g)}>
+                  {groupFilterMenuLabel(g)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Tooltip title={t('grades.groupFilterHint')} placement="top" arrow>
+            <IconButton
+              size="small"
+              aria-label={t('grades.groupFilterInfoAria')}
+              sx={{ mt: '3px', color: 'text.secondary' }}
+            >
+              <InfoOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+        <FormControl size="small" sx={{ minWidth: 170 }} disabled={!selectedInstitutionId}>
+          <InputLabel>{t('grades.academicArea')}</InputLabel>
+          <Select
+            label={t('grades.academicArea')}
+            value={filterAcademicAreaId ?? ''}
+            onChange={(e) =>
+              setFilterAcademicAreaId(e.target.value === '' ? null : e.target.value)
+            }
+          >
+            <MenuItem value="">{t('grades.all')}</MenuItem>
+            {academicAreaFilterOptions.map((a) => (
+              <MenuItem key={a.id} value={a.id}>
+                {a.name}
               </MenuItem>
             ))}
           </Select>
@@ -678,10 +813,8 @@ export function GradesPage() {
             setFilterYearId(null)
             setFilterPeriodId(null)
             setFilterAssignmentId(null)
-            setFilterStudentDocument('')
-            setFilterSubjectText('')
-            setFilterTeacherText('')
-            setFilterGroupName(null)
+            setFilterGroupId(null)
+            setFilterAcademicAreaId(null)
             setFilterStudentDocExact('')
             setFilterTeacherDocExact('')
             setFilterPeriodNumberExact('')

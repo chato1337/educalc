@@ -94,7 +94,7 @@ export interface paths {
         };
         /**
          * List Academic Indicators
-         * @description Qualitative achievement descriptor for a student Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number, performance_level. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Qualitative achievement descriptor for a student Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__subject__academic_area, course_assignment__teacher__document_number, academic_period, academic_period__number, performance_level. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["academic_indicators_list"];
         put?: never;
@@ -321,7 +321,7 @@ export interface paths {
         };
         /**
          * List Attendance
-         * @description Absences per subject and period Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Absences per subject and period Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__subject__academic_area, course_assignment__teacher__document_number, academic_period, academic_period__number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["attendances_list"];
         put?: never;
@@ -768,7 +768,7 @@ export interface paths {
         };
         /**
          * List Grades
-         * @description Student grades with enriched context: student identity, course assignment (subject, teacher, group, academic year), and academic period. Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, course_assignment__teacher__document_number, course_assignment__group__name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__teacher__document_number, academic_period, academic_period__number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Student grades with enriched context: student identity, course assignment (subject, teacher, group, academic year), and academic period. Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, course_assignment__teacher__document_number, course_assignment__group__name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__group, course_assignment__group__name, course_assignment__subject__academic_area, course_assignment__teacher__document_number, academic_period, academic_period__number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["grades_list"];
         put?: never;
@@ -893,7 +893,7 @@ export interface paths {
         };
         /**
          * List Groups
-         * @description Student group within a grade Text search available through query param `search`. Supported fields: name, grade_level__name, campus__name, =academic_year__year. Available exact-match filters via query params: grade_level, grade_level__name, academic_year, academic_year__year, campus, campus__name, name. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Student group within a grade Text search available through query param `search`. Supported fields: name, grade_level__name, campus__name, =academic_year__year. Available exact-match filters via query params: grade_level, grade_level__name, academic_year, academic_year__year, academic_year__institution, campus, campus__name, name. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["groups_list"];
         put?: never;
@@ -1751,8 +1751,12 @@ export interface components {
             subject: string;
             readonly subject_name: string;
             /** Format: uuid */
+            readonly subject_academic_area: string;
+            readonly subject_academic_area_name: string;
+            /** Format: uuid */
             teacher: string;
             readonly teacher_name: string;
+            readonly teacher_document_number: string;
             /** Format: uuid */
             group: string;
             readonly group_name: string;
@@ -3268,6 +3272,8 @@ export interface operations {
                 academic_period__number?: string;
                 /** @description Filter by exact value of `course_assignment`. */
                 course_assignment?: string;
+                /** @description Filter by exact value of `course_assignment__subject__academic_area`. */
+                course_assignment__subject__academic_area?: string;
                 /** @description Filter by exact value of `course_assignment__teacher__document_number`. */
                 course_assignment__teacher__document_number?: string;
                 /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
@@ -3937,6 +3943,8 @@ export interface operations {
                 academic_period__number?: string;
                 /** @description Filter by exact value of `course_assignment`. */
                 course_assignment?: string;
+                /** @description Filter by exact value of `course_assignment__subject__academic_area`. */
+                course_assignment__subject__academic_area?: string;
                 /** @description Filter by exact value of `course_assignment__teacher__document_number`. */
                 course_assignment__teacher__document_number?: string;
                 /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
@@ -5326,6 +5334,12 @@ export interface operations {
                 academic_period__number?: string;
                 /** @description Filter by exact value of `course_assignment`. */
                 course_assignment?: string;
+                /** @description Filter by exact value of `course_assignment__group` (group id). */
+                course_assignment__group?: string;
+                /** @description Filter by exact value of `course_assignment__group__name`. */
+                course_assignment__group__name?: string;
+                /** @description Filter by exact value of `course_assignment__subject__academic_area` (academic area id). */
+                course_assignment__subject__academic_area?: string;
                 /** @description Filter by exact value of `course_assignment__teacher__document_number`. */
                 course_assignment__teacher__document_number?: string;
                 /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
@@ -5720,6 +5734,8 @@ export interface operations {
             query?: {
                 /** @description Filter by exact value of `academic_year`. */
                 academic_year?: string;
+                /** @description Filter by exact value of `academic_year__institution`. */
+                academic_year__institution?: string;
                 /** @description Filter by exact value of `academic_year__year`. */
                 academic_year__year?: string;
                 /** @description Filter by exact value of `campus`. */

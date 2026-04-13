@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { fetchReferenceListResults } from '@/api/list'
+import { apiClient } from '@/api/client'
+import { fetchReferenceListResults, type PaginatedList } from '@/api/list'
 import { queryKeys } from '@/api/queryKeys'
 import { fetchGradingScalesList } from '@/features/operations/gradingScalesApi'
 import {
@@ -42,6 +43,7 @@ export function useGroupsForFilters(
   options?: { enabled?: boolean },
 ) {
   const listParams = {
+    academic_year__institution: institutionId ?? undefined,
     academic_year: filters.academic_year ?? undefined,
     campus: filters.campus ?? undefined,
     grade_level: filters.grade_level ?? undefined,
@@ -90,6 +92,37 @@ export function useCourseAssignmentsList(
         params,
       }),
     enabled: options?.enabled ?? true,
+  })
+}
+
+/** Todas las asignaciones docente–curso del profesor (paginado en servidor). */
+export async function fetchAllCourseAssignmentsForTeacher(
+  teacherId: string,
+): Promise<CourseAssignment[]> {
+  const limit = 100
+  let offset = 0
+  const all: CourseAssignment[] = []
+  for (;;) {
+    const { data } = await apiClient.get<PaginatedList<CourseAssignment>>(
+      '/api/course-assignments/',
+      { params: { teacher: teacherId, limit, offset } },
+    )
+    all.push(...data.results)
+    if (!data.next || data.results.length === 0) break
+    offset += limit
+    if (offset > 5000) break
+  }
+  return all
+}
+
+export function useTeacherCourseAssignments(
+  teacherId: string | null | undefined,
+  options?: { enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: ['course-assignments', 'teacher-scope', teacherId ?? ''],
+    queryFn: () => fetchAllCourseAssignmentsForTeacher(teacherId!),
+    enabled: (options?.enabled ?? true) && Boolean(teacherId),
   })
 }
 

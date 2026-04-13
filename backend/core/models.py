@@ -258,7 +258,8 @@ class Group(TimeStampedModel):
     name = models.CharField(max_length=50)
 
     class Meta:
-        ordering = ["name"]
+        # Tie-break on pk so limit/offset pagination is stable when many groups share `name`.
+        ordering = ["academic_year__year", "campus_id", "grade_level__level_order", "name", "pk"]
         verbose_name = "Group"
         verbose_name_plural = "Groups"
         unique_together = [["grade_level", "academic_year", "campus", "name"]]

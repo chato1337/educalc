@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from django.test import TransactionTestCase
+from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
@@ -387,3 +387,77 @@ class PerformanceSummaryRecalculateByInstitutionApiTests(TransactionTestCase):
         self.assertEqual(r.data["mode"], "from_grades")
         ps = PerformanceSummary.objects.get(student=self.student, group=self.group)
         self.assertEqual(ps.period_average, Decimal("3.80"))
+
+
+class GroupsListApiTests(TestCase):
+    """Regression: list must not repeat the same group id (stable ordering for shared `name`)."""
+
+    def setUp(self):
+        self.client = APIClient()
+        user = get_user_model().objects.create_user(username="grouplist", password="x")
+        self.client.force_authenticate(user=user)
+        self.inst = Institution.objects.create(name="IE Grupos", dane_code="DANE991000")
+        self.campus = Campus.objects.create(institution=self.inst, name="Sede 1")
+        self.ay = AcademicYear.objects.create(institution=self.inst, year=2026)
+        self.groups = []
+        for i in range(15):
+            gl = GradeLevel.objects.create(
+                institution=self.inst,
+                name=f"Nivel-{i}",
+                level_order=i,
+            )
+            self.groups.append(
+                Group.objects.create(
+                    grade_level=gl,
+                    academic_year=self.ay,
+                    campus=self.campus,
+                    name="601",
+                )
+            )
+
+    def test_groups_list_no_duplicate_ids_single_page(self):
+        url = reverse("group-list")
+        r = self.client.get(url, {"limit": 100, "offset": 0})
+        self.assertEqual(r.status_code, 200)
+        ids = [row["id"] for row in r.data["results"]]
+        self.assertEqual(len(ids), len(set(ids)))
+
+    def test_groups_list_pagination_no_overlap_same_name(self):
+        url = reverse("group-list")
+        seen = set()
+        for offset in (0, 5, 10):
+            r = self.client.get(url, {"limit": 5, "offset": offset})
+            self.assertEqual(r.status_code, 200)
+            for row in r.data["results"]:
+                self.assertNotIn(row["id"], seen, msg="same group id on multiple pages")
+                seen.add(row["id"])
+        self.assertEqual(len(seen), 15)
+
+    def test_groups_list_filter_by_academic_year_institution(self):
+        other = Institution.objects.create(name="IE Otra", dane_code="DANE991099")
+        other_campus = Campus.objects.create(institution=other, name="Sede Otra")
+        other_ay = AcademicYear.objects.create(institution=other, year=2099)
+        other_gl = GradeLevel.objects.create(
+            institution=other, name="OTRO", level_order=1
+        )
+        Group.objects.create(
+            grade_level=other_gl,
+            academic_year=other_ay,
+            campus=other_campus,
+            name="ZZZ",
+        )
+        url = reverse("group-list")
+        r = self.client.get(
+            url,
+            {
+                "academic_year__institution": str(self.inst.id),
+                "limit": 200,
+                "offset": 0,
+            },
+        )
+        self.assertEqual(r.status_code, 200)
+        ids = {row["id"] for row in r.data["results"]}
+        self.assertTrue(all(gid in ids for gid in (str(g.id) for g in self.groups)))
+        self.assertFalse(
+            any(row["name"] == "ZZZ" for row in r.data["results"]),
+        )
