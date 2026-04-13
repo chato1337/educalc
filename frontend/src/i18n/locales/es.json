@@ -924,6 +924,30 @@
     "editDialog": "Editar resumen",
     "newDialog": "Nuevo resumen",
     "deleteDialog": "Eliminar resumen",
-    "deletePrompt": "¿Eliminar este resumen de desempeño?"
+    "deletePrompt": "¿Eliminar este resumen de desempeño?",
+    "recalc": {
+      "sectionTitle": "Recálculo desde notas",
+      "sectionHint": "Recalcula promedios, definitivos agregados y puestos a partir de las calificaciones registradas (misma lógica que al guardar notas).",
+      "byGradeTitle": "Por grado (nivel + año)",
+      "byInstitutionTitle": "Por institución",
+      "gradeLevel": "Nivel (grado)",
+      "year": "Año lectivo",
+      "campus": "Sede (opcional)",
+      "campusAll": "(todas las sedes)",
+      "period": "Periodo (opcional)",
+      "periodAll": "(todos los periodos con notas)",
+      "syncAll": "Forzar todos los grupos × periodos del año",
+      "syncAllHint": "Incluye combinaciones sin notas; útil para limpiar o alinear filas.",
+      "institutionYear": "Año lectivo",
+      "institutionYearAll": "Todos los años (puede ser lento)",
+      "institutionUsesContext": "Se usa la institución seleccionada en el menú lateral.",
+      "runByGrade": "Recalcular por grado",
+      "runByInstitution": "Recalcular por institución",
+      "successGrade": "Recálculo por grado: {{pairs}} pares, {{groups}} grupos en alcance. Modo: {{mode}}.",
+      "successInstitution": "Recálculo por institución: {{pairs}} pares, {{groups}} grupos en alcance. Modo: {{mode}}.",
+      "pickGradeLevel": "Elige un nivel.",
+      "pickYear": "Selecciona un año lectivo.",
+      "gradeLevelPlaceholder": "(Seleccionar nivel)"
+    }
   }
 }

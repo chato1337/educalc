@@ -10,7 +10,9 @@ paths:
       operationId: academic_areas_list
       description: 'Broad category of knowledge Text search available through query
         param `search`. Supported fields: name, code, description. Available exact-match
-        filters via query params: institution, institution__dane_code, name, code.'
+        filters via query params: institution, institution__dane_code, name, code.
+        Paginated list: response JSON has `count`, `next`, `previous`, and `results`
+        (array of resources). Use `limit` and `offset` to page through `results`.'
       summary: List Academic Areas
       parameters:
       - in: query
@@ -29,10 +31,22 @@ paths:
           type: string
         description: Filter by exact value of `institution__dane_code`.
       - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
         name: name
         schema:
           type: string
         description: Filter by exact value of `name`.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -54,9 +68,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AcademicArea'
+                $ref: '#/components/schemas/PaginatedAcademicAreaList'
           description: ''
     post:
       operationId: academic_areas_create
@@ -229,6 +241,61 @@ paths:
                 type: object
                 additionalProperties: {}
           description: 'Validation failure or {"error": "..."}.'
+  /api/academic-grades/bulletin/:
+    get:
+      operationId: academic_grades_bulletin_retrieve
+      description: '**Single student:** pass `student` + `academic_year` (active enrollment).
+        **Whole group:** pass `group` + `academic_year` where the group belongs to
+        that year — returns one PDF with one boletín per active student, in name order.
+        Optional `period_ids` (comma-separated academic period UUIDs) limits columns.
+        Provide **exactly one** of `student` or `group`. Query param `grade_level_ids`
+        is ignored (reserved for compatibility).'
+      summary: Download bulletin PDF (grades)
+      parameters:
+      - in: query
+        name: academic_year
+        schema:
+          type: string
+          format: uuid
+        description: Academic year UUID (must match the group's year in group mode).
+        required: true
+      - in: query
+        name: grade_level_ids
+        schema:
+          type: string
+        description: Ignored. Reserved for future use.
+      - in: query
+        name: group
+        schema:
+          type: string
+          format: uuid
+        description: Group UUID (multi-boletín PDF for all active enrollments in that
+          group; mutually exclusive with `student`).
+      - in: query
+        name: period_ids
+        schema:
+          type: string
+        description: Comma-separated academic period UUIDs to include (subset of the
+          year's periods).
+      - in: query
+        name: student
+        schema:
+          type: string
+          format: uuid
+        description: Student UUID (single-boletín mode; mutually exclusive with `group`).
+      tags:
+      - Grades
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          description: ''
   /api/academic-indicators/:
     get:
       operationId: academic_indicators_list
@@ -237,7 +304,9 @@ paths:
         student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name,
         description, performance_level. Available exact-match filters via query params:
         student, student__document_number, course_assignment, course_assignment__teacher__document_number,
-        academic_period, academic_period__number, performance_level.'
+        academic_period, academic_period__number, performance_level. Paginated list:
+        response JSON has `count`, `next`, `previous`, and `results` (array of resources).
+        Use `limit` and `offset` to page through `results`.'
       summary: List Academic Indicators
       parameters:
       - in: query
@@ -260,6 +329,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `course_assignment__teacher__document_number`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -298,9 +379,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AcademicIndicator'
+                $ref: '#/components/schemas/PaginatedAcademicIndicatorList'
           description: ''
     post:
       operationId: academic_indicators_create
@@ -336,7 +415,9 @@ paths:
         fields: student__document_number, student__full_name, group__name, academic_period__name,
         grade_director__full_name, grade_director__document_number. Available exact-match
         filters via query params: student, student__document_number, academic_period,
-        academic_period__number, grade_director, grade_director__document_number.'
+        academic_period__number, grade_director, grade_director__document_number.
+        Paginated list: response JSON has `count`, `next`, `previous`, and `results`
+        (array of resources). Use `limit` and `offset` to page through `results`.'
       summary: List Academic Indicators Reports
       parameters:
       - in: query
@@ -359,6 +440,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `grade_director__document_number`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -391,9 +484,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AcademicIndicatorsReport'
+                $ref: '#/components/schemas/PaginatedAcademicIndicatorsReportList'
           description: ''
     post:
       operationId: academic_indicators_reports_create
@@ -629,7 +720,9 @@ paths:
       description: 'Evaluation period (P1, P2, P3, P4) Text search available through
         query param `search`. Supported fields: name, =number, =academic_year__year.
         Available exact-match filters via query params: academic_year, academic_year__year,
-        number, name.'
+        number, name. Paginated list: response JSON has `count`, `next`, `previous`,
+        and `results` (array of resources). Use `limit` and `offset` to page through
+        `results`.'
       summary: List Academic Periods
       parameters:
       - in: query
@@ -643,6 +736,12 @@ paths:
           type: string
         description: Filter by exact value of `academic_year__year`.
       - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
         name: name
         schema:
           type: string
@@ -652,6 +751,12 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `number`.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -673,9 +778,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AcademicPeriod'
+                $ref: '#/components/schemas/PaginatedAcademicPeriodList'
           description: ''
     post:
       operationId: academic_periods_create
@@ -854,7 +957,9 @@ paths:
       operationId: academic_years_list
       description: 'Academic/school year Text search available through query param
         `search`. Supported fields: =year, institution__name. Available exact-match
-        filters via query params: institution, institution__dane_code, year, is_active.'
+        filters via query params: institution, institution__dane_code, year, is_active.
+        Paginated list: response JSON has `count`, `next`, `previous`, and `results`
+        (array of resources). Use `limit` and `offset` to page through `results`.'
       summary: List Academic Years
       parameters:
       - in: query
@@ -872,6 +977,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `is_active`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -898,9 +1015,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AcademicYear'
+                $ref: '#/components/schemas/PaginatedAcademicYearList'
           description: ''
     post:
       operationId: academic_years_create
@@ -1049,7 +1164,9 @@ paths:
         course_assignment__subject__name, course_assignment__teacher__full_name, academic_period__name.
         Available exact-match filters via query params: student, student__document_number,
         course_assignment, course_assignment__teacher__document_number, academic_period,
-        academic_period__number.'
+        academic_period__number. Paginated list: response JSON has `count`, `next`,
+        `previous`, and `results` (array of resources). Use `limit` and `offset` to
+        page through `results`.'
       summary: List Attendance
       parameters:
       - in: query
@@ -1072,6 +1189,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `course_assignment__teacher__document_number`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -1105,9 +1234,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Attendance'
+                $ref: '#/components/schemas/PaginatedAttendanceList'
           description: ''
     post:
       operationId: attendances_create
@@ -1381,7 +1508,9 @@ paths:
       description: 'Campus or sede of an institution Text search available through
         query param `search`. Supported fields: name, code, institution__name, institution__dane_code.
         Available exact-match filters via query params: institution, institution__dane_code,
-        name, code.'
+        name, code. Paginated list: response JSON has `count`, `next`, `previous`,
+        and `results` (array of resources). Use `limit` and `offset` to page through
+        `results`.'
       summary: List Campuses
       parameters:
       - in: query
@@ -1400,10 +1529,22 @@ paths:
           type: string
         description: Filter by exact value of `institution__dane_code`.
       - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
         name: name
         schema:
           type: string
         description: Filter by exact value of `name`.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -1425,9 +1566,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Campus'
+                $ref: '#/components/schemas/PaginatedCampusList'
           description: ''
     post:
       operationId: campuses_create
@@ -1576,7 +1715,9 @@ paths:
         subject__emphasis, teacher__full_name, teacher__document_number, group__name,
         group__grade_level__name, =academic_year__year. Available exact-match filters
         via query params: subject, subject__name, teacher, teacher__document_number,
-        group, group__name, academic_year, academic_year__year.'
+        group, group__name, academic_year, academic_year__year. Paginated list: response
+        JSON has `count`, `next`, `previous`, and `results` (array of resources).
+        Use `limit` and `offset` to page through `results`.'
       summary: List Course Assignments
       parameters:
       - in: query
@@ -1599,6 +1740,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `group__name`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -1641,9 +1794,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CourseAssignment'
+                $ref: '#/components/schemas/PaginatedCourseAssignmentList'
           description: ''
     post:
       operationId: course_assignments_create
@@ -1817,6 +1968,37 @@ paths:
                 type: object
                 additionalProperties: {}
           description: 'Validation failure or {"error": "..."}.'
+  /api/dashboard/kpis/:
+    get:
+      operationId: dashboard_kpis_retrieve
+      description: Aggregated record counts aligned with core models. Optional query
+        ``institution`` (UUID) filters for ADMIN only; COORDINATOR scope is always
+        the user's institution.
+      summary: Dashboard KPIs
+      parameters:
+      - in: query
+        name: academic_period
+        schema:
+          type: string
+        description: Academic period UUID. When set, ``grades_period`` includes pending
+          grade slots/students for active enrollments in that year (scoped by role).
+      - in: query
+        name: institution
+        schema:
+          type: string
+        description: Institution UUID (ADMIN only). Omit for global totals.
+      tags:
+      - Dashboard
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardKpisResponse'
+          description: ''
   /api/disciplinary-reports/:
     get:
       operationId: disciplinary_reports_list
@@ -1824,7 +2006,9 @@ paths:
         through query param `search`. Supported fields: student__document_number,
         student__full_name, report_text, created_by__full_name, created_by__document_number.
         Available exact-match filters via query params: student, student__document_number,
-        academic_period, academic_period__number, created_by, created_by__document_number.'
+        academic_period, academic_period__number, created_by, created_by__document_number.
+        Paginated list: response JSON has `count`, `next`, `previous`, and `results`
+        (array of resources). Use `limit` and `offset` to page through `results`.'
       summary: List Disciplinary Reports
       parameters:
       - in: query
@@ -1847,6 +2031,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `created_by__document_number`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -1879,9 +2075,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DisciplinaryReport'
+                $ref: '#/components/schemas/PaginatedDisciplinaryReportList'
           description: ''
     post:
       operationId: disciplinary_reports_create
@@ -2062,7 +2256,9 @@ paths:
         through query param `search`. Supported fields: student__document_number,
         student__full_name, group__name, group__grade_level__name, =academic_year__year,
         status. Available exact-match filters via query params: student, student__document_number,
-        group, group__name, academic_year, academic_year__year, status.'
+        group, group__name, academic_year, academic_year__year, status. Paginated
+        list: response JSON has `count`, `next`, `previous`, and `results` (array
+        of resources). Use `limit` and `offset` to page through `results`.'
       summary: List Enrollments
       parameters:
       - in: query
@@ -2085,6 +2281,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `group__name`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -2122,9 +2330,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Enrollment'
+                $ref: '#/components/schemas/PaginatedEnrollmentList'
           description: ''
     post:
       operationId: enrollments_create
@@ -2272,7 +2478,9 @@ paths:
         param `search`. Supported fields: teacher__full_name, teacher__document_number,
         group__name, group__grade_level__name, =academic_year__year. Available exact-match
         filters via query params: teacher, teacher__document_number, group, group__name,
-        academic_year, academic_year__year.'
+        academic_year, academic_year__year. Paginated list: response JSON has `count`,
+        `next`, `previous`, and `results` (array of resources). Use `limit` and `offset`
+        to page through `results`.'
       summary: List Grade Directors
       parameters:
       - in: query
@@ -2295,6 +2503,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `group__name`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -2327,9 +2547,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/GradeDirector'
+                $ref: '#/components/schemas/PaginatedGradeDirectorList'
           description: ''
     post:
       operationId: grade_directors_create
@@ -2507,7 +2725,9 @@ paths:
       operationId: grade_levels_list
       description: 'Grade level (e.g. SEXTO, PRIMERO) Text search available through
         query param `search`. Supported fields: name. Available exact-match filters
-        via query params: institution, institution__dane_code, name, level_order.'
+        via query params: institution, institution__dane_code, name, level_order.
+        Paginated list: response JSON has `count`, `next`, `previous`, and `results`
+        (array of resources). Use `limit` and `offset` to page through `results`.'
       summary: List Grade Levels
       parameters:
       - in: query
@@ -2526,10 +2746,22 @@ paths:
           type: string
         description: Filter by exact value of `level_order`.
       - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
         name: name
         schema:
           type: string
         description: Filter by exact value of `name`.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -2551,9 +2783,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/GradeLevel'
+                $ref: '#/components/schemas/PaginatedGradeLevelList'
           description: ''
     post:
       operationId: grade_levels_create
@@ -2704,7 +2934,9 @@ paths:
         course_assignment__teacher__document_number, course_assignment__group__name,
         academic_period__name. Available exact-match filters via query params: student,
         student__document_number, course_assignment, course_assignment__teacher__document_number,
-        academic_period, academic_period__number.'
+        academic_period, academic_period__number. Paginated list: response JSON has
+        `count`, `next`, `previous`, and `results` (array of resources). Use `limit`
+        and `offset` to page through `results`.'
       summary: List Grades
       parameters:
       - in: query
@@ -2727,6 +2959,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `course_assignment__teacher__document_number`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -2761,9 +3005,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Grade'
+                $ref: '#/components/schemas/PaginatedGradeList'
           description: ''
     post:
       operationId: grades_create
@@ -2946,7 +3188,9 @@ paths:
       description: 'Performance levels per Decreto 1290 Text search available through
         query param `search`. Supported fields: code, name, description. Available
         exact-match filters via query params: institution, institution__dane_code,
-        code, name.'
+        code, name. Paginated list: response JSON has `count`, `next`, `previous`,
+        and `results` (array of resources). Use `limit` and `offset` to page through
+        `results`.'
       summary: List Grading Scales
       parameters:
       - in: query
@@ -2965,10 +3209,22 @@ paths:
           type: string
         description: Filter by exact value of `institution__dane_code`.
       - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
         name: name
         schema:
           type: string
         description: Filter by exact value of `name`.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -2990,9 +3246,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/GradingScale'
+                $ref: '#/components/schemas/PaginatedGradingScaleList'
           description: ''
     post:
       operationId: grading_scales_create
@@ -3172,7 +3426,9 @@ paths:
       description: 'Student group within a grade Text search available through query
         param `search`. Supported fields: name, grade_level__name, campus__name, =academic_year__year.
         Available exact-match filters via query params: grade_level, grade_level__name,
-        academic_year, academic_year__year, campus, campus__name, name.'
+        academic_year, academic_year__year, campus, campus__name, name. Paginated
+        list: response JSON has `count`, `next`, `previous`, and `results` (array
+        of resources). Use `limit` and `offset` to page through `results`.'
       summary: List Groups
       parameters:
       - in: query
@@ -3206,10 +3462,22 @@ paths:
           type: string
         description: Filter by exact value of `grade_level__name`.
       - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
         name: name
         schema:
           type: string
         description: Filter by exact value of `name`.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -3231,9 +3499,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Group'
+                $ref: '#/components/schemas/PaginatedGroupList'
           description: ''
     post:
       operationId: groups_create
@@ -3409,7 +3675,9 @@ paths:
       operationId: institutions_list
       description: 'Educational institutions at corporate level Text search available
         through query param `search`. Supported fields: name, dane_code, nit. Available
-        exact-match filters via query params: dane_code, nit, name.'
+        exact-match filters via query params: dane_code, nit, name. Paginated list:
+        response JSON has `count`, `next`, `previous`, and `results` (array of resources).
+        Use `limit` and `offset` to page through `results`.'
       summary: List Institutions
       parameters:
       - in: query
@@ -3417,6 +3685,12 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `dane_code`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
       - in: query
         name: name
         schema:
@@ -3427,6 +3701,12 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `nit`.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -3448,9 +3728,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Institution'
+                $ref: '#/components/schemas/PaginatedInstitutionList'
           description: ''
     post:
       operationId: institutions_create
@@ -3597,7 +3875,9 @@ paths:
       description: 'Parent or guardian of a student Text search available through
         query param `search`. Supported fields: document_number, full_name, first_name,
         second_name, first_last_name, second_last_name, email. Available exact-match
-        filters via query params: document_type, document_number, email, kinship.'
+        filters via query params: document_type, document_number, email, kinship.
+        Paginated list: response JSON has `count`, `next`, `previous`, and `results`
+        (array of resources). Use `limit` and `offset` to page through `results`.'
       summary: List Parents
       parameters:
       - in: query
@@ -3620,6 +3900,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `kinship`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -3642,9 +3934,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Parent'
+                $ref: '#/components/schemas/PaginatedParentList'
           description: ''
     post:
       operationId: parents_create
@@ -3825,7 +4115,9 @@ paths:
         query param `search`. Supported fields: student__document_number, student__full_name,
         group__name, group__grade_level__name, academic_period__name. Available exact-match
         filters via query params: student, student__document_number, group, group__name,
-        academic_period, academic_period__number.'
+        academic_period, academic_period__number. Paginated list: response JSON has
+        `count`, `next`, `previous`, and `results` (array of resources). Use `limit`
+        and `offset` to page through `results`.'
       summary: List Performance Summaries
       parameters:
       - in: query
@@ -3848,6 +4140,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `group__name`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -3880,9 +4184,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PerformanceSummary'
+                $ref: '#/components/schemas/PaginatedPerformanceSummaryList'
           description: ''
     post:
       operationId: performance_summaries_create
@@ -4056,6 +4358,109 @@ paths:
                 type: object
                 additionalProperties: {}
           description: 'Validation failure or {"error": "..."}.'
+  /api/performance-summaries/recalculate-by-grade/:
+    post:
+      operationId: performance_summaries_recalculate_by_grade_create
+      description: 'Ejecuta manualmente el mismo proceso que al guardar notas: promedios
+        por periodo, promedio definitivo agregado desde notas y puestos por grupo.
+        Por defecto solo considera pares (grupo, periodo) donde ya existen calificaciones;
+        use ``sync_all_group_period_combinations`` para forzar todos los grupos del
+        grado y todos los periodos del año (útil para limpiar o inicializar filas).'
+      summary: Recalcular desempeño por grado
+      tags:
+      - Performance Summaries
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PerformanceSummaryRecalculateByGradeRequestRequest'
+            examples:
+              PorGradoYAño(desdeNotas):
+                value:
+                  grade_level: 00000000-0000-4000-8000-000000000001
+                  academic_year: 00000000-0000-4000-8000-000000000002
+                summary: Por grado y año (desde notas)
+              ConSedeYUnSoloPeriodo:
+                value:
+                  grade_level: 00000000-0000-4000-8000-000000000001
+                  academic_year: 00000000-0000-4000-8000-000000000002
+                  campus: 00000000-0000-4000-8000-000000000003
+                  academic_period: 00000000-0000-4000-8000-000000000004
+                summary: Con sede y un solo periodo
+              ProductoCompletoGrupo×Periodos:
+                value:
+                  grade_level: 00000000-0000-4000-8000-000000000001
+                  academic_year: 00000000-0000-4000-8000-000000000002
+                  sync_all_group_period_combinations: true
+                summary: Producto completo grupo × periodos
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PerformanceSummaryRecalculateByGradeRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PerformanceSummaryRecalculateByGradeRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceSummaryRecalculateByGradeResponse'
+          description: ''
+  /api/performance-summaries/recalculate-by-institution/:
+    post:
+      operationId: performance_summaries_recalculate_by_institution_create
+      description: Recalcula ``PerformanceSummary`` para todos los grupos cuyo ``AcademicYear``
+        pertenece a la institución indicada. Sin ``academic_year`` incluye **todos**
+        los años lectivos de esa institución (puede ser costoso). Por defecto solo
+        sincroniza pares (grupo, periodo) con notas registradas; ``sync_all_group_period_combinations``
+        fuerza grupo × periodos del año de cada grupo.
+      summary: Recalcular desempeño por institución
+      tags:
+      - Performance Summaries
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PerformanceSummaryRecalculateByInstitutionRequestRequest'
+            examples:
+              TodaLaInstitución(desdeNotas):
+                value:
+                  institution: 00000000-0000-4000-8000-000000000001
+                summary: Toda la institución (desde notas)
+              UnAñoLectivoYProductoCompleto:
+                value:
+                  institution: 00000000-0000-4000-8000-000000000001
+                  academic_year: 00000000-0000-4000-8000-000000000002
+                  sync_all_group_period_combinations: true
+                summary: Un año lectivo y producto completo
+              SedeYPeriodoConcretos:
+                value:
+                  institution: 00000000-0000-4000-8000-000000000001
+                  academic_year: 00000000-0000-4000-8000-000000000002
+                  campus: 00000000-0000-4000-8000-000000000003
+                  academic_period: 00000000-0000-4000-8000-000000000004
+                summary: Sede y periodo concretos
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PerformanceSummaryRecalculateByInstitutionRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PerformanceSummaryRecalculateByInstitutionRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceSummaryRecalculateByInstitutionResponse'
+          description: ''
   /api/school-records/:
     get:
       operationId: school_records_list
@@ -4063,7 +4468,9 @@ paths:
         fields: student__document_number, student__full_name, group__name, group__grade_level__name,
         institution__name, institution__dane_code, campus__name. Available exact-match
         filters via query params: student, student__document_number, academic_year,
-        academic_year__year, institution, institution__dane_code.'
+        academic_year__year, institution, institution__dane_code. Paginated list:
+        response JSON has `count`, `next`, `previous`, and `results` (array of resources).
+        Use `limit` and `offset` to page through `results`.'
       summary: List School Records
       parameters:
       - in: query
@@ -4086,6 +4493,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `institution__dane_code`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -4119,9 +4538,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SchoolRecord'
+                $ref: '#/components/schemas/PaginatedSchoolRecordList'
           description: ''
     post:
       operationId: school_records_create
@@ -4212,7 +4629,9 @@ paths:
         query param `search`. Supported fields: student__document_number, student__full_name,
         parent__document_number, parent__full_name, parent__email. Available exact-match
         filters via query params: student, student__document_number, parent, parent__document_number,
-        is_primary.'
+        is_primary. Paginated list: response JSON has `count`, `next`, `previous`,
+        and `results` (array of resources). Use `limit` and `offset` to page through
+        `results`.'
       summary: List Student Guardians
       parameters:
       - in: query
@@ -4220,6 +4639,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `is_primary`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -4262,9 +4693,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/StudentGuardian'
+                $ref: '#/components/schemas/PaginatedStudentGuardianList'
           description: ''
     post:
       operationId: student_guardians_create
@@ -4443,7 +4872,9 @@ paths:
       description: 'Student data Text search available through query param `search`.
         Supported fields: document_number, full_name, first_name, second_name, first_last_name,
         second_last_name. Available exact-match filters via query params: document_type,
-        document_number, gender, sisben, stratum.'
+        document_number, gender, sisben, stratum. Paginated list: response JSON has
+        `count`, `next`, `previous`, and `results` (array of resources). Use `limit`
+        and `offset` to page through `results`.'
       summary: List Students
       parameters:
       - in: query
@@ -4461,6 +4892,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `gender`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -4493,9 +4936,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Student'
+                $ref: '#/components/schemas/PaginatedStudentList'
           description: ''
     post:
       operationId: students_create
@@ -4705,7 +5146,9 @@ paths:
       description: 'Subject/course with optional emphasis Text search available through
         query param `search`. Supported fields: name, emphasis, academic_area__name,
         institution__name. Available exact-match filters via query params: academic_area,
-        academic_area__name, institution, institution__dane_code, name, emphasis.'
+        academic_area__name, institution, institution__dane_code, name, emphasis.
+        Paginated list: response JSON has `count`, `next`, `previous`, and `results`
+        (array of resources). Use `limit` and `offset` to page through `results`.'
       summary: List Subjects
       parameters:
       - in: query
@@ -4734,10 +5177,22 @@ paths:
           type: string
         description: Filter by exact value of `institution__dane_code`.
       - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
         name: name
         schema:
           type: string
         description: Filter by exact value of `name`.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -4759,9 +5214,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Subject'
+                $ref: '#/components/schemas/PaginatedSubjectList'
           description: ''
     post:
       operationId: subjects_create
@@ -4940,7 +5393,9 @@ paths:
       description: 'Teacher/faculty information Text search available through query
         param `search`. Supported fields: document_number, full_name, first_name,
         second_name, first_last_name, second_last_name, email. Available exact-match
-        filters via query params: document_type, document_number, email, specialty.'
+        filters via query params: document_type, document_number, email, specialty.
+        Paginated list: response JSON has `count`, `next`, `previous`, and `results`
+        (array of resources). Use `limit` and `offset` to page through `results`.'
       summary: List Teachers
       parameters:
       - in: query
@@ -4958,6 +5413,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `email`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -4985,9 +5452,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Teacher'
+                $ref: '#/components/schemas/PaginatedTeacherList'
           description: ''
     post:
       operationId: teachers_create
@@ -5202,7 +5667,9 @@ paths:
         query param `search`. Supported fields: user__username, user__email, teacher__document_number,
         teacher__full_name, parent__document_number, parent__full_name, institution__name.
         Available exact-match filters via query params: role, institution, institution__dane_code,
-        user__username, user__email.'
+        user__username, user__email. Paginated list: response JSON has `count`, `next`,
+        `previous`, and `results` (array of resources). Use `limit` and `offset` to
+        page through `results`.'
       summary: List Users
       parameters:
       - in: query
@@ -5215,6 +5682,18 @@ paths:
         schema:
           type: string
         description: Filter by exact value of `institution__dane_code`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
       - name: ordering
         required: false
         in: query
@@ -5252,9 +5731,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/UserProfile'
+                $ref: '#/components/schemas/PaginatedUserProfileList'
           description: ''
     post:
       operationId: users_create
@@ -5967,6 +6444,113 @@ components:
       required:
       - password
       - username
+    DashboardKpisCounts:
+      type: object
+      properties:
+        institutions:
+          type: integer
+        campuses:
+          type: integer
+        academic_years:
+          type: integer
+        academic_years_active:
+          type: integer
+        grade_levels:
+          type: integer
+        academic_areas:
+          type: integer
+        subjects:
+          type: integer
+        grading_scales:
+          type: integer
+        groups:
+          type: integer
+        academic_periods:
+          type: integer
+        students:
+          type: integer
+        teachers:
+          type: integer
+        parents:
+          type: integer
+        enrollments:
+          type: integer
+        enrollments_active:
+          type: integer
+        course_assignments:
+          type: integer
+        grade_directors:
+          type: integer
+        grades:
+          type: integer
+        attendances:
+          type: integer
+        academic_indicators:
+          type: integer
+        performance_summaries:
+          type: integer
+        disciplinary_reports:
+          type: integer
+        school_records:
+          type: integer
+        academic_indicators_reports:
+          type: integer
+        student_guardians:
+          type: integer
+      required:
+      - academic_areas
+      - academic_indicators
+      - academic_indicators_reports
+      - academic_periods
+      - academic_years
+      - academic_years_active
+      - attendances
+      - campuses
+      - course_assignments
+      - disciplinary_reports
+      - enrollments
+      - enrollments_active
+      - grade_directors
+      - grade_levels
+      - grades
+      - grading_scales
+      - groups
+      - institutions
+      - parents
+      - performance_summaries
+      - school_records
+      - student_guardians
+      - students
+      - subjects
+      - teachers
+    DashboardKpisResponse:
+      type: object
+      properties:
+        scope:
+          allOf:
+          - $ref: '#/components/schemas/ScopeEnum'
+          description: |-
+            How counts were scoped for the current user.
+
+            * `global` - global
+            * `institution` - institution
+            * `teacher` - teacher
+            * `parent` - parent
+            * `none` - none
+        institution_id:
+          type: string
+          nullable: true
+          description: Institution UUID when scope is institution; null otherwise.
+        counts:
+          $ref: '#/components/schemas/DashboardKpisCounts'
+        grades_period:
+          nullable: true
+          description: 'When ``academic_period`` query is set: object with expected_slots,
+            filled_slots, pending_slots, pending_students (distinct), period ids/names;
+            otherwise null.'
+      required:
+      - counts
+      - scope
     DisciplinaryReport:
       type: object
       properties:
@@ -6568,6 +7152,566 @@ components:
       - institution_id
       - role
       - username
+    ModeEnum:
+      enum:
+      - from_grades
+      - all_combinations
+      type: string
+      description: |-
+        * `from_grades` - from_grades
+        * `all_combinations` - all_combinations
+    PaginatedAcademicAreaList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcademicArea'
+    PaginatedAcademicIndicatorList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcademicIndicator'
+    PaginatedAcademicIndicatorsReportList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcademicIndicatorsReport'
+    PaginatedAcademicPeriodList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcademicPeriod'
+    PaginatedAcademicYearList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcademicYear'
+    PaginatedAttendanceList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attendance'
+    PaginatedCampusList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Campus'
+    PaginatedCourseAssignmentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseAssignment'
+    PaginatedDisciplinaryReportList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisciplinaryReport'
+    PaginatedEnrollmentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Enrollment'
+    PaginatedGradeDirectorList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/GradeDirector'
+    PaginatedGradeLevelList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/GradeLevel'
+    PaginatedGradeList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Grade'
+    PaginatedGradingScaleList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/GradingScale'
+    PaginatedGroupList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Group'
+    PaginatedInstitutionList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Institution'
+    PaginatedParentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Parent'
+    PaginatedPerformanceSummaryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PerformanceSummary'
+    PaginatedSchoolRecordList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchoolRecord'
+    PaginatedStudentGuardianList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentGuardian'
+    PaginatedStudentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Student'
+    PaginatedSubjectList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subject'
+    PaginatedTeacherList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Teacher'
+    PaginatedUserProfileList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserProfile'
     Parent:
       type: object
       properties:
@@ -7200,6 +8344,113 @@ components:
       - student
       - student_name
       - updated_at
+    PerformanceSummaryRecalculateByGradeRequestRequest:
+      type: object
+      description: Body for POST /api/performance-summaries/recalculate-by-grade/.
+      properties:
+        grade_level:
+          type: string
+          format: uuid
+          description: UUID del nivel (grado), p. ej. SEXTO.
+        academic_year:
+          type: string
+          format: uuid
+          description: UUID del año lectivo del cohorte.
+        campus:
+          type: string
+          format: uuid
+          nullable: true
+          description: 'UUID de sede opcional: solo grupos de esa sede.'
+        academic_period:
+          type: string
+          format: uuid
+          nullable: true
+          description: UUID del periodo académico opcional; si se omite se usan todos
+            los periodos que tengan notas (modo desde notas).
+        sync_all_group_period_combinations:
+          type: boolean
+          default: false
+          description: Si es true, recalcula el producto cartesiano grupo × periodos
+            del año (o solo el periodo indicado), aunque aún no existan notas.
+      required:
+      - academic_year
+      - grade_level
+    PerformanceSummaryRecalculateByGradeResponse:
+      type: object
+      properties:
+        pairs_synced:
+          type: integer
+          description: Número de pares (grupo, periodo) ejecutados.
+        groups_in_scope:
+          type: integer
+          description: Cantidad de grupos que coinciden con grado + año (+ sede).
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/ModeEnum'
+          description: |-
+            from_grades: solo pares con al menos una nota; all_combinations: producto completo.
+
+            * `from_grades` - from_grades
+            * `all_combinations` - all_combinations
+      required:
+      - groups_in_scope
+      - mode
+      - pairs_synced
+    PerformanceSummaryRecalculateByInstitutionRequestRequest:
+      type: object
+      description: Body for POST /api/performance-summaries/recalculate-by-institution/.
+      properties:
+        institution:
+          type: string
+          format: uuid
+          description: 'UUID de la institución: todos los grupos cuyo año lectivo
+            pertenece a ella.'
+        academic_year:
+          type: string
+          format: uuid
+          nullable: true
+          description: 'Opcional: acota a un solo año lectivo de la institución.'
+        campus:
+          type: string
+          format: uuid
+          nullable: true
+          description: 'Opcional: solo grupos de esa sede.'
+        academic_period:
+          type: string
+          format: uuid
+          nullable: true
+          description: 'Opcional: limita a un periodo (debe pertenecer al año indicado
+            o a la institución).'
+        sync_all_group_period_combinations:
+          type: boolean
+          default: false
+          description: Si es true, recorre cada grupo en alcance × los periodos del
+            año de ese grupo (o solo ``academic_period`` si viene informado y existe
+            en ese año).
+      required:
+      - institution
+    PerformanceSummaryRecalculateByInstitutionResponse:
+      type: object
+      properties:
+        pairs_synced:
+          type: integer
+          description: Número de pares (grupo, periodo) ejecutados.
+        groups_in_scope:
+          type: integer
+          description: Cantidad de grupos de la institución en el alcance (filtros
+            aplicados).
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/ModeEnum'
+          description: |-
+            from_grades: solo pares con al menos una nota; all_combinations: producto completo.
+
+            * `from_grades` - from_grades
+            * `all_combinations` - all_combinations
+      required:
+      - groups_in_scope
+      - mode
+      - pairs_synced
     PerformanceSummaryRequest:
       type: object
       properties:
@@ -7330,6 +8581,20 @@ components:
       - group
       - institution
       - student
+    ScopeEnum:
+      enum:
+      - global
+      - institution
+      - teacher
+      - parent
+      - none
+      type: string
+      description: |-
+        * `global` - global
+        * `institution` - institution
+        * `teacher` - teacher
+        * `parent` - parent
+        * `none` - none
     StatusEnum:
       enum:
       - active

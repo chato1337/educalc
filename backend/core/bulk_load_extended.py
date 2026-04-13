@@ -40,6 +40,10 @@ from .models import (
     Teacher,
     UserProfile,
 )
+from .performance_summary_service import (
+    suppress_performance_summary_sync,
+    sync_many_group_periods,
+)
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -786,6 +790,14 @@ def bulk_load_grades(csv_file):
     stats = _empty_stats(["rows_processed", "rows_skipped", "created", "updated"])
     stats["errors"] = []
     reader = open_csv_dict_reader(csv_file)
+    touched_group_periods = set()
+    with suppress_performance_summary_sync():
+        _bulk_load_grades_rows(reader, col, stats, touched_group_periods)
+    sync_many_group_periods(touched_group_periods)
+    return stats
+
+
+def _bulk_load_grades_rows(reader, col, stats, touched_group_periods):
     for row_num, row in enumerate(reader, start=2):
         try:
             sdoc = clean_str(col(row, ["DOC_ESTUDIANTE", "doc_estudiante"]))
@@ -846,10 +858,10 @@ def bulk_load_grades(csv_file):
                     obj.definitive_grade = def_nota
                 obj.save()
                 stats["updated"] += 1
+            touched_group_periods.add((ca.group_id, ap.id))
             stats["rows_processed"] += 1
         except Exception as e:
             stats["errors"].append({"row": row_num, "error": str(e)})
-    return stats
 
 
 def bulk_load_attendance(csv_file):

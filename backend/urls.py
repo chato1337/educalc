@@ -16,6 +16,10 @@ from rest_framework.routers import DefaultRouter
 from core.auth_views import LoginView, MeView, RefreshTokenView
 from core.dashboard_views import DashboardKPIsView
 from core.academic_grades_report_views import AcademicGradesBulletinPdfView
+from core.performance_summary_views import (
+    PerformanceSummaryRecalculateByGradeView,
+    PerformanceSummaryRecalculateByInstitutionView,
+)
 from core.report_views import (
     AcademicIndicatorsReportByStudentPeriodView,
     SchoolRecordByStudentYearView,
@@ -99,6 +103,16 @@ urlpatterns = [
         "api/academic-grades/bulletin/",
         AcademicGradesBulletinPdfView.as_view(),
         name="academic-grades-bulletin-pdf",
+    ),
+    path(
+        "api/performance-summaries/recalculate-by-grade/",
+        PerformanceSummaryRecalculateByGradeView.as_view(),
+        name="performance-summary-recalculate-by-grade",
+    ),
+    path(
+        "api/performance-summaries/recalculate-by-institution/",
+        PerformanceSummaryRecalculateByInstitutionView.as_view(),
+        name="performance-summary-recalculate-by-institution",
     ),
     # API
     path("api/", include(router.urls)),

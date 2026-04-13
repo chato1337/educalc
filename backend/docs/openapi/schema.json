@@ -7004,6 +7004,157 @@
                 }
             }
         },
+        "/api/performance-summaries/recalculate-by-grade/": {
+            "post": {
+                "operationId": "performance_summaries_recalculate_by_grade_create",
+                "description": "Ejecuta manualmente el mismo proceso que al guardar notas: promedios por periodo, promedio definitivo agregado desde notas y puestos por grupo. Por defecto solo considera pares (grupo, periodo) donde ya existen calificaciones; use ``sync_all_group_period_combinations`` para forzar todos los grupos del grado y todos los periodos del año (útil para limpiar o inicializar filas).",
+                "summary": "Recalcular desempeño por grado",
+                "tags": [
+                    "Performance Summaries"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PerformanceSummaryRecalculateByGradeRequestRequest"
+                            },
+                            "examples": {
+                                "PorGradoYAño(desdeNotas)": {
+                                    "value": {
+                                        "grade_level": "00000000-0000-4000-8000-000000000001",
+                                        "academic_year": "00000000-0000-4000-8000-000000000002"
+                                    },
+                                    "summary": "Por grado y año (desde notas)"
+                                },
+                                "ConSedeYUnSoloPeriodo": {
+                                    "value": {
+                                        "grade_level": "00000000-0000-4000-8000-000000000001",
+                                        "academic_year": "00000000-0000-4000-8000-000000000002",
+                                        "campus": "00000000-0000-4000-8000-000000000003",
+                                        "academic_period": "00000000-0000-4000-8000-000000000004"
+                                    },
+                                    "summary": "Con sede y un solo periodo"
+                                },
+                                "ProductoCompletoGrupo×Periodos": {
+                                    "value": {
+                                        "grade_level": "00000000-0000-4000-8000-000000000001",
+                                        "academic_year": "00000000-0000-4000-8000-000000000002",
+                                        "sync_all_group_period_combinations": true
+                                    },
+                                    "summary": "Producto completo grupo × periodos"
+                                }
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PerformanceSummaryRecalculateByGradeRequestRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PerformanceSummaryRecalculateByGradeRequestRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PerformanceSummaryRecalculateByGradeResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/performance-summaries/recalculate-by-institution/": {
+            "post": {
+                "operationId": "performance_summaries_recalculate_by_institution_create",
+                "description": "Recalcula ``PerformanceSummary`` para todos los grupos cuyo ``AcademicYear`` pertenece a la institución indicada. Sin ``academic_year`` incluye **todos** los años lectivos de esa institución (puede ser costoso). Por defecto solo sincroniza pares (grupo, periodo) con notas registradas; ``sync_all_group_period_combinations`` fuerza grupo × periodos del año de cada grupo.",
+                "summary": "Recalcular desempeño por institución",
+                "tags": [
+                    "Performance Summaries"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PerformanceSummaryRecalculateByInstitutionRequestRequest"
+                            },
+                            "examples": {
+                                "TodaLaInstitución(desdeNotas)": {
+                                    "value": {
+                                        "institution": "00000000-0000-4000-8000-000000000001"
+                                    },
+                                    "summary": "Toda la institución (desde notas)"
+                                },
+                                "UnAñoLectivoYProductoCompleto": {
+                                    "value": {
+                                        "institution": "00000000-0000-4000-8000-000000000001",
+                                        "academic_year": "00000000-0000-4000-8000-000000000002",
+                                        "sync_all_group_period_combinations": true
+                                    },
+                                    "summary": "Un año lectivo y producto completo"
+                                },
+                                "SedeYPeriodoConcretos": {
+                                    "value": {
+                                        "institution": "00000000-0000-4000-8000-000000000001",
+                                        "academic_year": "00000000-0000-4000-8000-000000000002",
+                                        "campus": "00000000-0000-4000-8000-000000000003",
+                                        "academic_period": "00000000-0000-4000-8000-000000000004"
+                                    },
+                                    "summary": "Sede y periodo concretos"
+                                }
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PerformanceSummaryRecalculateByInstitutionRequestRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PerformanceSummaryRecalculateByInstitutionRequestRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PerformanceSummaryRecalculateByInstitutionResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/school-records/": {
             "get": {
                 "operationId": "school_records_list",
@@ -10926,6 +11077,14 @@
                     "username"
                 ]
             },
+            "ModeEnum": {
+                "enum": [
+                    "from_grades",
+                    "all_combinations"
+                ],
+                "type": "string",
+                "description": "* `from_grades` - from_grades\n* `all_combinations` - all_combinations"
+            },
             "PaginatedAcademicAreaList": {
                 "type": "object",
                 "required": [
@@ -12510,6 +12669,132 @@
                     "student",
                     "student_name",
                     "updated_at"
+                ]
+            },
+            "PerformanceSummaryRecalculateByGradeRequestRequest": {
+                "type": "object",
+                "description": "Body for POST /api/performance-summaries/recalculate-by-grade/.",
+                "properties": {
+                    "grade_level": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "UUID del nivel (grado), p. ej. SEXTO."
+                    },
+                    "academic_year": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "UUID del año lectivo del cohorte."
+                    },
+                    "campus": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "UUID de sede opcional: solo grupos de esa sede."
+                    },
+                    "academic_period": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "UUID del periodo académico opcional; si se omite se usan todos los periodos que tengan notas (modo desde notas)."
+                    },
+                    "sync_all_group_period_combinations": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Si es true, recalcula el producto cartesiano grupo × periodos del año (o solo el periodo indicado), aunque aún no existan notas."
+                    }
+                },
+                "required": [
+                    "academic_year",
+                    "grade_level"
+                ]
+            },
+            "PerformanceSummaryRecalculateByGradeResponse": {
+                "type": "object",
+                "properties": {
+                    "pairs_synced": {
+                        "type": "integer",
+                        "description": "Número de pares (grupo, periodo) ejecutados."
+                    },
+                    "groups_in_scope": {
+                        "type": "integer",
+                        "description": "Cantidad de grupos que coinciden con grado + año (+ sede)."
+                    },
+                    "mode": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ModeEnum"
+                            }
+                        ],
+                        "description": "from_grades: solo pares con al menos una nota; all_combinations: producto completo.\n\n* `from_grades` - from_grades\n* `all_combinations` - all_combinations"
+                    }
+                },
+                "required": [
+                    "groups_in_scope",
+                    "mode",
+                    "pairs_synced"
+                ]
+            },
+            "PerformanceSummaryRecalculateByInstitutionRequestRequest": {
+                "type": "object",
+                "description": "Body for POST /api/performance-summaries/recalculate-by-institution/.",
+                "properties": {
+                    "institution": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "UUID de la institución: todos los grupos cuyo año lectivo pertenece a ella."
+                    },
+                    "academic_year": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "Opcional: acota a un solo año lectivo de la institución."
+                    },
+                    "campus": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "Opcional: solo grupos de esa sede."
+                    },
+                    "academic_period": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "Opcional: limita a un periodo (debe pertenecer al año indicado o a la institución)."
+                    },
+                    "sync_all_group_period_combinations": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Si es true, recorre cada grupo en alcance × los periodos del año de ese grupo (o solo ``academic_period`` si viene informado y existe en ese año)."
+                    }
+                },
+                "required": [
+                    "institution"
+                ]
+            },
+            "PerformanceSummaryRecalculateByInstitutionResponse": {
+                "type": "object",
+                "properties": {
+                    "pairs_synced": {
+                        "type": "integer",
+                        "description": "Número de pares (grupo, periodo) ejecutados."
+                    },
+                    "groups_in_scope": {
+                        "type": "integer",
+                        "description": "Cantidad de grupos de la institución en el alcance (filtros aplicados)."
+                    },
+                    "mode": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ModeEnum"
+                            }
+                        ],
+                        "description": "from_grades: solo pares con al menos una nota; all_combinations: producto completo.\n\n* `from_grades` - from_grades\n* `all_combinations` - all_combinations"
+                    }
+                },
+                "required": [
+                    "groups_in_scope",
+                    "mode",
+                    "pairs_synced"
                 ]
             },
             "PerformanceSummaryRequest": {

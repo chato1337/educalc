@@ -1108,6 +1108,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/performance-summaries/recalculate-by-grade/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Recalcular desempeño por grado
+         * @description Ejecuta manualmente el mismo proceso que al guardar notas: promedios por periodo, promedio definitivo agregado desde notas y puestos por grupo. Por defecto solo considera pares (grupo, periodo) donde ya existen calificaciones; use ``sync_all_group_period_combinations`` para forzar todos los grupos del grado y todos los periodos del año (útil para limpiar o inicializar filas).
+         */
+        post: operations["performance_summaries_recalculate_by_grade_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/performance-summaries/recalculate-by-institution/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Recalcular desempeño por institución
+         * @description Recalcula ``PerformanceSummary`` para todos los grupos cuyo ``AcademicYear`` pertenece a la institución indicada. Sin ``academic_year`` incluye **todos** los años lectivos de esa institución (puede ser costoso). Por defecto solo sincroniza pares (grupo, periodo) con notas registradas; ``sync_all_group_period_combinations`` fuerza grupo × periodos del año de cada grupo.
+         */
+        post: operations["performance_summaries_recalculate_by_institution_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/school-records/": {
         parameters: {
             query?: never;
@@ -2020,6 +2060,12 @@ export interface components {
             /** @description UUID of the institution the user belongs to (if any) */
             institution_id: string | null;
         };
+        /**
+         * @description * `from_grades` - from_grades
+         *     * `all_combinations` - all_combinations
+         * @enum {string}
+         */
+        ModeEnum: "from_grades" | "all_combinations";
         PaginatedAcademicAreaList: {
             /** @example 123 */
             count: number;
@@ -2657,6 +2703,88 @@ export interface components {
             readonly created_at: string;
             /** Format: date-time */
             readonly updated_at: string;
+        };
+        /** @description Body for POST /api/performance-summaries/recalculate-by-grade/. */
+        PerformanceSummaryRecalculateByGradeRequestRequest: {
+            /**
+             * Format: uuid
+             * @description UUID del nivel (grado), p. ej. SEXTO.
+             */
+            grade_level: string;
+            /**
+             * Format: uuid
+             * @description UUID del año lectivo del cohorte.
+             */
+            academic_year: string;
+            /**
+             * Format: uuid
+             * @description UUID de sede opcional: solo grupos de esa sede.
+             */
+            campus?: string | null;
+            /**
+             * Format: uuid
+             * @description UUID del periodo académico opcional; si se omite se usan todos los periodos que tengan notas (modo desde notas).
+             */
+            academic_period?: string | null;
+            /**
+             * @description Si es true, recalcula el producto cartesiano grupo × periodos del año (o solo el periodo indicado), aunque aún no existan notas.
+             * @default false
+             */
+            sync_all_group_period_combinations: boolean;
+        };
+        PerformanceSummaryRecalculateByGradeResponse: {
+            /** @description Número de pares (grupo, periodo) ejecutados. */
+            pairs_synced: number;
+            /** @description Cantidad de grupos que coinciden con grado + año (+ sede). */
+            groups_in_scope: number;
+            /**
+             * @description from_grades: solo pares con al menos una nota; all_combinations: producto completo.
+             *
+             *     * `from_grades` - from_grades
+             *     * `all_combinations` - all_combinations
+             */
+            mode: components["schemas"]["ModeEnum"];
+        };
+        /** @description Body for POST /api/performance-summaries/recalculate-by-institution/. */
+        PerformanceSummaryRecalculateByInstitutionRequestRequest: {
+            /**
+             * Format: uuid
+             * @description UUID de la institución: todos los grupos cuyo año lectivo pertenece a ella.
+             */
+            institution: string;
+            /**
+             * Format: uuid
+             * @description Opcional: acota a un solo año lectivo de la institución.
+             */
+            academic_year?: string | null;
+            /**
+             * Format: uuid
+             * @description Opcional: solo grupos de esa sede.
+             */
+            campus?: string | null;
+            /**
+             * Format: uuid
+             * @description Opcional: limita a un periodo (debe pertenecer al año indicado o a la institución).
+             */
+            academic_period?: string | null;
+            /**
+             * @description Si es true, recorre cada grupo en alcance × los periodos del año de ese grupo (o solo ``academic_period`` si viene informado y existe en ese año).
+             * @default false
+             */
+            sync_all_group_period_combinations: boolean;
+        };
+        PerformanceSummaryRecalculateByInstitutionResponse: {
+            /** @description Número de pares (grupo, periodo) ejecutados. */
+            pairs_synced: number;
+            /** @description Cantidad de grupos de la institución en el alcance (filtros aplicados). */
+            groups_in_scope: number;
+            /**
+             * @description from_grades: solo pares con al menos una nota; all_combinations: producto completo.
+             *
+             *     * `from_grades` - from_grades
+             *     * `all_combinations` - all_combinations
+             */
+            mode: components["schemas"]["ModeEnum"];
         };
         PerformanceSummaryRequest: {
             /** Format: uuid */
@@ -6329,6 +6457,56 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    performance_summaries_recalculate_by_grade_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PerformanceSummaryRecalculateByGradeRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PerformanceSummaryRecalculateByGradeRequestRequest"];
+                "multipart/form-data": components["schemas"]["PerformanceSummaryRecalculateByGradeRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerformanceSummaryRecalculateByGradeResponse"];
+                };
+            };
+        };
+    };
+    performance_summaries_recalculate_by_institution_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PerformanceSummaryRecalculateByInstitutionRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PerformanceSummaryRecalculateByInstitutionRequestRequest"];
+                "multipart/form-data": components["schemas"]["PerformanceSummaryRecalculateByInstitutionRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerformanceSummaryRecalculateByInstitutionResponse"];
                 };
             };
         };

@@ -23,6 +23,14 @@ export type Grade = components['schemas']['Grade']
 export type GradingScale = components['schemas']['GradingScale']
 export type AcademicIndicator = components['schemas']['AcademicIndicator']
 export type PerformanceSummary = components['schemas']['PerformanceSummary']
+export type PerformanceSummaryRecalculateByGradeRequest =
+  components['schemas']['PerformanceSummaryRecalculateByGradeRequestRequest']
+export type PerformanceSummaryRecalculateByGradeResponse =
+  components['schemas']['PerformanceSummaryRecalculateByGradeResponse']
+export type PerformanceSummaryRecalculateByInstitutionRequest =
+  components['schemas']['PerformanceSummaryRecalculateByInstitutionRequestRequest']
+export type PerformanceSummaryRecalculateByInstitutionResponse =
+  components['schemas']['PerformanceSummaryRecalculateByInstitutionResponse']
 export type Attendance = components['schemas']['Attendance']
 export type DisciplinaryReport = components['schemas']['DisciplinaryReport']
 export type SchoolRecord = components['schemas']['SchoolRecord']

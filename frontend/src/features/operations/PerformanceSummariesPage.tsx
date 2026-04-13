@@ -1,6 +1,7 @@
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import EditIcon from '@mui/icons-material/Edit'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import SearchIcon from '@mui/icons-material/Search'
 import type { AutocompleteRenderInputParams } from '@mui/material/Autocomplete'
 import {
@@ -8,11 +9,13 @@ import {
   Autocomplete,
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControl,
+  FormControlLabel,
   IconButton,
   InputLabel,
   MenuItem,
@@ -25,6 +28,7 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Typography,
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -42,15 +46,24 @@ import { PageHeader } from '@/components/PageHeader'
 import { useAcademicYearsQuery } from '@/features/academic-structure/academicQueries'
 import {
   useAcademicPeriodsForYear,
+  useCampusesForInstitution,
+  useGradeLevelsQuery,
   useGroupsForFilters,
   useStudentsSearch,
 } from '@/features/operations/operationsQueries'
+import {
+  postPerformanceSummaryRecalculateByGrade,
+  postPerformanceSummaryRecalculateByInstitution,
+} from '@/features/operations/performanceSummariesRecalcApi'
 import { useUiStore } from '@/stores/uiStore'
 import type {
   AcademicPeriod,
   AcademicYear,
+  GradeLevel,
   Group,
   PerformanceSummary,
+  PerformanceSummaryRecalculateByGradeRequest,
+  PerformanceSummaryRecalculateByInstitutionRequest,
   Student,
 } from '@/types/schemas'
 
@@ -94,6 +107,20 @@ export function PerformanceSummariesPage() {
   const [studentSearchInput, setStudentSearchInput] = useState('')
   const [appliedStudentSearch, setAppliedStudentSearch] = useState('')
 
+  const [recalcYearId, setRecalcYearId] = useState('')
+  const [recalcGradeLevelId, setRecalcGradeLevelId] = useState('')
+  const [recalcCampusId, setRecalcCampusId] = useState('')
+  const [recalcPeriodId, setRecalcPeriodId] = useState('')
+  const [recalcGradeSyncAll, setRecalcGradeSyncAll] = useState(false)
+  const [instRecalcYearId, setInstRecalcYearId] = useState('')
+  const [instRecalcCampusId, setInstRecalcCampusId] = useState('')
+  const [instRecalcPeriodId, setInstRecalcPeriodId] = useState('')
+  const [instRecalcSyncAll, setInstRecalcSyncAll] = useState(false)
+  const [recalcFeedback, setRecalcFeedback] = useState<{
+    severity: 'success' | 'error'
+    message: string
+  } | null>(null)
+
   const { data: academicYears = [] } = useAcademicYearsQuery(
     selectedInstitutionId,
   )
@@ -125,6 +152,28 @@ export function PerformanceSummariesPage() {
   const { data: periodsForDialog = [] } = useAcademicPeriodsForYear(
     dialogOpen ? dialogYearId : null,
   )
+
+  const { data: gradeLevels = [] } = useGradeLevelsQuery(selectedInstitutionId)
+  const { data: campuses = [] } = useCampusesForInstitution(selectedInstitutionId)
+  const { data: periodsForRecalcGrade = [] } = useAcademicPeriodsForYear(
+    recalcYearId || null,
+  )
+  const { data: periodsForRecalcInst = [] } = useAcademicPeriodsForYear(
+    instRecalcYearId || null,
+  )
+
+  useEffect(() => {
+    if (!selectedInstitutionId) {
+      setRecalcYearId('')
+      setInstRecalcYearId('')
+      return
+    }
+    const first = academicYears[0]?.id ?? ''
+    setRecalcYearId((prev) => (prev && academicYears.some((y) => y.id === prev) ? prev : first))
+    setInstRecalcYearId((prev) =>
+      prev && academicYears.some((y) => y.id === prev) ? prev : first,
+    )
+  }, [selectedInstitutionId, academicYears])
 
   useEffect(() => {
     if (!editing) return
@@ -196,6 +245,46 @@ export function PerformanceSummariesPage() {
     },
   })
 
+  const recalcByGradeMutation = useMutation({
+    mutationFn: postPerformanceSummaryRecalculateByGrade,
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({ queryKey: ['performance-summaries'] })
+      setRecalcFeedback({
+        severity: 'success',
+        message: t('performanceSummaries.recalc.successGrade', {
+          pairs: data.pairs_synced,
+          groups: data.groups_in_scope,
+          mode: data.mode,
+        }),
+      })
+    },
+    onError: (e) =>
+      setRecalcFeedback({
+        severity: 'error',
+        message: getErrorMessage(e),
+      }),
+  })
+
+  const recalcByInstitutionMutation = useMutation({
+    mutationFn: postPerformanceSummaryRecalculateByInstitution,
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({ queryKey: ['performance-summaries'] })
+      setRecalcFeedback({
+        severity: 'success',
+        message: t('performanceSummaries.recalc.successInstitution', {
+          pairs: data.pairs_synced,
+          groups: data.groups_in_scope,
+          mode: data.mode,
+        }),
+      })
+    },
+    onError: (e) =>
+      setRecalcFeedback({
+        severity: 'error',
+        message: getErrorMessage(e),
+      }),
+  })
+
   function toBody(v: FormValues) {
     const body: Record<string, unknown> = {
       student: v.student,
@@ -255,7 +344,49 @@ export function PerformanceSummariesPage() {
     updateMutation.isPending ||
     form.formState.isSubmitting
 
+  const recalcPending =
+    recalcByGradeMutation.isPending || recalcByInstitutionMutation.isPending
+
   const yearLabel = (y: AcademicYear) => String(y.year)
+
+  function submitRecalcByGrade() {
+    if (!recalcGradeLevelId) {
+      setRecalcFeedback({
+        severity: 'error',
+        message: t('performanceSummaries.recalc.pickGradeLevel'),
+      })
+      return
+    }
+    if (!recalcYearId) {
+      setRecalcFeedback({
+        severity: 'error',
+        message: t('performanceSummaries.recalc.pickYear'),
+      })
+      return
+    }
+    setRecalcFeedback(null)
+    const body: PerformanceSummaryRecalculateByGradeRequest = {
+      grade_level: recalcGradeLevelId,
+      academic_year: recalcYearId,
+      sync_all_group_period_combinations: recalcGradeSyncAll,
+    }
+    if (recalcCampusId) body.campus = recalcCampusId
+    if (recalcPeriodId) body.academic_period = recalcPeriodId
+    recalcByGradeMutation.mutate(body)
+  }
+
+  function submitRecalcByInstitution() {
+    if (!selectedInstitutionId) return
+    setRecalcFeedback(null)
+    const body: PerformanceSummaryRecalculateByInstitutionRequest = {
+      institution: selectedInstitutionId,
+      sync_all_group_period_combinations: instRecalcSyncAll,
+    }
+    if (instRecalcYearId) body.academic_year = instRecalcYearId
+    if (instRecalcCampusId) body.campus = instRecalcCampusId
+    if (instRecalcPeriodId) body.academic_period = instRecalcPeriodId
+    recalcByInstitutionMutation.mutate(body)
+  }
 
   return (
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
@@ -334,6 +465,205 @@ export function PerformanceSummariesPage() {
           </Select>
         </FormControl>
       </Paper>
+
+      {selectedInstitutionId ? (
+        <Paper className="p-4 flex flex-col gap-3">
+          <Typography variant="subtitle1">
+            {t('performanceSummaries.recalc.sectionTitle')}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {t('performanceSummaries.recalc.sectionHint')}
+          </Typography>
+          {recalcFeedback ? (
+            <Alert
+              severity={recalcFeedback.severity}
+              onClose={() => setRecalcFeedback(null)}
+            >
+              {recalcFeedback.message}
+            </Alert>
+          ) : null}
+          <Box className="grid gap-6 md:grid-cols-2 md:gap-8">
+            <Box className="flex flex-col gap-2">
+              <Typography variant="subtitle2">
+                {t('performanceSummaries.recalc.byGradeTitle')}
+              </Typography>
+              <FormControl size="small" fullWidth required>
+                <InputLabel>{t('performanceSummaries.recalc.year')}</InputLabel>
+                <Select
+                  label={t('performanceSummaries.recalc.year')}
+                  value={recalcYearId}
+                  onChange={(e) => {
+                    setRecalcYearId(e.target.value)
+                    setRecalcPeriodId('')
+                  }}
+                >
+                  {academicYears.map((y) => (
+                    <MenuItem key={y.id} value={y.id}>
+                      {yearLabel(y)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" fullWidth>
+                <InputLabel>{t('performanceSummaries.recalc.gradeLevel')}</InputLabel>
+                <Select
+                  label={t('performanceSummaries.recalc.gradeLevel')}
+                  value={recalcGradeLevelId}
+                  onChange={(e) => setRecalcGradeLevelId(e.target.value)}
+                >
+                  <MenuItem value="">
+                    <em>{t('performanceSummaries.recalc.gradeLevelPlaceholder')}</em>
+                  </MenuItem>
+                  {gradeLevels.map((gl: GradeLevel) => (
+                    <MenuItem key={gl.id} value={gl.id}>
+                      {gl.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" fullWidth>
+                <InputLabel>{t('performanceSummaries.recalc.campus')}</InputLabel>
+                <Select
+                  label={t('performanceSummaries.recalc.campus')}
+                  value={recalcCampusId}
+                  onChange={(e) => setRecalcCampusId(e.target.value)}
+                >
+                  <MenuItem value="">{t('performanceSummaries.recalc.campusAll')}</MenuItem>
+                  {campuses.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" fullWidth disabled={!recalcYearId}>
+                <InputLabel>{t('performanceSummaries.recalc.period')}</InputLabel>
+                <Select
+                  label={t('performanceSummaries.recalc.period')}
+                  value={recalcPeriodId}
+                  onChange={(e) => setRecalcPeriodId(e.target.value)}
+                >
+                  <MenuItem value="">{t('performanceSummaries.recalc.periodAll')}</MenuItem>
+                  {periodsForRecalcGrade.map((p: AcademicPeriod) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {p.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={recalcGradeSyncAll}
+                    onChange={(_, c) => setRecalcGradeSyncAll(c)}
+                  />
+                }
+                label={
+                  <Box>
+                    <Typography variant="body2">
+                      {t('performanceSummaries.recalc.syncAll')}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {t('performanceSummaries.recalc.syncAllHint')}
+                    </Typography>
+                  </Box>
+                }
+              />
+              <Button
+                variant="outlined"
+                startIcon={<RefreshIcon />}
+                onClick={submitRecalcByGrade}
+                disabled={recalcPending || !recalcYearId}
+              >
+                {t('performanceSummaries.recalc.runByGrade')}
+              </Button>
+            </Box>
+
+            <Box className="flex flex-col gap-2">
+              <Typography variant="subtitle2">
+                {t('performanceSummaries.recalc.byInstitutionTitle')}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t('performanceSummaries.recalc.institutionUsesContext')}
+              </Typography>
+              <FormControl size="small" fullWidth>
+                <InputLabel>{t('performanceSummaries.recalc.institutionYear')}</InputLabel>
+                <Select
+                  label={t('performanceSummaries.recalc.institutionYear')}
+                  value={instRecalcYearId}
+                  onChange={(e) => {
+                    setInstRecalcYearId(e.target.value)
+                    setInstRecalcPeriodId('')
+                  }}
+                >
+                  <MenuItem value="">{t('performanceSummaries.recalc.institutionYearAll')}</MenuItem>
+                  {academicYears.map((y) => (
+                    <MenuItem key={y.id} value={y.id}>
+                      {yearLabel(y)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" fullWidth>
+                <InputLabel>{t('performanceSummaries.recalc.campus')}</InputLabel>
+                <Select
+                  label={t('performanceSummaries.recalc.campus')}
+                  value={instRecalcCampusId}
+                  onChange={(e) => setInstRecalcCampusId(e.target.value)}
+                >
+                  <MenuItem value="">{t('performanceSummaries.recalc.campusAll')}</MenuItem>
+                  {campuses.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" fullWidth disabled={!instRecalcYearId}>
+                <InputLabel>{t('performanceSummaries.recalc.period')}</InputLabel>
+                <Select
+                  label={t('performanceSummaries.recalc.period')}
+                  value={instRecalcPeriodId}
+                  onChange={(e) => setInstRecalcPeriodId(e.target.value)}
+                >
+                  <MenuItem value="">{t('performanceSummaries.recalc.periodAll')}</MenuItem>
+                  {periodsForRecalcInst.map((p: AcademicPeriod) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {p.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={instRecalcSyncAll}
+                    onChange={(_, c) => setInstRecalcSyncAll(c)}
+                  />
+                }
+                label={
+                  <Box>
+                    <Typography variant="body2">
+                      {t('performanceSummaries.recalc.syncAll')}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {t('performanceSummaries.recalc.syncAllHint')}
+                    </Typography>
+                  </Box>
+                }
+              />
+              <Button
+                variant="outlined"
+                startIcon={<RefreshIcon />}
+                onClick={submitRecalcByInstitution}
+                disabled={recalcPending}
+              >
+                {t('performanceSummaries.recalc.runByInstitution')}
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
+      ) : null}
 
       {error ? (
         <Alert severity="error">{getErrorMessage(error)}</Alert>
