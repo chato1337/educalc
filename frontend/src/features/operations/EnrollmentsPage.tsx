@@ -208,10 +208,23 @@ export function EnrollmentsPage() {
         sortable: false,
       },
       {
+        field: 'student_document_number',
+        headerName: t('enrollments.documentNumber'),
+        width: 140,
+        sortable: false,
+      },
+      {
         field: 'group_name',
         headerName: t('enrollments.group'),
+        flex: 0.7,
+        minWidth: 100,
+        sortable: false,
+      },
+      {
+        field: 'campus_name',
+        headerName: t('enrollments.campus'),
         flex: 1,
-        minWidth: 120,
+        minWidth: 140,
         sortable: false,
       },
       {

@@ -335,7 +335,11 @@ class GradeDirectorSerializer(serializers.ModelSerializer):
 
 class EnrollmentSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source="student.full_name", read_only=True)
+    student_document_number = serializers.CharField(
+        source="student.document_number", read_only=True
+    )
     group_name = serializers.CharField(source="group.name", read_only=True)
+    campus_name = serializers.CharField(source="group.campus.name", read_only=True)
     academic_year_year = serializers.IntegerField(source="academic_year.year", read_only=True)
 
     class Meta:
@@ -344,8 +348,10 @@ class EnrollmentSerializer(serializers.ModelSerializer):
             "id",
             "student",
             "student_name",
+            "student_document_number",
             "group",
             "group_name",
+            "campus_name",
             "academic_year",
             "academic_year_year",
             "enrollment_date",

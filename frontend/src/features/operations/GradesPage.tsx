@@ -199,30 +199,6 @@ function matchGradingScaleId(
   return matches[0].id
 }
 
-/** Asignaciones cuyo `group` coincide con la matrícula activa; en edición incluye la actual si hiciera falta. */
-function courseAssignmentsForStudentGroups(
-  all: CourseAssignment[],
-  enrollments: Enrollment[],
-  editingAssignmentId: string | null | undefined,
-): CourseAssignment[] {
-  const groups = new Set(enrollments.map((e) => e.group))
-  if (groups.size === 0) {
-    if (editingAssignmentId) {
-      const only = all.find((a) => a.id === editingAssignmentId)
-      return only ? [only] : []
-    }
-    return []
-  }
-  const base = all.filter((a) => groups.has(a.group))
-  if (editingAssignmentId) {
-    const cur = all.find((a) => a.id === editingAssignmentId)
-    if (cur && !base.some((a) => a.id === cur.id)) {
-      return [cur, ...base]
-    }
-  }
-  return base
-}
-
 export function GradesPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -354,24 +330,24 @@ export function GradesPage() {
   const { data: periodsForDialog = [] } = useAcademicPeriodsForYear(
     dialogOpen ? dialogYearId : null,
   )
-  const { data: assignmentsForDialog = [] } = useCourseAssignmentsList(
-    { academic_year: dialogYearId ?? undefined },
-    { enabled: dialogOpen && !!dialogYearId },
-  )
+
+  const { data: editingDialogCourseAssignment, isLoading: editingDialogCourseAssignmentLoading } =
+    useQuery({
+      queryKey: ['course-assignments', 'detail', editing?.course_assignment ?? ''],
+      queryFn: async () => {
+        const { data } = await apiClient.get<CourseAssignment>(
+          `/api/course-assignments/${editing!.course_assignment}/`,
+        )
+        return data
+      },
+      enabled: dialogOpen && !!editing?.course_assignment,
+    })
 
   useEffect(() => {
-    if (!editing) return
-    let cancelled = false
-    void apiClient
-      .get<CourseAssignment>(`/api/course-assignments/${editing.course_assignment}/`)
-      .then(({ data }) => {
-        if (!cancelled) setDialogYearId(data.academic_year)
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [editing])
+    const y = editingDialogCourseAssignment?.academic_year
+    if (!y || !editing) return
+    setDialogYearId(y)
+  }, [editing, editingDialogCourseAssignment?.academic_year])
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,
@@ -411,23 +387,72 @@ export function GradesPage() {
   })
   const enrollmentsForDialog = enrollmentsRaw ?? []
 
+  const enrollmentGroupIds = useMemo(() => {
+    const ids = [...new Set(enrollmentsForDialog.map((e) => e.group))]
+    ids.sort()
+    return ids
+  }, [enrollmentsForDialog])
+
+  const dialogCourseListParams = useMemo(
+    () => ({
+      academic_year: dialogYearId ?? undefined,
+      group__in:
+        enrollmentGroupIds.length > 0
+          ? enrollmentGroupIds.join(',')
+          : undefined,
+    }),
+    [dialogYearId, enrollmentGroupIds],
+  )
+
+  const fetchDialogAssignmentsByGroups =
+    dialogOpen &&
+    !!dialogYearId &&
+    !!dialogStudentId &&
+    !enrollmentsLoading &&
+    enrollmentGroupIds.length > 0
+
+  const {
+    data: assignmentsForDialogByGroup = [],
+    isLoading: assignmentsForDialogByGroupLoading,
+  } = useCourseAssignmentsList(dialogCourseListParams, {
+    enabled: fetchDialogAssignmentsByGroups,
+  })
+
+  const dialogAssignmentsLoading =
+    enrollmentsLoading ||
+    (fetchDialogAssignmentsByGroups && assignmentsForDialogByGroupLoading) ||
+    (!!editing?.course_assignment && editingDialogCourseAssignmentLoading)
+
   const assignmentsForDialogScoped = useMemo(() => {
     if (!dialogOpen || !dialogYearId) return []
-    if (!dialogStudentId) return []
-    if (enrollmentsLoading) return []
-    return courseAssignmentsForStudentGroups(
-      assignmentsForDialog,
-      enrollmentsForDialog,
-      editing?.course_assignment,
-    )
+    const fromGroups = assignmentsForDialogByGroup
+    const extra = editingDialogCourseAssignment
+
+    if (!editing) {
+      if (!dialogStudentId || enrollmentsLoading) return []
+      if (enrollmentGroupIds.length === 0) return []
+      return fromGroups
+    }
+
+    if (enrollmentsLoading) {
+      return extra ? [extra] : []
+    }
+    if (enrollmentGroupIds.length === 0) {
+      return extra ? [extra] : []
+    }
+    if (extra && !fromGroups.some((a) => a.id === extra.id)) {
+      return [extra, ...fromGroups]
+    }
+    return fromGroups
   }, [
     dialogOpen,
     dialogYearId,
+    editing,
     dialogStudentId,
     enrollmentsLoading,
-    assignmentsForDialog,
-    enrollmentsForDialog,
-    editing?.course_assignment,
+    enrollmentGroupIds.length,
+    assignmentsForDialogByGroup,
+    editingDialogCourseAssignment,
   ])
 
   useEffect(() => {
@@ -438,7 +463,7 @@ export function GradesPage() {
       }
       return
     }
-    if (enrollmentsLoading) return
+    if (enrollmentsLoading || dialogAssignmentsLoading) return
     const ca = form.getValues('course_assignment')
     if (!ca) return
     if (!assignmentsForDialogScoped.some((a) => a.id === ca)) {
@@ -449,6 +474,7 @@ export function GradesPage() {
     editing,
     dialogStudentId,
     enrollmentsLoading,
+    dialogAssignmentsLoading,
     assignmentsForDialogScoped,
     form.getValues,
     form.setValue,
@@ -1117,6 +1143,13 @@ export function GradesPage() {
                     return 'Cargando matrícula…'
                   }
                   if (
+                    dialogStudentId &&
+                    !enrollmentsLoading &&
+                    dialogAssignmentsLoading
+                  ) {
+                    return 'Cargando asignaciones docente-curso…'
+                  }
+                  if (
                     !enrollmentsLoading &&
                     dialogStudentId &&
                     enrollmentsForDialog.length === 0
@@ -1125,6 +1158,7 @@ export function GradesPage() {
                   }
                   if (
                     !enrollmentsLoading &&
+                    !dialogAssignmentsLoading &&
                     dialogStudentId &&
                     enrollmentsForDialog.length > 0 &&
                     assignmentsForDialogScoped.length === 0
@@ -1135,10 +1169,10 @@ export function GradesPage() {
                 })()
                 const assignmentDisabled = !!(
                   !dialogYearId ||
-                  enrollmentsLoading ||
+                  dialogAssignmentsLoading ||
                   (!editing && !dialogStudentId) ||
                   (dialogStudentId &&
-                    !enrollmentsLoading &&
+                    !dialogAssignmentsLoading &&
                     assignmentsForDialogScoped.length === 0)
                 )
                 const helperParts = [
@@ -1155,9 +1189,7 @@ export function GradesPage() {
                     value={
                       assignmentsForDialogScoped.find(
                         (a) => a.id === field.value,
-                      ) ??
-                      assignmentsForDialog.find((a) => a.id === field.value) ??
-                      null
+                      ) ?? null
                     }
                     onChange={(_, v) => field.onChange(v?.id ?? '')}
                     disabled={assignmentDisabled}

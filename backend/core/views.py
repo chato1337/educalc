@@ -14,6 +14,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from .filters import CourseAssignmentFilter
 from .bulk_load import bulk_load_students
 from .bulk_load_extended import (
     bulk_load_academic_areas,
@@ -718,6 +719,7 @@ class AcademicPeriodViewSet(viewsets.ModelViewSet):
         "teacher",
         "teacher__document_number",
         "group",
+        "group__in",
         "group__name",
         "academic_year",
         "academic_year__year",
@@ -734,16 +736,7 @@ class CourseAssignmentViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = CourseAssignmentSerializer
     permission_classes = [IsAuthenticated]
-    filterset_fields = [
-        "subject",
-        "subject__name",
-        "teacher",
-        "teacher__document_number",
-        "group",
-        "group__name",
-        "academic_year",
-        "academic_year__year",
-    ]
+    filterset_class = CourseAssignmentFilter
     search_fields = [
         "subject__name",
         "subject__emphasis",
@@ -840,7 +833,7 @@ class GradeDirectorViewSet(viewsets.ModelViewSet):
 )
 class EnrollmentViewSet(viewsets.ModelViewSet):
     queryset = Enrollment.objects.select_related(
-        "student", "group", "academic_year"
+        "student", "group", "group__campus", "academic_year"
     ).all()
     serializer_class = EnrollmentSerializer
     permission_classes = [IsAuthenticated]

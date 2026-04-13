@@ -483,7 +483,7 @@ export interface paths {
         };
         /**
          * List Course Assignments
-         * @description Teacher assigned to a subject in a group for an academic year Text search available through query param `search`. Supported fields: subject__name, subject__emphasis, teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: subject, subject__name, teacher, teacher__document_number, group, group__name, academic_year, academic_year__year. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Teacher assigned to a subject in a group for an academic year Text search available through query param `search`. Supported fields: subject__name, subject__emphasis, teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: subject, subject__name, teacher, teacher__document_number, group, group__in, group__name, academic_year, academic_year__year. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["course_assignments_list"];
         put?: never;
@@ -1759,7 +1759,7 @@ export interface components {
             readonly teacher_document_number: string;
             /** Format: uuid */
             group: string;
-            readonly             group_name: string;
+            readonly group_name: string;
             /** Format: uuid */
             readonly campus: string;
             readonly campus_name: string;
@@ -1862,9 +1862,11 @@ export interface components {
             /** Format: uuid */
             student: string;
             readonly student_name: string;
+            readonly student_document_number: string;
             /** Format: uuid */
             group: string;
             readonly group_name: string;
+            readonly campus_name: string;
             /** Format: uuid */
             academic_year: string;
             readonly academic_year_year: number;
@@ -4380,6 +4382,8 @@ export interface operations {
                 academic_year__year?: string;
                 /** @description Filter by exact value of `group`. */
                 group?: string;
+                /** @description Filter by exact value of `group__in`. */
+                group__in?: string;
                 /** @description Filter by exact value of `group__name`. */
                 group__name?: string;
                 /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */

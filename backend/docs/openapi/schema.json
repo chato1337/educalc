@@ -2751,7 +2751,7 @@
         "/api/course-assignments/": {
             "get": {
                 "operationId": "course_assignments_list",
-                "description": "Teacher assigned to a subject in a group for an academic year Text search available through query param `search`. Supported fields: subject__name, subject__emphasis, teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: subject, subject__name, teacher, teacher__document_number, group, group__name, academic_year, academic_year__year. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "description": "Teacher assigned to a subject in a group for an academic year Text search available through query param `search`. Supported fields: subject__name, subject__emphasis, teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: subject, subject__name, teacher, teacher__document_number, group, group__in, group__name, academic_year, academic_year__year. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Course Assignments",
                 "parameters": [
                     {
@@ -2777,6 +2777,14 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `group`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "group__in",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `group__in`."
                     },
                     {
                         "in": "query",
@@ -10465,11 +10473,19 @@
                         "type": "string",
                         "readOnly": true
                     },
+                    "student_document_number": {
+                        "type": "string",
+                        "readOnly": true
+                    },
                     "group": {
                         "type": "string",
                         "format": "uuid"
                     },
                     "group_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "campus_name": {
                         "type": "string",
                         "readOnly": true
                     },
@@ -10503,12 +10519,14 @@
                 "required": [
                     "academic_year",
                     "academic_year_year",
+                    "campus_name",
                     "created_at",
                     "group",
                     "group_name",
                     "id",
                     "status",
                     "student",
+                    "student_document_number",
                     "student_name",
                     "updated_at"
                 ]
