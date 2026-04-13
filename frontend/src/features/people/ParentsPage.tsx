@@ -37,7 +37,7 @@ import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
 import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
 import { DocumentTypeSelect } from '@/components/DocumentTypeSelect'
-import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel'
+import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
 import { PageHeader } from '@/components/PageHeader'
 import type { Parent } from '@/types/schemas'
 
@@ -336,17 +336,14 @@ export function ParentsPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {!isLoading && rows.length > 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} sx={{ border: 0, p: 0 }}>
-                  <InfiniteScrollSentinel
-                    onLoadMore={() => void listQuery.fetchNextPage()}
-                    hasMore={listQuery.hasNextPage ?? false}
-                    isLoadingMore={listQuery.isFetchingNextPage}
-                  />
-                </TableCell>
-              </TableRow>
-            ) : null}
+            <InfiniteTableBodyFooter
+              columnCount={4}
+              hasRows={rows.length > 0}
+              isLoading={isLoading}
+              isFetchingNextPage={listQuery.isFetchingNextPage}
+              hasNextPage={listQuery.hasNextPage ?? false}
+              onLoadMore={() => void listQuery.fetchNextPage()}
+            />
           </TableBody>
         </Table>
       </TableContainer>

@@ -23,7 +23,7 @@ import {
   flatInfinitePages,
   useInfiniteList,
 } from '@/api/useInfiniteList'
-import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel'
+import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
 import { PageHeader } from '@/components/PageHeader'
 import { useUiStore } from '@/stores/uiStore'
 
@@ -153,25 +153,18 @@ export function GenericListPage({ config }: Props) {
                 </TableRow>
               ))}
               {columns.length > 0 ? (
-                <TableRow>
-                  <TableCell colSpan={columns.length} sx={{ border: 0, p: 0 }}>
-                    <InfiniteScrollSentinel
-                      onLoadMore={() => void listQuery.fetchNextPage()}
-                      hasMore={listQuery.hasNextPage ?? false}
-                      isLoadingMore={listQuery.isFetchingNextPage}
-                    />
-                  </TableCell>
-                </TableRow>
+                <InfiniteTableBodyFooter
+                  columnCount={columns.length}
+                  hasRows={data.length > 0}
+                  isLoading={isLoading}
+                  isFetchingNextPage={listQuery.isFetchingNextPage}
+                  hasNextPage={listQuery.hasNextPage ?? false}
+                  onLoadMore={() => void listQuery.fetchNextPage()}
+                />
               ) : null}
             </TableBody>
           </Table>
         </TableContainer>
-      ) : null}
-
-      {listQuery.isFetchingNextPage ? (
-        <Typography variant="caption" color="text.secondary">
-          {t('genericList.updating')}
-        </Typography>
       ) : null}
     </Box>
   )

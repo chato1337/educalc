@@ -35,7 +35,7 @@ import {
   flatInfinitePages,
   useInfiniteList,
 } from '@/api/useInfiniteList'
-import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel'
+import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
 import { useInstitutionsReference } from '@/features/academic-structure/academicQueries'
 import { PageHeader } from '@/components/PageHeader'
 import { useUiStore } from '@/stores/uiStore'
@@ -257,17 +257,14 @@ export function AcademicAreasPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {!isLoading && rows.length > 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} sx={{ border: 0, p: 0 }}>
-                  <InfiniteScrollSentinel
-                    onLoadMore={() => void listQuery.fetchNextPage()}
-                    hasMore={listQuery.hasNextPage ?? false}
-                    isLoadingMore={listQuery.isFetchingNextPage}
-                  />
-                </TableCell>
-              </TableRow>
-            ) : null}
+            <InfiniteTableBodyFooter
+              columnCount={4}
+              hasRows={rows.length > 0}
+              isLoading={isLoading}
+              isFetchingNextPage={listQuery.isFetchingNextPage}
+              hasNextPage={listQuery.hasNextPage ?? false}
+              onLoadMore={() => void listQuery.fetchNextPage()}
+            />
           </TableBody>
         </Table>
       </TableContainer>

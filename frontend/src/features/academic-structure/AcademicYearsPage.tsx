@@ -38,7 +38,7 @@ import {
   flatInfinitePages,
   useInfiniteList,
 } from '@/api/useInfiniteList'
-import { InfiniteScrollSentinel } from '@/components/InfiniteScrollSentinel'
+import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
 import { PageHeader } from '@/components/PageHeader'
 import { useInstitutionsReference } from '@/features/academic-structure/academicQueries'
 import { useUiStore } from '@/stores/uiStore'
@@ -272,17 +272,14 @@ export function AcademicYearsPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {!isLoading && rows.length > 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} sx={{ border: 0, p: 0 }}>
-                  <InfiniteScrollSentinel
-                    onLoadMore={() => void listQuery.fetchNextPage()}
-                    hasMore={listQuery.hasNextPage ?? false}
-                    isLoadingMore={listQuery.isFetchingNextPage}
-                  />
-                </TableCell>
-              </TableRow>
-            ) : null}
+            <InfiniteTableBodyFooter
+              columnCount={5}
+              hasRows={rows.length > 0}
+              isLoading={isLoading}
+              isFetchingNextPage={listQuery.isFetchingNextPage}
+              hasNextPage={listQuery.hasNextPage ?? false}
+              onLoadMore={() => void listQuery.fetchNextPage()}
+            />
           </TableBody>
         </Table>
       </TableContainer>
