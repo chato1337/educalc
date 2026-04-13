@@ -21,15 +21,15 @@ import {
   Paper,
   Select,
   Tooltip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
 } from '@mui/material'
+import {
+  DataGrid,
+  type GridColDef,
+  type GridRenderCellParams,
+  type GridSortModel,
+} from '@mui/x-data-grid'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -41,7 +41,7 @@ import {
   useWatch,
   type Resolver,
 } from 'react-hook-form'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -50,7 +50,12 @@ import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
 import { fetchMe } from '@/features/auth/meApi'
 import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
-import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
+import { InfiniteDataGridFooter } from '@/components/InfiniteDataGridFooter'
+import {
+  dataGridDefaultSx,
+  useMuiDataGridLocaleText,
+} from '@/hooks/useMuiDataGridLocaleText'
+import { createServerSortHandlers } from '@/lib/dataGridServerSort'
 import { PageHeader } from '@/components/PageHeader'
 import {
   useAcademicAreasQuery,
@@ -110,6 +115,12 @@ type GradeRow = Grade & {
   academic_period_name: string
   academic_period_number: number
 }
+
+const gradeListSortHandlers = createServerSortHandlers({
+  student_name: 'student__full_name',
+  academic_period_name: 'academic_period__name',
+  numerical_grade: 'numerical_grade',
+})
 
 function bodyFromValues(v: FormValues) {
   const body: Record<string, unknown> = {
@@ -323,6 +334,15 @@ export function GradesPage() {
   const isLoading = listQuery.isLoading
   const error = listQuery.error
 
+  const sortModel = useMemo(
+    () => gradeListSortHandlers.orderingToSortModel(ordering),
+    [ordering],
+  )
+  const dataGridLocaleText = useMuiDataGridLocaleText()
+  const handleSortModelChange = useCallback((model: GridSortModel) => {
+    setOrdering(gradeListSortHandlers.sortModelToOrdering(model))
+  }, [])
+
   const { data: gradingScales = [] } = useGradingScalesForInstitution(
     selectedInstitutionId,
   )
@@ -523,21 +543,122 @@ export function GradesPage() {
     setDialogOpen(true)
   }
 
-  function openEdit(row: GradeRow) {
-    setEditing(row)
-    setFormError(null)
-    form.reset({
-      student: row.student,
-      course_assignment: row.course_assignment,
-      academic_period: row.academic_period,
-      numerical_grade: String(row.numerical_grade),
-      performance_level: row.performance_level ?? '',
-      definitive_grade: row.definitive_grade
-        ? String(row.definitive_grade)
-        : '',
-    })
-    setDialogOpen(true)
-  }
+  const openEdit = useCallback(
+    (row: GradeRow) => {
+      setEditing(row)
+      setFormError(null)
+      form.reset({
+        student: row.student,
+        course_assignment: row.course_assignment,
+        academic_period: row.academic_period,
+        numerical_grade: String(row.numerical_grade),
+        performance_level: row.performance_level ?? '',
+        definitive_grade: row.definitive_grade
+          ? String(row.definitive_grade)
+          : '',
+      })
+      setDialogOpen(true)
+    },
+    [form],
+  )
+
+  const columns = useMemo<GridColDef<GradeRow>[]>(
+    () => [
+      {
+        field: 'student_name',
+        headerName: t('grades.student'),
+        flex: 1,
+        minWidth: 160,
+        sortable: true,
+      },
+      {
+        field: 'document',
+        headerName: t('grades.document'),
+        minWidth: 140,
+        flex: 0.7,
+        sortable: false,
+        valueGetter: (_v, row) =>
+          `${getDocumentTypeAbbr(row.student_document_type)} ${row.student_document_number}`.trim(),
+      },
+      {
+        field: 'subject',
+        headerName: t('grades.subject'),
+        flex: 1,
+        minWidth: 160,
+        sortable: false,
+        valueGetter: (_v, row) => {
+          const em = row.course_assignment_subject_emphasis
+          const base = row.course_assignment_subject_name
+          return em ? `${base} (${em})` : base
+        },
+      },
+      {
+        field: 'course_assignment_group_name',
+        headerName: t('grades.group'),
+        flex: 0.7,
+        minWidth: 100,
+        sortable: false,
+      },
+      {
+        field: 'course_assignment_teacher_name',
+        headerName: t('grades.teacher'),
+        flex: 0.8,
+        minWidth: 120,
+        sortable: false,
+      },
+      {
+        field: 'academic_period_name',
+        headerName: t('grades.period'),
+        minWidth: 160,
+        flex: 0.9,
+        sortable: true,
+        valueGetter: (_v, row) =>
+          `${row.academic_period_name} (${row.course_assignment_academic_year_year})`,
+      },
+      {
+        field: 'numerical_grade',
+        headerName: t('grades.grade'),
+        width: 100,
+        sortable: true,
+      },
+      {
+        field: 'performance_level_name',
+        headerName: t('grades.level'),
+        flex: 0.6,
+        minWidth: 100,
+        sortable: false,
+        valueFormatter: (value: string | null | undefined) =>
+          value == null || value === '' ? '-' : String(value),
+      },
+      {
+        field: 'actions',
+        type: 'actions',
+        headerName: t('common.actions'),
+        width: 108,
+        align: 'right',
+        headerAlign: 'right',
+        getActions: (params: GridRenderCellParams<GradeRow>) => [
+          <IconButton
+            key="edit"
+            aria-label={t('grades.edit')}
+            size="small"
+            onClick={() => openEdit(params.row)}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>,
+          <IconButton
+            key="delete"
+            aria-label={t('grades.delete')}
+            size="small"
+            onClick={() => setDeleteTarget(params.row)}
+          >
+            <DeleteOutlineIcon fontSize="small" />
+          </IconButton>,
+        ],
+      },
+    ],
+    [openEdit, t],
+  )
 
   function closeDialog() {
     setDialogOpen(false)
@@ -832,83 +953,34 @@ export function GradesPage() {
         <Alert severity="error">{getErrorMessage(error)}</Alert>
       ) : null}
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('grades.student')}</TableCell>
-              <TableCell>{t('grades.document')}</TableCell>
-              <TableCell>{t('grades.subject')}</TableCell>
-              <TableCell>{t('grades.group')}</TableCell>
-              <TableCell>{t('grades.teacher')}</TableCell>
-              <TableCell>{t('grades.period')}</TableCell>
-              <TableCell>{t('grades.grade')}</TableCell>
-              <TableCell>{t('grades.level')}</TableCell>
-              <TableCell align="right" width={100}>
-                {t('common.actions')}
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={9}>{t('common.loading')}</TableCell>
-              </TableRow>
-            ) : null}
-            {!isLoading && rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9}>{t('common.none')}</TableCell>
-              </TableRow>
-            ) : null}
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.student_name}</TableCell>
-                <TableCell className="whitespace-nowrap">
-                  {getDocumentTypeAbbr(row.student_document_type)}{' '}
-                  {row.student_document_number}
-                </TableCell>
-                <TableCell>
-                  {row.course_assignment_subject_name}
-                  {row.course_assignment_subject_emphasis
-                    ? ` (${row.course_assignment_subject_emphasis})`
-                    : ''}
-                </TableCell>
-                <TableCell>{row.course_assignment_group_name}</TableCell>
-                <TableCell>{row.course_assignment_teacher_name}</TableCell>
-                <TableCell className="whitespace-nowrap">
-                  {row.academic_period_name} ({row.course_assignment_academic_year_year})
-                </TableCell>
-                <TableCell>{row.numerical_grade}</TableCell>
-                <TableCell>{row.performance_level_name ?? '-'}</TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    aria-label={t('grades.edit')}
-                    size="small"
-                    onClick={() => openEdit(row)}
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    aria-label={t('grades.delete')}
-                    size="small"
-                    onClick={() => setDeleteTarget(row)}
-                  >
-                    <DeleteOutlineIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            <InfiniteTableBodyFooter
-              columnCount={9}
-              hasRows={rows.length > 0}
-              isLoading={isLoading}
-              isFetchingNextPage={listQuery.isFetchingNextPage}
-              hasNextPage={listQuery.hasNextPage ?? false}
-              onLoadMore={() => void listQuery.fetchNextPage()}
-            />
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Paper sx={{ width: '100%', p: 0, overflow: 'hidden' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          loading={isLoading}
+          autoHeight
+          hideFooter
+          disableRowSelectionOnClick
+          disableColumnMenu
+          sortingMode="server"
+          sortModel={sortModel}
+          onSortModelChange={handleSortModelChange}
+          sortingOrder={['asc', 'desc', null]}
+          localeText={dataGridLocaleText}
+          sx={{
+            ...dataGridDefaultSx,
+            '& .MuiDataGrid-cell[data-field="document"], & .MuiDataGrid-cell[data-field="academic_period_name"]':
+              { whiteSpace: 'nowrap' },
+          }}
+        />
+      </Paper>
+      <InfiniteDataGridFooter
+        show={rows.length > 0 && !isLoading}
+        isFetchingNextPage={listQuery.isFetchingNextPage}
+        hasNextPage={listQuery.hasNextPage ?? false}
+        onLoadMore={() => void listQuery.fetchNextPage()}
+      />
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>

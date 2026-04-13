@@ -14,19 +14,18 @@ import {
   DialogTitle,
   IconButton,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
 } from '@mui/material'
+import {
+  DataGrid,
+  type GridColDef,
+  type GridRenderCellParams,
+} from '@mui/x-data-grid'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { z } from 'zod'
 
@@ -36,7 +35,11 @@ import {
   flatInfinitePages,
   useInfiniteList,
 } from '@/api/useInfiniteList'
-import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
+import { InfiniteDataGridFooter } from '@/components/InfiniteDataGridFooter'
+import {
+  dataGridDefaultSx,
+  useMuiDataGridLocaleText,
+} from '@/hooks/useMuiDataGridLocaleText'
 import {
   useAcademicYearsQuery,
   useCampusesForInstitution,
@@ -166,17 +169,89 @@ export function GroupsPage() {
     setDialogOpen(true)
   }
 
-  function openEdit(row: Group) {
-    setEditing(row)
-    setFormError(null)
-    form.reset({
-      grade_level: row.grade_level,
-      academic_year: row.academic_year,
-      campus: row.campus,
-      name: row.name,
-    })
-    setDialogOpen(true)
-  }
+  const dataGridLocaleText = useMuiDataGridLocaleText()
+
+  const openEdit = useCallback(
+    (row: Group) => {
+      setEditing(row)
+      setFormError(null)
+      form.reset({
+        grade_level: row.grade_level,
+        academic_year: row.academic_year,
+        campus: row.campus,
+        name: row.name,
+      })
+      setDialogOpen(true)
+    },
+    [form],
+  )
+
+  const columns = useMemo<GridColDef<Group>[]>(
+    () => [
+      {
+        field: 'name',
+        headerName: t('groups.name'),
+        flex: 1,
+        minWidth: 120,
+        sortable: false,
+      },
+      {
+        field: 'grade_level_name',
+        headerName: t('groups.level'),
+        flex: 0.8,
+        minWidth: 120,
+        sortable: false,
+      },
+      {
+        field: 'academic_year_year',
+        headerName: t('groups.year'),
+        width: 100,
+        sortable: false,
+      },
+      {
+        field: 'campus_name',
+        headerName: t('groups.campus'),
+        flex: 0.8,
+        minWidth: 120,
+        sortable: false,
+      },
+      {
+        field: 'actions',
+        type: 'actions',
+        headerName: t('common.actions'),
+        width: 200,
+        align: 'right',
+        headerAlign: 'right',
+        getActions: (params: GridRenderCellParams<Group>) => [
+          <Link
+            key="rank"
+            to={`/groups/${params.row.id}/rankings`}
+            className="text-blue-600 text-sm mr-2 inline-flex items-center self-center"
+          >
+            {t('groups.ranking')}
+          </Link>,
+          <IconButton
+            key="edit"
+            size="small"
+            aria-label={t('groups.edit')}
+            onClick={() => openEdit(params.row)}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>,
+          <IconButton
+            key="delete"
+            size="small"
+            color="error"
+            aria-label={t('groups.delete')}
+            onClick={() => setDeleteTarget(params.row)}
+          >
+            <DeleteOutlineIcon fontSize="small" />
+          </IconButton>,
+        ],
+      },
+    ],
+    [openEdit, t],
+  )
 
   function closeDialog() {
     setDialogOpen(false)
@@ -306,70 +381,26 @@ export function GroupsPage() {
 
       {error ? <Alert severity="error">{getErrorMessage(error)}</Alert> : null}
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('groups.name')}</TableCell>
-              <TableCell>{t('groups.level')}</TableCell>
-              <TableCell>{t('groups.year')}</TableCell>
-              <TableCell>{t('groups.campus')}</TableCell>
-              <TableCell align="right">{t('common.actions')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5}>{t('common.loading')}</TableCell>
-              </TableRow>
-            ) : null}
-            {!isLoading && rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5}>{t('common.none')}</TableCell>
-              </TableRow>
-            ) : null}
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.name}</TableCell>
-                <TableCell>{row.grade_level_name}</TableCell>
-                <TableCell>{row.academic_year_year}</TableCell>
-                <TableCell>{row.campus_name}</TableCell>
-                <TableCell align="right">
-                  <Link
-                    to={`/groups/${row.id}/rankings`}
-                    className="text-blue-600 text-sm mr-2"
-                  >
-                    {t('groups.ranking')}
-                  </Link>
-                  <IconButton
-                    size="small"
-                    aria-label={t('groups.edit')}
-                    onClick={() => openEdit(row)}
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    aria-label={t('groups.delete')}
-                    onClick={() => setDeleteTarget(row)}
-                  >
-                    <DeleteOutlineIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            <InfiniteTableBodyFooter
-              columnCount={5}
-              hasRows={rows.length > 0}
-              isLoading={isLoading}
-              isFetchingNextPage={listQuery.isFetchingNextPage}
-              hasNextPage={listQuery.hasNextPage ?? false}
-              onLoadMore={() => void listQuery.fetchNextPage()}
-            />
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Paper sx={{ width: '100%', p: 0, overflow: 'hidden' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          loading={isLoading}
+          autoHeight
+          hideFooter
+          disableRowSelectionOnClick
+          disableColumnMenu
+          localeText={dataGridLocaleText}
+          sx={dataGridDefaultSx}
+        />
+      </Paper>
+      <InfiniteDataGridFooter
+        show={rows.length > 0 && !isLoading}
+        isFetchingNextPage={listQuery.isFetchingNextPage}
+        hasNextPage={listQuery.hasNextPage ?? false}
+        onLoadMore={() => void listQuery.fetchNextPage()}
+      />
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>

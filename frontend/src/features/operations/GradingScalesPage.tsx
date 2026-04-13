@@ -12,25 +12,28 @@ import {
   DialogTitle,
   IconButton,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
 } from '@mui/material'
+import {
+  DataGrid,
+  type GridColDef,
+  type GridRenderCellParams,
+} from '@mui/x-data-grid'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, type Resolver } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { z } from 'zod'
 
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
 import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
-import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
+import { InfiniteDataGridFooter } from '@/components/InfiniteDataGridFooter'
+import {
+  dataGridDefaultSx,
+  useMuiDataGridLocaleText,
+} from '@/hooks/useMuiDataGridLocaleText'
 import { PageHeader } from '@/components/PageHeader'
 import {
   createGradingScale,
@@ -177,19 +180,82 @@ export function GradingScalesPage() {
     setDialogOpen(true)
   }
 
-  function openEdit(row: GradingScale) {
-    setEditing(row)
-    setFormError(null)
-    form.reset({
-      institution: row.institution,
-      code: row.code,
-      name: row.name,
-      min_score: String(row.min_score),
-      max_score: String(row.max_score),
-      description: row.description ?? '',
-    })
-    setDialogOpen(true)
-  }
+  const dataGridLocaleText = useMuiDataGridLocaleText()
+
+  const openEdit = useCallback(
+    (row: GradingScale) => {
+      setEditing(row)
+      setFormError(null)
+      form.reset({
+        institution: row.institution,
+        code: row.code,
+        name: row.name,
+        min_score: String(row.min_score),
+        max_score: String(row.max_score),
+        description: row.description ?? '',
+      })
+      setDialogOpen(true)
+    },
+    [form],
+  )
+
+  const columns = useMemo<GridColDef<GradingScale>[]>(
+    () => [
+      {
+        field: 'code',
+        headerName: t('gradingScales.code'),
+        flex: 0.5,
+        minWidth: 90,
+        sortable: false,
+      },
+      {
+        field: 'name',
+        headerName: t('gradingScales.name'),
+        flex: 1,
+        minWidth: 140,
+        sortable: false,
+      },
+      {
+        field: 'min_score',
+        headerName: t('gradingScales.min'),
+        width: 100,
+        sortable: false,
+      },
+      {
+        field: 'max_score',
+        headerName: t('gradingScales.max'),
+        width: 100,
+        sortable: false,
+      },
+      {
+        field: 'actions',
+        type: 'actions',
+        headerName: t('common.actions'),
+        width: 108,
+        align: 'right',
+        headerAlign: 'right',
+        getActions: (params: GridRenderCellParams<GradingScale>) => [
+          <IconButton
+            key="edit"
+            aria-label={t('gradingScales.edit')}
+            size="small"
+            onClick={() => openEdit(params.row)}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>,
+          <IconButton
+            key="delete"
+            aria-label={t('gradingScales.delete')}
+            size="small"
+            onClick={() => setDeleteTarget(params.row)}
+          >
+            <DeleteOutlineIcon fontSize="small" />
+          </IconButton>,
+        ],
+      },
+    ],
+    [openEdit, t],
+  )
 
   function closeDialog() {
     setDialogOpen(false)
@@ -257,65 +323,26 @@ export function GradingScalesPage() {
         <Alert severity="error">{getErrorMessage(error)}</Alert>
       ) : null}
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('gradingScales.code')}</TableCell>
-              <TableCell>{t('gradingScales.name')}</TableCell>
-              <TableCell>{t('gradingScales.min')}</TableCell>
-              <TableCell>{t('gradingScales.max')}</TableCell>
-              <TableCell align="right" width={100}>
-                {t('common.actions')}
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5}>{t('common.loading')}</TableCell>
-              </TableRow>
-            ) : null}
-            {!isLoading && rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5}>{t('common.none')}</TableCell>
-              </TableRow>
-            ) : null}
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.code}</TableCell>
-                <TableCell>{row.name}</TableCell>
-                <TableCell>{row.min_score}</TableCell>
-                <TableCell>{row.max_score}</TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    aria-label={t('gradingScales.edit')}
-                    size="small"
-                    onClick={() => openEdit(row)}
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    aria-label={t('gradingScales.delete')}
-                    size="small"
-                    onClick={() => setDeleteTarget(row)}
-                  >
-                    <DeleteOutlineIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            <InfiniteTableBodyFooter
-              columnCount={5}
-              hasRows={rows.length > 0}
-              isLoading={isLoading}
-              isFetchingNextPage={listQuery.isFetchingNextPage}
-              hasNextPage={listQuery.hasNextPage ?? false}
-              onLoadMore={() => void listQuery.fetchNextPage()}
-            />
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Paper sx={{ width: '100%', p: 0, overflow: 'hidden' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          loading={isLoading}
+          autoHeight
+          hideFooter
+          disableRowSelectionOnClick
+          disableColumnMenu
+          localeText={dataGridLocaleText}
+          sx={dataGridDefaultSx}
+        />
+      </Paper>
+      <InfiniteDataGridFooter
+        show={rows.length > 0 && !isLoading}
+        isFetchingNextPage={listQuery.isFetchingNextPage}
+        hasNextPage={listQuery.hasNextPage ?? false}
+        onLoadMore={() => void listQuery.fetchNextPage()}
+      />
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>

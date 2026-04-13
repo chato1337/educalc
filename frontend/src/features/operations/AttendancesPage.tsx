@@ -18,20 +18,19 @@ import {
   MenuItem,
   Paper,
   Select,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
 } from '@mui/material'
+import {
+  DataGrid,
+  type GridColDef,
+  type GridRenderCellParams,
+} from '@mui/x-data-grid'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { resolvedAppRole } from '@/app/roleMatrix'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
@@ -40,7 +39,11 @@ import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
 import { fetchMe } from '@/features/auth/meApi'
 import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
-import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
+import { InfiniteDataGridFooter } from '@/components/InfiniteDataGridFooter'
+import {
+  dataGridDefaultSx,
+  useMuiDataGridLocaleText,
+} from '@/hooks/useMuiDataGridLocaleText'
 import { PageHeader } from '@/components/PageHeader'
 import {
   useAcademicAreasQuery,
@@ -242,19 +245,75 @@ export function AttendancesPage() {
     setDialogOpen(true)
   }
 
-  function openEdit(row: Attendance) {
-    setEditing(row)
-    setFormError(null)
-    setDialogYearId(null)
-    form.reset({
-      student: row.student,
-      course_assignment: row.course_assignment,
-      academic_period: row.academic_period,
-      unexcused_absences: row.unexcused_absences,
-      excused_absences: row.excused_absences,
-    })
-    setDialogOpen(true)
-  }
+  const dataGridLocaleText = useMuiDataGridLocaleText()
+
+  const openEdit = useCallback(
+    (row: Attendance) => {
+      setEditing(row)
+      setFormError(null)
+      setDialogYearId(null)
+      form.reset({
+        student: row.student,
+        course_assignment: row.course_assignment,
+        academic_period: row.academic_period,
+        unexcused_absences: row.unexcused_absences,
+        excused_absences: row.excused_absences,
+      })
+      setDialogOpen(true)
+    },
+    [form],
+  )
+
+  const columns = useMemo<GridColDef<Attendance>[]>(
+    () => [
+      {
+        field: 'student_name',
+        headerName: t('attendances.student'),
+        flex: 1,
+        minWidth: 180,
+        sortable: false,
+      },
+      {
+        field: 'unexcused_absences',
+        headerName: t('attendances.unexcusedShort'),
+        width: 120,
+        sortable: false,
+      },
+      {
+        field: 'excused_absences',
+        headerName: t('attendances.excusedShort'),
+        width: 120,
+        sortable: false,
+      },
+      {
+        field: 'actions',
+        type: 'actions',
+        headerName: t('common.actions'),
+        width: 108,
+        align: 'right',
+        headerAlign: 'right',
+        getActions: (params: GridRenderCellParams<Attendance>) => [
+          <IconButton
+            key="edit"
+            size="small"
+            onClick={() => openEdit(params.row)}
+            aria-label={t('attendances.edit')}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>,
+          <IconButton
+            key="delete"
+            size="small"
+            onClick={() => setDeleteTarget(params.row)}
+            aria-label={t('attendances.delete')}
+          >
+            <DeleteOutlineIcon fontSize="small" />
+          </IconButton>,
+        ],
+      },
+    ],
+    [openEdit, t],
+  )
 
   function closeDialog() {
     setDialogOpen(false)
@@ -375,61 +434,26 @@ export function AttendancesPage() {
         <Alert severity="error">{getErrorMessage(error)}</Alert>
       ) : null}
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('attendances.student')}</TableCell>
-              <TableCell>{t('attendances.unexcusedShort')}</TableCell>
-              <TableCell>{t('attendances.excusedShort')}</TableCell>
-              <TableCell align="right" width={100} />
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
-              </TableRow>
-            ) : null}
-            {!isLoading && rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4}>{t('common.none')}</TableCell>
-              </TableRow>
-            ) : null}
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.student_name}</TableCell>
-                <TableCell>{row.unexcused_absences}</TableCell>
-                <TableCell>{row.excused_absences}</TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    size="small"
-                    onClick={() => openEdit(row)}
-                    aria-label={t('attendances.edit')}
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={() => setDeleteTarget(row)}
-                    aria-label={t('attendances.delete')}
-                  >
-                    <DeleteOutlineIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            <InfiniteTableBodyFooter
-              columnCount={4}
-              hasRows={rows.length > 0}
-              isLoading={isLoading}
-              isFetchingNextPage={listQuery.isFetchingNextPage}
-              hasNextPage={listQuery.hasNextPage ?? false}
-              onLoadMore={() => void listQuery.fetchNextPage()}
-            />
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Paper sx={{ width: '100%', p: 0, overflow: 'hidden' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          loading={isLoading}
+          autoHeight
+          hideFooter
+          disableRowSelectionOnClick
+          disableColumnMenu
+          localeText={dataGridLocaleText}
+          sx={dataGridDefaultSx}
+        />
+      </Paper>
+      <InfiniteDataGridFooter
+        show={rows.length > 0 && !isLoading}
+        isFetchingNextPage={listQuery.isFetchingNextPage}
+        hasNextPage={listQuery.hasNextPage ?? false}
+        onLoadMore={() => void listQuery.fetchNextPage()}
+      />
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>

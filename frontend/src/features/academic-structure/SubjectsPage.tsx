@@ -14,20 +14,19 @@ import {
   DialogTitle,
   IconButton,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
 } from '@mui/material'
+import {
+  DataGrid,
+  type GridColDef,
+  type GridRenderCellParams,
+} from '@mui/x-data-grid'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type { Resolver } from 'react-hook-form'
 import { Controller, useForm, useWatch } from 'react-hook-form'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -37,7 +36,11 @@ import {
   flatInfinitePages,
   useInfiniteList,
 } from '@/api/useInfiniteList'
-import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
+import { InfiniteDataGridFooter } from '@/components/InfiniteDataGridFooter'
+import {
+  dataGridDefaultSx,
+  useMuiDataGridLocaleText,
+} from '@/hooks/useMuiDataGridLocaleText'
 import { useInstitutionsReference } from '@/features/academic-structure/academicQueries'
 import { PageHeader } from '@/components/PageHeader'
 import { useUiStore } from '@/stores/uiStore'
@@ -175,18 +178,85 @@ export function SubjectsPage() {
     setDialogOpen(true)
   }
 
-  function openEdit(row: Subject) {
-    setEditing(row)
-    setFormError(null)
-    form.reset({
-      institution: row.institution,
-      academic_area: row.academic_area,
-      name: row.name,
-      emphasis: row.emphasis ?? '',
-      hours: row.hours ?? undefined,
-    })
-    setDialogOpen(true)
-  }
+  const dataGridLocaleText = useMuiDataGridLocaleText()
+
+  const openEdit = useCallback(
+    (row: Subject) => {
+      setEditing(row)
+      setFormError(null)
+      form.reset({
+        institution: row.institution,
+        academic_area: row.academic_area,
+        name: row.name,
+        emphasis: row.emphasis ?? '',
+        hours: row.hours ?? undefined,
+      })
+      setDialogOpen(true)
+    },
+    [form],
+  )
+
+  const columns = useMemo<GridColDef<Subject>[]>(
+    () => [
+      {
+        field: 'name',
+        headerName: t('subjects.name'),
+        flex: 1,
+        minWidth: 140,
+        sortable: false,
+      },
+      {
+        field: 'academic_area_name',
+        headerName: t('subjects.area'),
+        flex: 1,
+        minWidth: 140,
+        sortable: false,
+      },
+      {
+        field: 'institution_name',
+        headerName: t('subjects.institution'),
+        flex: 1,
+        minWidth: 160,
+        sortable: false,
+      },
+      {
+        field: 'hours',
+        headerName: t('subjects.hours'),
+        width: 90,
+        sortable: false,
+        valueFormatter: (value: number | null | undefined) =>
+          value == null ? '-' : String(value),
+      },
+      {
+        field: 'actions',
+        type: 'actions',
+        headerName: t('common.actions'),
+        width: 108,
+        align: 'right',
+        headerAlign: 'right',
+        getActions: (params: GridRenderCellParams<Subject>) => [
+          <IconButton
+            key="edit"
+            size="small"
+            aria-label={t('subjects.edit')}
+            onClick={() => openEdit(params.row)}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>,
+          <IconButton
+            key="delete"
+            size="small"
+            color="error"
+            aria-label={t('subjects.delete')}
+            onClick={() => setDeleteTarget(params.row)}
+          >
+            <DeleteOutlineIcon fontSize="small" />
+          </IconButton>,
+        ],
+      },
+    ],
+    [openEdit, t],
+  )
 
   function closeDialog() {
     setDialogOpen(false)
@@ -240,64 +310,26 @@ export function SubjectsPage() {
 
       {error ? <Alert severity="error">{getErrorMessage(error)}</Alert> : null}
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('subjects.name')}</TableCell>
-              <TableCell>{t('subjects.area')}</TableCell>
-              <TableCell>{t('subjects.institution')}</TableCell>
-              <TableCell>{t('subjects.hours')}</TableCell>
-              <TableCell align="right">{t('common.actions')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5}>{t('common.loading')}</TableCell>
-              </TableRow>
-            ) : null}
-            {!isLoading && rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5}>{t('common.none')}</TableCell>
-              </TableRow>
-            ) : null}
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.name}</TableCell>
-                <TableCell>{row.academic_area_name}</TableCell>
-                <TableCell>{row.institution_name}</TableCell>
-                <TableCell>{row.hours ?? '-'}</TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    size="small"
-                    aria-label={t('subjects.edit')}
-                    onClick={() => openEdit(row)}
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    aria-label={t('subjects.delete')}
-                    onClick={() => setDeleteTarget(row)}
-                  >
-                    <DeleteOutlineIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            <InfiniteTableBodyFooter
-              columnCount={5}
-              hasRows={rows.length > 0}
-              isLoading={isLoading}
-              isFetchingNextPage={listQuery.isFetchingNextPage}
-              hasNextPage={listQuery.hasNextPage ?? false}
-              onLoadMore={() => void listQuery.fetchNextPage()}
-            />
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Paper sx={{ width: '100%', p: 0, overflow: 'hidden' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          loading={isLoading}
+          autoHeight
+          hideFooter
+          disableRowSelectionOnClick
+          disableColumnMenu
+          localeText={dataGridLocaleText}
+          sx={dataGridDefaultSx}
+        />
+      </Paper>
+      <InfiniteDataGridFooter
+        show={rows.length > 0 && !isLoading}
+        isFetchingNextPage={listQuery.isFetchingNextPage}
+        hasNextPage={listQuery.hasNextPage ?? false}
+        onLoadMore={() => void listQuery.fetchNextPage()}
+      />
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>

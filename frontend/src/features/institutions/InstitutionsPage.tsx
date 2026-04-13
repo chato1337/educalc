@@ -11,17 +11,12 @@ import {
   DialogTitle,
   IconButton,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
 } from '@mui/material'
+import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -33,8 +28,12 @@ import {
   flatInfinitePages,
   useInfiniteList,
 } from '@/api/useInfiniteList'
-import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
+import { InfiniteDataGridFooter } from '@/components/InfiniteDataGridFooter'
 import { PageHeader } from '@/components/PageHeader'
+import {
+  dataGridDefaultSx,
+  useMuiDataGridLocaleText,
+} from '@/hooks/useMuiDataGridLocaleText'
 import type { Institution } from '@/types/schemas'
 
 const institutionSchema = z.object({
@@ -112,17 +111,77 @@ export function InstitutionsPage() {
     setDialogOpen(true)
   }
 
-  function openEdit(row: Institution) {
-    setEditing(row)
-    setFormError(null)
-    form.reset({
-      name: row.name,
-      dane_code: row.dane_code,
-      legal_reference: row.legal_reference ?? '',
-      nit: row.nit ?? '',
-    })
-    setDialogOpen(true)
-  }
+  const openEdit = useCallback(
+    (row: Institution) => {
+      setEditing(row)
+      setFormError(null)
+      form.reset({
+        name: row.name,
+        dane_code: row.dane_code,
+        legal_reference: row.legal_reference ?? '',
+        nit: row.nit ?? '',
+      })
+      setDialogOpen(true)
+    },
+    [form],
+  )
+
+  const dataGridLocaleText = useMuiDataGridLocaleText()
+
+  const columns = useMemo<GridColDef<Institution>[]>(
+    () => [
+      {
+        field: 'name',
+        headerName: t('institutions.name'),
+        flex: 1,
+        minWidth: 160,
+        sortable: false,
+      },
+      {
+        field: 'dane_code',
+        headerName: t('institutions.dane'),
+        width: 130,
+        sortable: false,
+      },
+      {
+        field: 'nit',
+        headerName: t('institutions.nit'),
+        flex: 0.8,
+        minWidth: 120,
+        sortable: false,
+        valueFormatter: (value: string | null | undefined) =>
+          value == null || value === '' ? '-' : String(value),
+      },
+      {
+        field: 'actions',
+        type: 'actions',
+        headerName: t('common.actions'),
+        width: 108,
+        align: 'right',
+        headerAlign: 'right',
+        getActions: (params: GridRenderCellParams<Institution>) => [
+          <IconButton
+            key="edit"
+            size="small"
+            aria-label={t('institutions.edit')}
+            onClick={() => openEdit(params.row)}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>,
+          <IconButton
+            key="delete"
+            size="small"
+            color="error"
+            aria-label={t('institutions.delete')}
+            onClick={() => setDeleteTarget(params.row)}
+          >
+            <DeleteOutlineIcon fontSize="small" />
+          </IconButton>,
+        ],
+      },
+    ],
+    [openEdit, t],
+  )
 
   function closeDialog() {
     setDialogOpen(false)
@@ -159,62 +218,26 @@ export function InstitutionsPage() {
 
       {error ? <Alert severity="error">{getErrorMessage(error)}</Alert> : null}
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('institutions.name')}</TableCell>
-              <TableCell>{t('institutions.dane')}</TableCell>
-              <TableCell>{t('institutions.nit')}</TableCell>
-              <TableCell align="right">{t('common.actions')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
-              </TableRow>
-            ) : null}
-            {!isLoading && rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4}>{t('common.none')}</TableCell>
-              </TableRow>
-            ) : null}
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.name}</TableCell>
-                <TableCell>{row.dane_code}</TableCell>
-                <TableCell>{row.nit ?? '-'}</TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    aria-label={t('institutions.edit')}
-                    onClick={() => openEdit(row)}
-                    size="small"
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    aria-label={t('institutions.delete')}
-                    onClick={() => setDeleteTarget(row)}
-                    size="small"
-                    color="error"
-                  >
-                    <DeleteOutlineIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            <InfiniteTableBodyFooter
-              columnCount={4}
-              hasRows={rows.length > 0}
-              isLoading={isLoading}
-              isFetchingNextPage={listQuery.isFetchingNextPage}
-              hasNextPage={listQuery.hasNextPage ?? false}
-              onLoadMore={() => void listQuery.fetchNextPage()}
-            />
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Paper sx={{ width: '100%', p: 0, overflow: 'hidden' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          loading={isLoading}
+          autoHeight
+          hideFooter
+          disableRowSelectionOnClick
+          disableColumnMenu
+          localeText={dataGridLocaleText}
+          sx={dataGridDefaultSx}
+        />
+      </Paper>
+      <InfiniteDataGridFooter
+        show={rows.length > 0 && !isLoading}
+        isFetchingNextPage={listQuery.isFetchingNextPage}
+        hasNextPage={listQuery.hasNextPage ?? false}
+        onLoadMore={() => void listQuery.fetchNextPage()}
+      />
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>

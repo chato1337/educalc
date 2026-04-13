@@ -1,16 +1,13 @@
-import {
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material'
+import { Paper, Typography } from '@mui/material'
+import { DataGrid, type GridColDef } from '@mui/x-data-grid'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { BulkLoadRowError, BulkLoadStats } from '@/api/bulkLoad'
+import {
+  dataGridDefaultSx,
+  useMuiDataGridLocaleText,
+} from '@/hooks/useMuiDataGridLocaleText'
 
 function formatStatKey(key: string): string {
   return key.replace(/_/g, ' ')
@@ -27,12 +24,43 @@ function isRowError(x: unknown): x is BulkLoadRowError {
   )
 }
 
+type ErrorRow = BulkLoadRowError & { id: string }
+
 export function BulkLoadResultSummary({ data }: { data: BulkLoadStats }) {
   const { t } = useTranslation()
+  const dataGridLocaleText = useMuiDataGridLocaleText()
   const rawErrors = data.errors
   const errors: BulkLoadRowError[] = Array.isArray(rawErrors)
     ? rawErrors.filter(isRowError)
     : []
+
+  const errorRows = useMemo<ErrorRow[]>(
+    () =>
+      errors.slice(0, 100).map((e, i) => ({
+        ...e,
+        id: `${e.row}-${i}`,
+      })),
+    [errors],
+  )
+
+  const errorColumns = useMemo<GridColDef<ErrorRow>[]>(
+    () => [
+      {
+        field: 'row',
+        headerName: t('bulkLoadResultSummary.row'),
+        width: 72,
+        sortable: false,
+      },
+      {
+        field: 'error',
+        headerName: t('bulkLoadResultSummary.message'),
+        flex: 1,
+        minWidth: 200,
+        sortable: false,
+      },
+    ],
+    [t],
+  )
 
   const statEntries = Object.entries(data).filter(([key, value]) => {
     if (key === 'errors') return false
@@ -69,24 +97,20 @@ export function BulkLoadResultSummary({ data }: { data: BulkLoadStats }) {
           <Typography variant="subtitle2" className="px-3 pt-3 pb-1">
             {t('bulkLoadResultSummary.rowErrors', { count: errors.length })}
           </Typography>
-          <TableContainer sx={{ maxHeight: 280 }}>
-            <Table size="small" stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell>{t('bulkLoadResultSummary.row')}</TableCell>
-                  <TableCell>{t('bulkLoadResultSummary.message')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {errors.slice(0, 100).map((e, i) => (
-                  <TableRow key={`${e.row}-${i}`}>
-                    <TableCell width={72}>{e.row}</TableCell>
-                    <TableCell>{e.error}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <DataGrid
+            rows={errorRows}
+            columns={errorColumns}
+            getRowId={(row) => row.id}
+            autoHeight
+            hideFooter
+            disableRowSelectionOnClick
+            disableColumnMenu
+            localeText={dataGridLocaleText}
+            sx={{
+              ...dataGridDefaultSx,
+              maxHeight: 280,
+            }}
+          />
           {errors.length > 100 ? (
             <Typography variant="caption" color="text.secondary" className="px-3 pb-2 block">
               {t('bulkLoadResultSummary.showingLimitedErrors', {

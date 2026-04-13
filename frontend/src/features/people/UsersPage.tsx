@@ -19,19 +19,19 @@ import {
   MenuItem,
   Paper,
   Select,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
 } from '@mui/material'
+import {
+  DataGrid,
+  type GridColDef,
+  type GridRenderCellParams,
+  type GridSortModel,
+} from '@mui/x-data-grid'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
@@ -39,9 +39,14 @@ import { apiClient } from '@/api/client'
 import { fetchReferenceListResults } from '@/api/list'
 import { getErrorMessage } from '@/api/errors'
 import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
-import { useInstitutionsReference } from '@/features/academic-structure/academicQueries'
-import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
+import { InfiniteDataGridFooter } from '@/components/InfiniteDataGridFooter'
 import { PageHeader } from '@/components/PageHeader'
+import { useInstitutionsReference } from '@/features/academic-structure/academicQueries'
+import {
+  dataGridDefaultSx,
+  useMuiDataGridLocaleText,
+} from '@/hooks/useMuiDataGridLocaleText'
+import { createServerSortHandlers } from '@/lib/dataGridServerSort'
 import type { Parent, RoleEnum, Teacher, UserProfile } from '@/types/schemas'
 import type { Institution } from '@/types/schemas'
 
@@ -80,6 +85,12 @@ function toCreateBody(v: FormValues) {
     parent: v.parent || undefined,
   }
 }
+
+const userSortHandlers = createServerSortHandlers({
+  djangoUser: 'user__username',
+  email: 'user__email',
+  role: 'role',
+})
 
 export function UsersPage() {
   const { t } = useTranslation()
@@ -127,6 +138,16 @@ export function UsersPage() {
   const rows = useMemo(() => flatInfinitePages(listQuery.data), [listQuery.data])
   const isLoading = listQuery.isLoading
   const error = listQuery.error
+
+  const sortModel = useMemo(
+    () => userSortHandlers.orderingToSortModel(ordering),
+    [ordering],
+  )
+  const dataGridLocaleText = useMuiDataGridLocaleText()
+
+  const handleSortModelChange = useCallback((model: GridSortModel) => {
+    setOrdering(userSortHandlers.sortModelToOrdering(model))
+  }, [])
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,
@@ -185,18 +206,86 @@ export function UsersPage() {
     setDialogOpen(true)
   }
 
-  function openEdit(row: UserProfile) {
-    setEditing(row)
-    setFormError(null)
-    form.reset({
-      user: row.user,
-      role: row.role ?? undefined,
-      institution: row.institution ?? '',
-      teacher: row.teacher ?? '',
-      parent: row.parent ?? '',
-    })
-    setDialogOpen(true)
-  }
+  const openEdit = useCallback(
+    (row: UserProfile) => {
+      setEditing(row)
+      setFormError(null)
+      form.reset({
+        user: row.user,
+        role: row.role ?? undefined,
+        institution: row.institution ?? '',
+        teacher: row.teacher ?? '',
+        parent: row.parent ?? '',
+      })
+      setDialogOpen(true)
+    },
+    [form],
+  )
+
+  const columns = useMemo<GridColDef<UserProfile>[]>(
+    () => [
+      {
+        field: 'djangoUser',
+        headerName: t('users.username'),
+        flex: 1,
+        minWidth: 200,
+        sortable: true,
+        valueGetter: (_value, row) => `#${row.user} — ${row.username}`,
+      },
+      {
+        field: 'email',
+        headerName: t('users.email'),
+        flex: 1,
+        minWidth: 200,
+        sortable: true,
+      },
+      {
+        field: 'role',
+        headerName: t('users.role'),
+        width: 140,
+        sortable: true,
+        valueFormatter: (value: UserProfile['role'] | undefined) =>
+          value == null ? '-' : String(value),
+      },
+      {
+        field: 'institution',
+        headerName: t('users.institutionId'),
+        minWidth: 220,
+        flex: 0.8,
+        sortable: false,
+        valueFormatter: (value: string | null | undefined) =>
+          value == null || value === '' ? '-' : String(value),
+      },
+      {
+        field: 'actions',
+        type: 'actions',
+        headerName: t('common.actions'),
+        width: 108,
+        align: 'right',
+        headerAlign: 'right',
+        getActions: (params: GridRenderCellParams<UserProfile>) => [
+          <IconButton
+            key="edit"
+            size="small"
+            aria-label={t('users.edit')}
+            onClick={() => openEdit(params.row)}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>,
+          <IconButton
+            key="delete"
+            size="small"
+            color="error"
+            aria-label={t('users.delete')}
+            onClick={() => setDeleteTarget(params.row)}
+          >
+            <DeleteOutlineIcon fontSize="small" />
+          </IconButton>,
+        ],
+      },
+    ],
+    [openEdit, t],
+  )
 
   function closeDialog() {
     setDialogOpen(false)
@@ -337,66 +426,30 @@ export function UsersPage() {
 
       {error ? <Alert severity="error">{getErrorMessage(error)}</Alert> : null}
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('users.username')}</TableCell>
-              <TableCell>{t('users.email')}</TableCell>
-              <TableCell>{t('users.role')}</TableCell>
-              <TableCell>{t('users.institutionId')}</TableCell>
-              <TableCell align="right">{t('common.actions')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5}>{t('common.loading')}</TableCell>
-              </TableRow>
-            ) : null}
-            {!isLoading && rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5}>{t('common.none')}</TableCell>
-              </TableRow>
-            ) : null}
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>
-                  #{row.user} — {row.username}
-                </TableCell>
-                <TableCell>{row.email}</TableCell>
-                <TableCell>{row.role ?? '-'}</TableCell>
-                <TableCell>{row.institution ?? '-'}</TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    size="small"
-                    aria-label={t('users.edit')}
-                    onClick={() => openEdit(row)}
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    aria-label={t('users.delete')}
-                    onClick={() => setDeleteTarget(row)}
-                  >
-                    <DeleteOutlineIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            <InfiniteTableBodyFooter
-              columnCount={5}
-              hasRows={rows.length > 0}
-              isLoading={isLoading}
-              isFetchingNextPage={listQuery.isFetchingNextPage}
-              hasNextPage={listQuery.hasNextPage ?? false}
-              onLoadMore={() => void listQuery.fetchNextPage()}
-            />
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Paper sx={{ width: '100%', p: 0, overflow: 'hidden' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          loading={isLoading}
+          autoHeight
+          hideFooter
+          disableRowSelectionOnClick
+          disableColumnMenu
+          sortingMode="server"
+          sortModel={sortModel}
+          onSortModelChange={handleSortModelChange}
+          sortingOrder={['asc', 'desc', null]}
+          localeText={dataGridLocaleText}
+          sx={dataGridDefaultSx}
+        />
+      </Paper>
+      <InfiniteDataGridFooter
+        show={rows.length > 0 && !isLoading}
+        isFetchingNextPage={listQuery.isFetchingNextPage}
+        hasNextPage={listQuery.hasNextPage ?? false}
+        onLoadMore={() => void listQuery.fetchNextPage()}
+      />
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>

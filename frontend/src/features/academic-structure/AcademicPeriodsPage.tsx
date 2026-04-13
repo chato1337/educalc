@@ -14,20 +14,19 @@ import {
   DialogTitle,
   IconButton,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
 } from '@mui/material'
+import {
+  DataGrid,
+  type GridColDef,
+  type GridRenderCellParams,
+} from '@mui/x-data-grid'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type { Resolver } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
@@ -36,7 +35,11 @@ import {
   flatInfinitePages,
   useInfiniteList,
 } from '@/api/useInfiniteList'
-import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
+import { InfiniteDataGridFooter } from '@/components/InfiniteDataGridFooter'
+import {
+  dataGridDefaultSx,
+  useMuiDataGridLocaleText,
+} from '@/hooks/useMuiDataGridLocaleText'
 import { useAcademicYearsQuery } from '@/features/academic-structure/academicQueries'
 import { PageHeader } from '@/components/PageHeader'
 import { useUiStore } from '@/stores/uiStore'
@@ -162,18 +165,85 @@ export function AcademicPeriodsPage() {
     setDialogOpen(true)
   }
 
-  function openEdit(row: AcademicPeriod) {
-    setEditing(row)
-    setFormError(null)
-    form.reset({
-      academic_year: row.academic_year,
-      number: row.number,
-      name: row.name,
-      start_date: row.start_date?.slice(0, 10) ?? '',
-      end_date: row.end_date?.slice(0, 10) ?? '',
-    })
-    setDialogOpen(true)
-  }
+  const dataGridLocaleText = useMuiDataGridLocaleText()
+
+  const openEdit = useCallback(
+    (row: AcademicPeriod) => {
+      setEditing(row)
+      setFormError(null)
+      form.reset({
+        academic_year: row.academic_year,
+        number: row.number,
+        name: row.name,
+        start_date: row.start_date?.slice(0, 10) ?? '',
+        end_date: row.end_date?.slice(0, 10) ?? '',
+      })
+      setDialogOpen(true)
+    },
+    [form],
+  )
+
+  const columns = useMemo<GridColDef<AcademicPeriod>[]>(
+    () => [
+      {
+        field: 'name',
+        headerName: t('academicPeriods.name'),
+        flex: 1,
+        minWidth: 120,
+        sortable: false,
+      },
+      {
+        field: 'number',
+        headerName: t('academicPeriods.numberShort'),
+        width: 90,
+        sortable: false,
+      },
+      {
+        field: 'academic_year_year',
+        headerName: t('academicPeriods.academicYear'),
+        flex: 0.8,
+        minWidth: 100,
+        sortable: false,
+      },
+      {
+        field: 'dates',
+        headerName: t('academicPeriods.dates'),
+        flex: 1,
+        minWidth: 160,
+        sortable: false,
+        valueGetter: (_v, row) =>
+          [row.start_date, row.end_date].filter(Boolean).join(' → ') || '-',
+      },
+      {
+        field: 'actions',
+        type: 'actions',
+        headerName: t('common.actions'),
+        width: 108,
+        align: 'right',
+        headerAlign: 'right',
+        getActions: (params: GridRenderCellParams<AcademicPeriod>) => [
+          <IconButton
+            key="edit"
+            size="small"
+            aria-label={t('academicPeriods.edit')}
+            onClick={() => openEdit(params.row)}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>,
+          <IconButton
+            key="delete"
+            size="small"
+            color="error"
+            aria-label={t('academicPeriods.delete')}
+            onClick={() => setDeleteTarget(params.row)}
+          >
+            <DeleteOutlineIcon fontSize="small" />
+          </IconButton>,
+        ],
+      },
+    ],
+    [openEdit, t],
+  )
 
   function closeDialog() {
     setDialogOpen(false)
@@ -255,67 +325,26 @@ export function AcademicPeriodsPage() {
 
       {error ? <Alert severity="error">{getErrorMessage(error)}</Alert> : null}
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('academicPeriods.name')}</TableCell>
-              <TableCell>{t('academicPeriods.numberShort')}</TableCell>
-              <TableCell>{t('academicPeriods.academicYear')}</TableCell>
-              <TableCell>{t('academicPeriods.dates')}</TableCell>
-              <TableCell align="right">{t('common.actions')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5}>{t('common.loading')}</TableCell>
-              </TableRow>
-            ) : null}
-            {!isLoading && rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5}>{t('common.none')}</TableCell>
-              </TableRow>
-            ) : null}
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.name}</TableCell>
-                <TableCell>{row.number}</TableCell>
-                <TableCell>{row.academic_year_year}</TableCell>
-                <TableCell>
-                  {[row.start_date, row.end_date].filter(Boolean).join(' → ') ||
-                    '-'}
-                </TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    size="small"
-                    aria-label={t('academicPeriods.edit')}
-                    onClick={() => openEdit(row)}
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    aria-label={t('academicPeriods.delete')}
-                    onClick={() => setDeleteTarget(row)}
-                  >
-                    <DeleteOutlineIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            <InfiniteTableBodyFooter
-              columnCount={5}
-              hasRows={rows.length > 0}
-              isLoading={isLoading}
-              isFetchingNextPage={listQuery.isFetchingNextPage}
-              hasNextPage={listQuery.hasNextPage ?? false}
-              onLoadMore={() => void listQuery.fetchNextPage()}
-            />
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Paper sx={{ width: '100%', p: 0, overflow: 'hidden' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          loading={isLoading}
+          autoHeight
+          hideFooter
+          disableRowSelectionOnClick
+          disableColumnMenu
+          localeText={dataGridLocaleText}
+          sx={dataGridDefaultSx}
+        />
+      </Paper>
+      <InfiniteDataGridFooter
+        show={rows.length > 0 && !isLoading}
+        isFetchingNextPage={listQuery.isFetchingNextPage}
+        hasNextPage={listQuery.hasNextPage ?? false}
+        onLoadMore={() => void listQuery.fetchNextPage()}
+      />
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>

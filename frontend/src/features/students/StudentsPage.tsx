@@ -9,17 +9,16 @@ import {
   MenuItem,
   Paper,
   Select,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
 } from '@mui/material'
+import {
+  DataGrid,
+  type GridColDef,
+  type GridSortModel,
+} from '@mui/x-data-grid'
 import SearchIcon from '@mui/icons-material/Search'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
@@ -28,9 +27,19 @@ import {
   flatInfinitePages,
   useInfiniteList,
 } from '@/api/useInfiniteList'
-import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
+import { InfiniteDataGridFooter } from '@/components/InfiniteDataGridFooter'
 import { PageHeader } from '@/components/PageHeader'
+import {
+  dataGridDefaultSx,
+  useMuiDataGridLocaleText,
+} from '@/hooks/useMuiDataGridLocaleText'
+import { createServerSortHandlers } from '@/lib/dataGridServerSort'
 import type { Student } from '@/types/schemas'
+
+const studentSortHandlers = createServerSortHandlers({
+  full_name: 'full_name',
+  document_number: 'document_number',
+})
 
 export function StudentsPage() {
   const { t } = useTranslation()
@@ -64,6 +73,71 @@ export function StudentsPage() {
   )
   const isLoading = listQuery.isLoading
   const error = listQuery.error
+
+  const sortModel = useMemo(
+    () => studentSortHandlers.orderingToSortModel(ordering),
+    [ordering],
+  )
+  const dataGridLocaleText = useMuiDataGridLocaleText()
+  const handleSortModelChange = useCallback((model: GridSortModel) => {
+    setOrdering(studentSortHandlers.sortModelToOrdering(model))
+  }, [])
+
+  const columns = useMemo<GridColDef<Student>[]>(
+    () => [
+      {
+        field: 'full_name',
+        headerName: t('students.name'),
+        flex: 1,
+        minWidth: 200,
+        sortable: true,
+      },
+      {
+        field: 'document_number',
+        headerName: t('students.document'),
+        width: 160,
+        sortable: true,
+      },
+      {
+        field: 'document_type',
+        headerName: t('students.documentType'),
+        width: 120,
+        sortable: false,
+      },
+      {
+        field: 'actions',
+        headerName: t('common.actions'),
+        minWidth: 240,
+        sortable: false,
+        renderCell: (params) => (
+          <Box
+            sx={{
+              display: 'inline-flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: 0.5,
+              typography: 'body2',
+            }}
+          >
+            <Link
+              to={`/students/${params.row.id}`}
+              className="text-blue-600 underline"
+            >
+              {t('common.view')}
+            </Link>
+            <span>·</span>
+            <Link
+              to={`/students/${params.row.id}/grades-summary`}
+              className="text-blue-600 underline"
+            >
+              {t('students.gradesSummary')}
+            </Link>
+          </Box>
+        ),
+      },
+    ],
+    [t],
+  )
 
   return (
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
@@ -180,60 +254,30 @@ export function StudentsPage() {
 
       {error ? <Alert severity="error">{getErrorMessage(error)}</Alert> : null}
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('students.name')}</TableCell>
-              <TableCell>{t('students.document')}</TableCell>
-              <TableCell>{t('students.documentType')}</TableCell>
-              <TableCell>{t('common.actions')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
-              </TableRow>
-            ) : null}
-            {!isLoading && rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4}>{t('common.none')}</TableCell>
-              </TableRow>
-            ) : null}
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.full_name}</TableCell>
-                <TableCell>{row.document_number}</TableCell>
-                <TableCell>{row.document_type}</TableCell>
-                <TableCell>
-                  <Link
-                    to={`/students/${row.id}`}
-                    className="text-blue-600 underline"
-                  >
-                    {t('common.view')}
-                  </Link>
-                  {' · '}
-                  <Link
-                    to={`/students/${row.id}/grades-summary`}
-                    className="text-blue-600 underline"
-                  >
-                    {t('students.gradesSummary')}
-                  </Link>
-                </TableCell>
-              </TableRow>
-            ))}
-            <InfiniteTableBodyFooter
-              columnCount={4}
-              hasRows={rows.length > 0}
-              isLoading={isLoading}
-              isFetchingNextPage={listQuery.isFetchingNextPage}
-              hasNextPage={listQuery.hasNextPage ?? false}
-              onLoadMore={() => void listQuery.fetchNextPage()}
-            />
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Paper sx={{ width: '100%', p: 0, overflow: 'hidden' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          loading={isLoading}
+          autoHeight
+          hideFooter
+          disableRowSelectionOnClick
+          disableColumnMenu
+          sortingMode="server"
+          sortModel={sortModel}
+          onSortModelChange={handleSortModelChange}
+          sortingOrder={['asc', 'desc', null]}
+          localeText={dataGridLocaleText}
+          sx={dataGridDefaultSx}
+        />
+      </Paper>
+      <InfiniteDataGridFooter
+        show={rows.length > 0 && !isLoading}
+        isFetchingNextPage={listQuery.isFetchingNextPage}
+        hasNextPage={listQuery.hasNextPage ?? false}
+        onLoadMore={() => void listQuery.fetchNextPage()}
+      />
     </Box>
   )
 }

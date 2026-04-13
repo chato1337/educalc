@@ -17,21 +17,20 @@ import {
   MenuItem,
   Paper,
   Select,
-  Table,
   ToggleButton,
   ToggleButtonGroup,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
 } from '@mui/material'
+import {
+  DataGrid,
+  type GridColDef,
+  type GridSortModel,
+} from '@mui/x-data-grid'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
@@ -39,7 +38,12 @@ import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
 import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
-import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
+import { InfiniteDataGridFooter } from '@/components/InfiniteDataGridFooter'
+import {
+  dataGridDefaultSx,
+  useMuiDataGridLocaleText,
+} from '@/hooks/useMuiDataGridLocaleText'
+import { createServerSortHandlers } from '@/lib/dataGridServerSort'
 import { PageHeader } from '@/components/PageHeader'
 import { useAcademicYearsQuery } from '@/features/academic-structure/academicQueries'
 import { downloadGradesBulletinPdf } from '@/features/operations/gradesBulletinApi'
@@ -70,6 +74,12 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 type BulletinScope = 'student' | 'group'
+
+const schoolRecordSortHandlers = createServerSortHandlers({
+  student_name: 'student__full_name',
+  group_name: 'group__name',
+  generated_at: 'generated_at',
+})
 
 export function SchoolRecordsPage() {
   const { t } = useTranslation()
@@ -131,6 +141,51 @@ export function SchoolRecordsPage() {
   const rows = useMemo(() => flatInfinitePages(listQuery.data), [listQuery.data])
   const isLoading = listQuery.isLoading
   const error = listQuery.error
+
+  const sortModel = useMemo(
+    () => schoolRecordSortHandlers.orderingToSortModel(ordering),
+    [ordering],
+  )
+  const dataGridLocaleText = useMuiDataGridLocaleText()
+  const handleSortModelChange = useCallback((model: GridSortModel) => {
+    setOrdering(schoolRecordSortHandlers.sortModelToOrdering(model))
+  }, [])
+
+  const columns = useMemo<GridColDef<SchoolRecord>[]>(
+    () => [
+      {
+        field: 'student_name',
+        headerName: t('schoolRecords.student'),
+        flex: 1,
+        minWidth: 160,
+        sortable: true,
+      },
+      {
+        field: 'group_name',
+        headerName: t('schoolRecords.group'),
+        flex: 1,
+        minWidth: 120,
+        sortable: true,
+      },
+      {
+        field: 'campus_name',
+        headerName: t('schoolRecords.campus'),
+        flex: 0.8,
+        minWidth: 120,
+        sortable: false,
+      },
+      {
+        field: 'generated_at',
+        headerName: t('schoolRecords.generated'),
+        flex: 1,
+        minWidth: 180,
+        sortable: true,
+        valueFormatter: (value: string | null | undefined) =>
+          value ? new Date(value).toLocaleString() : '-',
+      },
+    ],
+    [t],
+  )
 
   const { data: studentOptions = [] } = useStudentsSearch(appliedStudentSearch)
   const { data: compStudentOptions = [] } = useStudentsSearch(compAppliedSearch)
@@ -647,50 +702,30 @@ export function SchoolRecordsPage() {
         <Alert severity="error">{getErrorMessage(error)}</Alert>
       ) : null}
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('schoolRecords.student')}</TableCell>
-              <TableCell>{t('schoolRecords.group')}</TableCell>
-              <TableCell>{t('schoolRecords.campus')}</TableCell>
-              <TableCell>{t('schoolRecords.generated')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
-              </TableRow>
-            ) : null}
-            {!isLoading && rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4}>{t('common.none')}</TableCell>
-              </TableRow>
-            ) : null}
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.student_name}</TableCell>
-                <TableCell>{row.group_name}</TableCell>
-                <TableCell>{row.campus_name}</TableCell>
-                <TableCell>
-                  {row.generated_at
-                    ? new Date(row.generated_at).toLocaleString()
-                    : '-'}
-                </TableCell>
-              </TableRow>
-            ))}
-            <InfiniteTableBodyFooter
-              columnCount={4}
-              hasRows={rows.length > 0}
-              isLoading={isLoading}
-              isFetchingNextPage={listQuery.isFetchingNextPage}
-              hasNextPage={listQuery.hasNextPage ?? false}
-              onLoadMore={() => void listQuery.fetchNextPage()}
-            />
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Paper sx={{ width: '100%', p: 0, overflow: 'hidden' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          loading={isLoading}
+          autoHeight
+          hideFooter
+          disableRowSelectionOnClick
+          disableColumnMenu
+          sortingMode="server"
+          sortModel={sortModel}
+          onSortModelChange={handleSortModelChange}
+          sortingOrder={['asc', 'desc', null]}
+          localeText={dataGridLocaleText}
+          sx={dataGridDefaultSx}
+        />
+      </Paper>
+      <InfiniteDataGridFooter
+        show={rows.length > 0 && !isLoading}
+        isFetchingNextPage={listQuery.isFetchingNextPage}
+        hasNextPage={listQuery.hasNextPage ?? false}
+        onLoadMore={() => void listQuery.fetchNextPage()}
+      />
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>{t('schoolRecords.generateFinalBook')}</DialogTitle>

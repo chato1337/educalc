@@ -17,19 +17,19 @@ import {
   MenuItem,
   Paper,
   Select,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
 } from '@mui/material'
+import {
+  DataGrid,
+  type GridColDef,
+  type GridRenderCellParams,
+  type GridSortModel,
+} from '@mui/x-data-grid'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, type Resolver } from 'react-hook-form'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
@@ -37,8 +37,13 @@ import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
 import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
 import { DocumentTypeSelect } from '@/components/DocumentTypeSelect'
-import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
+import { InfiniteDataGridFooter } from '@/components/InfiniteDataGridFooter'
 import { PageHeader } from '@/components/PageHeader'
+import {
+  dataGridDefaultSx,
+  useMuiDataGridLocaleText,
+} from '@/hooks/useMuiDataGridLocaleText'
+import { createServerSortHandlers } from '@/lib/dataGridServerSort'
 import type { Parent } from '@/types/schemas'
 
 const schema = z.object({
@@ -68,6 +73,12 @@ const defaults: FormValues = {
   phone: '',
   kinship: '',
 }
+
+const parentSortHandlers = createServerSortHandlers({
+  full_name: 'full_name',
+  document_number: 'document_number',
+  email: 'email',
+})
 
 function toApiBody(v: FormValues) {
   return {
@@ -117,6 +128,15 @@ export function ParentsPage() {
   const isLoading = listQuery.isLoading
   const error = listQuery.error
 
+  const sortModel = useMemo(
+    () => parentSortHandlers.orderingToSortModel(ordering),
+    [ordering],
+  )
+  const dataGridLocaleText = useMuiDataGridLocaleText()
+  const handleSortModelChange = useCallback((model: GridSortModel) => {
+    setOrdering(parentSortHandlers.sortModelToOrdering(model))
+  }, [])
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: defaults,
@@ -163,23 +183,81 @@ export function ParentsPage() {
     setDialogOpen(true)
   }
 
-  function openEdit(row: Parent) {
-    setEditing(row)
-    setFormError(null)
-    form.reset({
-      document_type: row.document_type ?? '',
-      document_number: row.document_number ?? '',
-      first_name: row.first_name,
-      second_name: row.second_name ?? '',
-      first_last_name: row.first_last_name,
-      second_last_name: row.second_last_name ?? '',
-      full_name: row.full_name,
-      email: row.email ?? '',
-      phone: row.phone ?? '',
-      kinship: row.kinship ?? '',
-    })
-    setDialogOpen(true)
-  }
+  const openEdit = useCallback(
+    (row: Parent) => {
+      setEditing(row)
+      setFormError(null)
+      form.reset({
+        document_type: row.document_type ?? '',
+        document_number: row.document_number ?? '',
+        first_name: row.first_name,
+        second_name: row.second_name ?? '',
+        first_last_name: row.first_last_name,
+        second_last_name: row.second_last_name ?? '',
+        full_name: row.full_name,
+        email: row.email ?? '',
+        phone: row.phone ?? '',
+        kinship: row.kinship ?? '',
+      })
+      setDialogOpen(true)
+    },
+    [form],
+  )
+
+  const columns = useMemo<GridColDef<Parent>[]>(
+    () => [
+      {
+        field: 'full_name',
+        headerName: t('parents.name'),
+        flex: 1,
+        minWidth: 180,
+        sortable: true,
+      },
+      {
+        field: 'email',
+        headerName: t('parents.email'),
+        flex: 1,
+        minWidth: 180,
+        sortable: true,
+      },
+      {
+        field: 'kinship',
+        headerName: t('parents.kinship'),
+        width: 140,
+        sortable: false,
+        valueFormatter: (value: string | null | undefined) =>
+          value == null || value === '' ? '-' : String(value),
+      },
+      {
+        field: 'actions',
+        type: 'actions',
+        headerName: t('common.actions'),
+        width: 108,
+        align: 'right',
+        headerAlign: 'right',
+        getActions: (params: GridRenderCellParams<Parent>) => [
+          <IconButton
+            key="edit"
+            size="small"
+            aria-label={t('parents.edit')}
+            onClick={() => openEdit(params.row)}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>,
+          <IconButton
+            key="delete"
+            size="small"
+            color="error"
+            aria-label={t('parents.delete')}
+            onClick={() => setDeleteTarget(params.row)}
+          >
+            <DeleteOutlineIcon fontSize="small" />
+          </IconButton>,
+        ],
+      },
+    ],
+    [openEdit, t],
+  )
 
   function closeDialog() {
     setDialogOpen(false)
@@ -291,62 +369,30 @@ export function ParentsPage() {
 
       {error ? <Alert severity="error">{getErrorMessage(error)}</Alert> : null}
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('parents.name')}</TableCell>
-              <TableCell>{t('parents.email')}</TableCell>
-              <TableCell>{t('parents.kinship')}</TableCell>
-              <TableCell align="right">{t('common.actions')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
-              </TableRow>
-            ) : null}
-            {!isLoading && rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4}>{t('common.none')}</TableCell>
-              </TableRow>
-            ) : null}
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.full_name}</TableCell>
-                <TableCell>{row.email}</TableCell>
-                <TableCell>{row.kinship ?? '-'}</TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    size="small"
-                    aria-label={t('parents.edit')}
-                    onClick={() => openEdit(row)}
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    aria-label={t('parents.delete')}
-                    onClick={() => setDeleteTarget(row)}
-                  >
-                    <DeleteOutlineIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            <InfiniteTableBodyFooter
-              columnCount={4}
-              hasRows={rows.length > 0}
-              isLoading={isLoading}
-              isFetchingNextPage={listQuery.isFetchingNextPage}
-              hasNextPage={listQuery.hasNextPage ?? false}
-              onLoadMore={() => void listQuery.fetchNextPage()}
-            />
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Paper sx={{ width: '100%', p: 0, overflow: 'hidden' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          loading={isLoading}
+          autoHeight
+          hideFooter
+          disableRowSelectionOnClick
+          disableColumnMenu
+          sortingMode="server"
+          sortModel={sortModel}
+          onSortModelChange={handleSortModelChange}
+          sortingOrder={['asc', 'desc', null]}
+          localeText={dataGridLocaleText}
+          sx={dataGridDefaultSx}
+        />
+      </Paper>
+      <InfiniteDataGridFooter
+        show={rows.length > 0 && !isLoading}
+        isFetchingNextPage={listQuery.isFetchingNextPage}
+        hasNextPage={listQuery.hasNextPage ?? false}
+        onLoadMore={() => void listQuery.fetchNextPage()}
+      />
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>

@@ -1,19 +1,6 @@
 import SearchIcon from '@mui/icons-material/Search'
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-} from '@mui/material'
+import { Alert, Box, Button, Paper, TextField } from '@mui/material'
+import { DataGrid, type GridColDef } from '@mui/x-data-grid'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -23,8 +10,12 @@ import {
   flatInfinitePages,
   useInfiniteList,
 } from '@/api/useInfiniteList'
-import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
+import { InfiniteDataGridFooter } from '@/components/InfiniteDataGridFooter'
 import { PageHeader } from '@/components/PageHeader'
+import {
+  dataGridDefaultSx,
+  useMuiDataGridLocaleText,
+} from '@/hooks/useMuiDataGridLocaleText'
 import { useUiStore } from '@/stores/uiStore'
 
 import type { ResourceListConfig } from '@/features/admin/resourceConfig'
@@ -70,11 +61,13 @@ export function GenericListPage({ config }: Props) {
     selectedInstitutionId,
   ])
 
+  const listEnabled = !config.institutionParam || !!selectedInstitutionId
+
   const listQuery = useInfiniteList<Record<string, unknown>>({
     queryKey: queryKeys.resourceList(config.path, params),
     url: config.apiPath,
     params,
-    enabled: !config.institutionParam || !!selectedInstitutionId,
+    enabled: listEnabled,
   })
   const data = useMemo(
     () => flatInfinitePages(listQuery.data),
@@ -83,8 +76,33 @@ export function GenericListPage({ config }: Props) {
   const isLoading = listQuery.isLoading
   const error = listQuery.error
 
-  const columns = useMemo(
+  const columnKeys = useMemo(
     () => (data?.length ? pickColumns(data) : []),
+    [data],
+  )
+
+  const dataGridLocaleText = useMuiDataGridLocaleText()
+
+  const columnDefs = useMemo<GridColDef<Record<string, unknown>>[]>(
+    () =>
+      columnKeys.map((field) => ({
+        field,
+        headerName: field,
+        flex: 1,
+        minWidth: 120,
+        sortable: false,
+        valueGetter: (_v, row) => row[field],
+        valueFormatter: (value: unknown) => formatCell(value),
+      })),
+    [columnKeys],
+  )
+
+  const gridRows = useMemo(
+    () =>
+      data.map((row, i) => ({
+        ...row,
+        __gridRowId: String(row.id ?? i),
+      })),
     [data],
   )
 
@@ -124,47 +142,29 @@ export function GenericListPage({ config }: Props) {
         <Alert severity="error">{getErrorMessage(error)}</Alert>
       ) : null}
 
-      {isLoading ? (
-        <Box className="flex justify-center py-12">
-          <CircularProgress />
-        </Box>
-      ) : null}
-
-      {!isLoading && data && data.length === 0 ? (
-        <Typography color="text.secondary">{t('common.none')}</Typography>
-      ) : null}
-
-      {!isLoading && data && data.length > 0 ? (
-        <TableContainer component={Paper}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                {columns.map((col) => (
-                  <TableCell key={col}>{col}</TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.map((row, i) => (
-                <TableRow key={(row.id as string) ?? i}>
-                  {columns.map((col) => (
-                    <TableCell key={col}>{formatCell(row[col])}</TableCell>
-                  ))}
-                </TableRow>
-              ))}
-              {columns.length > 0 ? (
-                <InfiniteTableBodyFooter
-                  columnCount={columns.length}
-                  hasRows={data.length > 0}
-                  isLoading={isLoading}
-                  isFetchingNextPage={listQuery.isFetchingNextPage}
-                  hasNextPage={listQuery.hasNextPage ?? false}
-                  onLoadMore={() => void listQuery.fetchNextPage()}
-                />
-              ) : null}
-            </TableBody>
-          </Table>
-        </TableContainer>
+      {listEnabled ? (
+        <>
+          <Paper sx={{ width: '100%', p: 0, overflow: 'hidden' }}>
+            <DataGrid
+              rows={gridRows}
+              columns={columnDefs}
+              getRowId={(row) => String(row.__gridRowId)}
+              loading={isLoading}
+              autoHeight
+              hideFooter
+              disableRowSelectionOnClick
+              disableColumnMenu
+              localeText={dataGridLocaleText}
+              sx={dataGridDefaultSx}
+            />
+          </Paper>
+          <InfiniteDataGridFooter
+            show={data.length > 0 && !isLoading}
+            isFetchingNextPage={listQuery.isFetchingNextPage}
+            hasNextPage={listQuery.hasNextPage ?? false}
+            onLoadMore={() => void listQuery.fetchNextPage()}
+          />
+        </>
       ) : null}
     </Box>
   )

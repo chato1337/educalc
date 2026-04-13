@@ -16,19 +16,18 @@ import {
   MenuItem,
   Paper,
   Select,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
 } from '@mui/material'
+import {
+  DataGrid,
+  type GridColDef,
+  type GridSortModel,
+} from '@mui/x-data-grid'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
@@ -36,7 +35,12 @@ import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
 import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
-import { InfiniteTableBodyFooter } from '@/components/InfiniteTableBodyFooter'
+import { InfiniteDataGridFooter } from '@/components/InfiniteDataGridFooter'
+import {
+  dataGridDefaultSx,
+  useMuiDataGridLocaleText,
+} from '@/hooks/useMuiDataGridLocaleText'
+import { createServerSortHandlers } from '@/lib/dataGridServerSort'
 import { PageHeader } from '@/components/PageHeader'
 import { useAcademicYearsQuery } from '@/features/academic-structure/academicQueries'
 import {
@@ -65,6 +69,11 @@ const schema = z.object({
 })
 
 type FormValues = z.infer<typeof schema>
+
+const academicIndicatorsReportSortHandlers = createServerSortHandlers({
+  student_name: 'student__full_name',
+  generated_at: 'generated_at',
+})
 
 export function AcademicIndicatorsReportsPage() {
   const { t } = useTranslation()
@@ -120,6 +129,54 @@ export function AcademicIndicatorsReportsPage() {
   const rows = useMemo(() => flatInfinitePages(listQuery.data), [listQuery.data])
   const isLoading = listQuery.isLoading
   const error = listQuery.error
+
+  const sortModel = useMemo(
+    () =>
+      academicIndicatorsReportSortHandlers.orderingToSortModel(ordering),
+    [ordering],
+  )
+  const dataGridLocaleText = useMuiDataGridLocaleText()
+  const handleSortModelChange = useCallback((model: GridSortModel) => {
+    setOrdering(
+      academicIndicatorsReportSortHandlers.sortModelToOrdering(model),
+    )
+  }, [])
+
+  const columns = useMemo<GridColDef<AcademicIndicatorsReport>[]>(
+    () => [
+      {
+        field: 'student_name',
+        headerName: t('academicIndicators.student'),
+        flex: 1,
+        minWidth: 160,
+        sortable: true,
+      },
+      {
+        field: 'group_name',
+        headerName: t('academicIndicators.group'),
+        flex: 1,
+        minWidth: 120,
+        sortable: false,
+      },
+      {
+        field: 'grade_director_name',
+        headerName: t('academicIndicators.director'),
+        flex: 1,
+        minWidth: 160,
+        sortable: false,
+      },
+      {
+        field: 'generated_at',
+        headerName: t('academicIndicators.generated'),
+        flex: 1,
+        minWidth: 180,
+        sortable: true,
+        valueFormatter: (value: string | null | undefined) =>
+          value ? new Date(value).toLocaleString() : '-',
+      },
+    ],
+    [t],
+  )
 
   const { data: studentOptions = [] } = useStudentsSearch(appliedStudentSearch)
   const { data: compStudentOptions = [] } = useStudentsSearch(compAppliedSearch)
@@ -512,50 +569,30 @@ export function AcademicIndicatorsReportsPage() {
         <Alert severity="error">{getErrorMessage(error)}</Alert>
       ) : null}
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('academicIndicators.student')}</TableCell>
-              <TableCell>{t('academicIndicators.group')}</TableCell>
-              <TableCell>{t('academicIndicators.director')}</TableCell>
-              <TableCell>{t('academicIndicators.generated')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={4}>{t('common.loading')}</TableCell>
-              </TableRow>
-            ) : null}
-            {!isLoading && rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4}>{t('common.none')}</TableCell>
-              </TableRow>
-            ) : null}
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.student_name}</TableCell>
-                <TableCell>{row.group_name}</TableCell>
-                <TableCell>{row.grade_director_name}</TableCell>
-                <TableCell>
-                  {row.generated_at
-                    ? new Date(row.generated_at).toLocaleString()
-                    : '-'}
-                </TableCell>
-              </TableRow>
-            ))}
-            <InfiniteTableBodyFooter
-              columnCount={4}
-              hasRows={rows.length > 0}
-              isLoading={isLoading}
-              isFetchingNextPage={listQuery.isFetchingNextPage}
-              hasNextPage={listQuery.hasNextPage ?? false}
-              onLoadMore={() => void listQuery.fetchNextPage()}
-            />
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Paper sx={{ width: '100%', p: 0, overflow: 'hidden' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          loading={isLoading}
+          autoHeight
+          hideFooter
+          disableRowSelectionOnClick
+          disableColumnMenu
+          sortingMode="server"
+          sortModel={sortModel}
+          onSortModelChange={handleSortModelChange}
+          sortingOrder={['asc', 'desc', null]}
+          localeText={dataGridLocaleText}
+          sx={dataGridDefaultSx}
+        />
+      </Paper>
+      <InfiniteDataGridFooter
+        show={rows.length > 0 && !isLoading}
+        isFetchingNextPage={listQuery.isFetchingNextPage}
+        hasNextPage={listQuery.hasNextPage ?? false}
+        onLoadMore={() => void listQuery.fetchNextPage()}
+      />
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>{t('academicIndicators.generateReportDialog')}</DialogTitle>
