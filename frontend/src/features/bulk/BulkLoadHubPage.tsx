@@ -117,6 +117,15 @@ export function BulkLoadHubPage() {
             <div className="flex flex-wrap items-center gap-2">
               <strong>{t('bulkLoadHub.endpoint')}:</strong> <code>{target.apiPath}</code>
               <Chip size="small" label={target.requestSchema} variant="outlined" />
+              {target.openApiOperationId ? (
+                <Chip
+                  size="small"
+                  label={t('bulkLoadHub.openApiOperationId', {
+                    id: target.openApiOperationId,
+                  })}
+                  variant="outlined"
+                />
+              ) : null}
             </div>
             <div>
               <strong>{t('bulkLoadHub.openapiContract')}:</strong> {target.openApiDescription}

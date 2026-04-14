@@ -26,6 +26,7 @@ from core.report_views import (
 )
 from core.views import (
     AcademicAreaViewSet,
+    AcademicIndicatorCatalogViewSet,
     AcademicIndicatorViewSet,
     AcademicIndicatorsReportViewSet,
     AcademicPeriodViewSet,
@@ -61,6 +62,11 @@ router.register(r"students", StudentViewSet, basename="student")
 router.register(r"teachers", TeacherViewSet, basename="teacher")
 router.register(r"parents", ParentViewSet, basename="parent")
 router.register(r"academic-areas", AcademicAreaViewSet, basename="academicarea")
+router.register(
+    r"academic-indicator-catalogs",
+    AcademicIndicatorCatalogViewSet,
+    basename="academicindicatorcatalog",
+)
 router.register(r"subjects", SubjectViewSet, basename="subject")
 router.register(r"course-assignments", CourseAssignmentViewSet, basename="courseassignment")
 router.register(r"academic-periods", AcademicPeriodViewSet, basename="academicperiod")

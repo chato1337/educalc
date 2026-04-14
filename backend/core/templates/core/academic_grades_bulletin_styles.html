@@ -1,4 +1,8 @@
-  @page { margin: 0; size: auto; }
+  /* Oficio / US Legal 8.5×14 in — más alto que carta para boletines extensos */
+  @page {
+    size: legal;
+    margin: 0;
+  }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { margin: 0; padding: 0; }
   body { font-family: Arial, Helvetica, sans-serif; background: #fff; color: #1a1a1a; }
@@ -20,9 +24,25 @@
   .estudiante-bar .label { font-size: 10px; color: #666; margin-bottom: 1px; text-transform: uppercase; letter-spacing: 0.5px; }
   .estudiante-bar .value { font-size: 14px; font-weight: 700; color: #1a1a1a; }
   .grado-badge { background: #1a3a6b; color: #fff; padding: 5px 14px; border-radius: 4px; font-size: 12px; font-weight: 600; }
-  .tabla-titulo { text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.8px; color: #444; padding: 10px 20px 4px; text-transform: uppercase; }
+  .tabla-titulo {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: #444;
+    padding: 10px 20px 4px;
+    text-transform: uppercase;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
   .tabla-wrap { padding: 6px 20px 16px; overflow-x: auto; }
   table.notas { width: 100%; border-collapse: collapse; font-size: 12px; }
+  /* Repetir cabecera de notas si la tabla cruza de página */
+  table.notas thead { display: table-header-group; }
+  table.notas tbody tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
   table.notas th { background: #1a3a6b; color: #fff; padding: 7px 8px; text-align: center; font-weight: 600; font-size: 11px; white-space: nowrap; }
   table.notas th.left { text-align: left; }
   table.notas td { padding: 7px 8px; border-bottom: 0.5px solid #e0e0e0; vertical-align: middle; }
@@ -41,24 +61,106 @@
   .def-bas { background: #fdf0d0; color: #854f0b; }
   .def-baj { background: #fce8e8; color: #a32d2d; }
   .resumen-grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #ddd; }
-  .resumen-block { padding: 10px 20px; border-right: 0.5px solid #ddd; }
+  .resumen-block {
+    padding: 10px 20px;
+    border-right: 0.5px solid #ddd;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
   .resumen-block:last-child { border-right: none; }
-  .resumen-block .rtitle { font-size: 10px; color: #666; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+  .resumen-block .rtitle {
+    font-size: 10px;
+    color: #666;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
   .inas-table { width: 100%; font-size: 11px; border-collapse: collapse; }
   .inas-table td { padding: 3px 6px; }
   .inas-table td:first-child { color: #666; }
   .inas-table td:not(:first-child) { text-align: center; font-weight: 600; }
-  .leyenda-bar { background: #f4f4f4; border-top: 0.5px solid #ddd; padding: 8px 20px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .leyenda-bar {
+    background: #f4f4f4;
+    border-top: 0.5px solid #ddd;
+    padding: 8px 20px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
   .leyenda-bar span { font-size: 10px; color: #666; }
   .ley-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; }
   .indicadores { padding: 14px 20px; border-top: 1px solid #ddd; }
-  .indicadores h3 { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #666; margin-bottom: 10px; border-bottom: 0.5px solid #ddd; padding-bottom: 6px; }
-  .ind-item { margin-bottom: 9px; }
-  .ind-materia { font-size: 11px; font-weight: 700; color: #1a3a6b; display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
-  .ind-desc { font-size: 11px; color: #555; padding-left: 12px; line-height: 1.5; }
+  .indicadores h3 {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 10px;
+    border-bottom: 0.5px solid #ddd;
+    padding-bottom: 6px;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  .ind-item {
+    margin-bottom: 9px;
+    /* Evitar partir badge+título; el párrafo largo puede fluir entre páginas */
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+  .ind-materia {
+    font-size: 11px;
+    font-weight: 700;
+    color: #1a3a6b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  .ind-desc {
+    font-size: 11px;
+    color: #555;
+    padding-left: 12px;
+    line-height: 1.5;
+    orphans: 2;
+    widows: 2;
+  }
   .disciplinario { border-top: 1px solid #ddd; padding: 10px 20px 14px; background: #f7f8fa; }
-  .disciplinario .rtitle { font-size: 10px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
-  .firma-area { border-top: 1px solid #ddd; padding: 20px 20px 24px; display: flex; justify-content: center; }
+  .disciplinario .rtitle {
+    font-size: 10px;
+    font-weight: 700;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  .disciplinario-text {
+    min-height: 2.5em;
+    font-size: 11px;
+    color: #333;
+    white-space: pre-wrap;
+  }
+  /* Disciplinario + firma: preferir misma página; WeasyPrint a veces falla con flex + break-inside */
+  .boletin-cierre {
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+  .firma-area {
+    border-top: 1px solid #ddd;
+    padding: 16px 20px 20px;
+    text-align: center;
+    page-break-before: avoid;
+    break-before: avoid;
+  }
   .firma-box { text-align: center; max-width: 280px; margin: 0 auto; }
   .firma-linea {
     width: 220px;

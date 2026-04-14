@@ -469,10 +469,344 @@
                 }
             }
         },
+        "/api/academic-indicator-catalogs/": {
+            "get": {
+                "operationId": "academic_indicator_catalogs_list",
+                "description": "Achievement texts per academic area and grade level (Bajo vs Básico or above) Text search available through query param `search`. Supported fields: academic_area__name, grade_level__name, achievement_below_basic, achievement_basic_or_above. Available exact-match filters via query params: academic_area, grade_level, academic_area__institution, grade_level__institution. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "summary": "List Academic Indicator Catalogs",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "academic_area",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `academic_area`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "academic_area__institution",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `academic_area__institution`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "grade_level",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `grade_level`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "grade_level__institution",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `grade_level__institution`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Search text across: academic_area__name, grade_level__name, achievement_below_basic, achievement_basic_or_above."
+                    }
+                ],
+                "tags": [
+                    "Academic Indicator Catalogs"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedAcademicIndicatorCatalogList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "academic_indicator_catalogs_create",
+                "summary": "Create Academic Indicator Catalogs",
+                "tags": [
+                    "Academic Indicator Catalogs"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AcademicIndicatorCatalogRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AcademicIndicatorCatalogRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AcademicIndicatorCatalogRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AcademicIndicatorCatalog"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/academic-indicator-catalogs/{id}/": {
+            "get": {
+                "operationId": "academic_indicator_catalogs_retrieve",
+                "summary": "Get Academic Indicator Catalogs",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Academic Indicator Catalog.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Academic Indicator Catalogs"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AcademicIndicatorCatalog"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "academic_indicator_catalogs_update",
+                "summary": "Update Academic Indicator Catalogs",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Academic Indicator Catalog.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Academic Indicator Catalogs"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AcademicIndicatorCatalogRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AcademicIndicatorCatalogRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AcademicIndicatorCatalogRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AcademicIndicatorCatalog"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "academic_indicator_catalogs_partial_update",
+                "summary": "Partial update Academic Indicator Catalogs",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Academic Indicator Catalog.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Academic Indicator Catalogs"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAcademicIndicatorCatalogRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAcademicIndicatorCatalogRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAcademicIndicatorCatalogRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AcademicIndicatorCatalog"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "academic_indicator_catalogs_destroy",
+                "summary": "Delete Academic Indicator Catalogs",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Academic Indicator Catalog.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Academic Indicator Catalogs"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
         "/api/academic-indicators/": {
             "get": {
                 "operationId": "academic_indicators_list",
-                "description": "Qualitative achievement descriptor for a student Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__subject__academic_area, course_assignment__teacher__document_number, academic_period, academic_period__number, performance_level. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "description": "Qualitative achievement descriptor for a student Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level, catalog__achievement_below_basic, catalog__achievement_basic_or_above. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__subject__academic_area, course_assignment__teacher__document_number, academic_period, academic_period__number, performance_level, catalog, outcome. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Academic Indicators",
                 "parameters": [
                     {
@@ -490,6 +824,14 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `academic_period__number`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "catalog",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `catalog`."
                     },
                     {
                         "in": "query",
@@ -542,6 +884,14 @@
                     },
                     {
                         "in": "query",
+                        "name": "outcome",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `outcome`."
+                    },
+                    {
+                        "in": "query",
                         "name": "performance_level",
                         "schema": {
                             "type": "string"
@@ -554,7 +904,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "description": "Search text across: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level."
+                        "description": "Search text across: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level, catalog__achievement_below_basic, catalog__achievement_basic_or_above."
                     },
                     {
                         "in": "query",
@@ -1089,7 +1439,7 @@
         "/api/academic-indicators/bulk-load/": {
             "post": {
                 "operationId": "academic_indicators_bulk_load_create",
-                "description": "Context columns as grades; DESCRIPCION, NOTA (optional), NIVEL_DESEMPENO_TEXTO (optional). Appends rows.",
+                "description": "Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO (sin DOC_ESTUDIANTE); upsert en catálogo área+grado. (2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION, NOTA (opcional), NIVEL_DESEMPENO_TEXTO (opcional).",
                 "summary": "Bulk load academic indicators from CSV",
                 "tags": [
                     "Academic Indicators"
@@ -9573,6 +9923,25 @@
                         "type": "string",
                         "format": "uuid"
                     },
+                    "catalog": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "catalog_label": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "outcome": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OutcomeEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/BlankEnum"
+                            }
+                        ]
+                    },
                     "description": {
                         "type": "string"
                     },
@@ -9599,6 +9968,7 @@
                 },
                 "required": [
                     "academic_period",
+                    "catalog_label",
                     "course_assignment",
                     "created_at",
                     "description",
@@ -9606,6 +9976,86 @@
                     "student",
                     "student_name",
                     "updated_at"
+                ]
+            },
+            "AcademicIndicatorCatalog": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "academic_area": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "academic_area_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "grade_level": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "grade_level_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "achievement_below_basic": {
+                        "type": "string"
+                    },
+                    "achievement_basic_or_above": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "academic_area",
+                    "academic_area_name",
+                    "achievement_basic_or_above",
+                    "achievement_below_basic",
+                    "created_at",
+                    "grade_level",
+                    "grade_level_name",
+                    "id",
+                    "updated_at"
+                ]
+            },
+            "AcademicIndicatorCatalogRequest": {
+                "type": "object",
+                "properties": {
+                    "academic_area": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "grade_level": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "achievement_below_basic": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "achievement_basic_or_above": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "academic_area",
+                    "achievement_basic_or_above",
+                    "achievement_below_basic",
+                    "grade_level"
                 ]
             },
             "AcademicIndicatorRequest": {
@@ -9622,6 +10072,21 @@
                     "academic_period": {
                         "type": "string",
                         "format": "uuid"
+                    },
+                    "catalog": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "outcome": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OutcomeEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/BlankEnum"
+                            }
+                        ]
                     },
                     "description": {
                         "type": "string",
@@ -10010,6 +10475,11 @@
                     "student"
                 ]
             },
+            "BlankEnum": {
+                "enum": [
+                    ""
+                ]
+            },
             "BulkLoadCsvUploadRequest": {
                 "type": "object",
                 "description": "Multipart CSV upload for bulk loaders (OpenAPI: multipart field ``file``).",
@@ -10149,6 +10619,15 @@
                         "type": "string",
                         "readOnly": true
                     },
+                    "group_grade_level": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "group_grade_level_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
                     "campus": {
                         "type": "string",
                         "format": "uuid",
@@ -10184,6 +10663,8 @@
                     "campus_name",
                     "created_at",
                     "group",
+                    "group_grade_level",
+                    "group_grade_level_name",
                     "group_name",
                     "id",
                     "subject",
@@ -11178,6 +11659,14 @@
                 "type": "string",
                 "description": "* `from_grades` - from_grades\n* `all_combinations` - all_combinations"
             },
+            "OutcomeEnum": {
+                "enum": [
+                    "below_basic",
+                    "basic_or_above"
+                ],
+                "type": "string",
+                "description": "* `below_basic` - Bajo (por debajo del umbral de Básico)\n* `basic_or_above` - Básico o superior"
+            },
             "PaginatedAcademicAreaList": {
                 "type": "object",
                 "required": [
@@ -11205,6 +11694,37 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/AcademicArea"
+                        }
+                    }
+                }
+            },
+            "PaginatedAcademicIndicatorCatalogList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AcademicIndicatorCatalog"
                         }
                     }
                 }
@@ -12069,6 +12589,27 @@
                     }
                 }
             },
+            "PatchedAcademicIndicatorCatalogRequest": {
+                "type": "object",
+                "properties": {
+                    "academic_area": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "grade_level": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "achievement_below_basic": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "achievement_basic_or_above": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                }
+            },
             "PatchedAcademicIndicatorRequest": {
                 "type": "object",
                 "properties": {
@@ -12083,6 +12624,21 @@
                     "academic_period": {
                         "type": "string",
                         "format": "uuid"
+                    },
+                    "catalog": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "outcome": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OutcomeEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/BlankEnum"
+                            }
+                        ]
                     },
                     "description": {
                         "type": "string",

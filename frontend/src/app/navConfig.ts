@@ -196,6 +196,12 @@ export const navSections: NavSection[] = [
         rolesAllowed: STAFF_ROLES,
       },
       {
+        labelKey: 'nav.academicIndicatorCatalogs',
+        path: '/academic-indicator-catalogs',
+        icon: Assessment,
+        rolesAllowed: STAFF_ROLES,
+      },
+      {
         labelKey: 'nav.academicIndicators',
         path: '/academic-indicators',
         icon: Assessment,

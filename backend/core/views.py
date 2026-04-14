@@ -36,6 +36,7 @@ from .bulk_load_extended import (
 from .models import (
     AcademicArea,
     AcademicIndicator,
+    AcademicIndicatorCatalog,
     AcademicIndicatorsReport,
     AcademicPeriod,
     AcademicYear,
@@ -65,6 +66,7 @@ from .serializers import (
     BulkLoadFileSerializer,
     BulkLoadStudentsSerializer,
     AcademicAreaSerializer,
+    AcademicIndicatorCatalogSerializer,
     AcademicIndicatorSerializer,
     AcademicIndicatorsReportSerializer,
     AcademicPeriodSerializer,
@@ -731,6 +733,7 @@ class CourseAssignmentViewSet(viewsets.ModelViewSet):
         "subject__academic_area",
         "teacher",
         "group",
+        "group__grade_level",
         "group__campus",
         "academic_year",
     ).all()
@@ -1059,6 +1062,43 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 
 
 @schema_viewset(
+    ["Academic Indicator Catalogs"],
+    "Achievement texts per academic area and grade level (Bajo vs Básico or above)",
+    search_fields=[
+        "academic_area__name",
+        "grade_level__name",
+        "achievement_below_basic",
+        "achievement_basic_or_above",
+    ],
+    filter_fields=[
+        "academic_area",
+        "grade_level",
+        "academic_area__institution",
+        "grade_level__institution",
+    ],
+)
+class AcademicIndicatorCatalogViewSet(viewsets.ModelViewSet):
+    queryset = AcademicIndicatorCatalog.objects.select_related(
+        "academic_area",
+        "grade_level",
+    ).all()
+    serializer_class = AcademicIndicatorCatalogSerializer
+    permission_classes = [IsAuthenticated]
+    filterset_fields = [
+        "academic_area",
+        "grade_level",
+        "academic_area__institution",
+        "grade_level__institution",
+    ]
+    search_fields = [
+        "academic_area__name",
+        "grade_level__name",
+        "achievement_below_basic",
+        "achievement_basic_or_above",
+    ]
+
+
+@schema_viewset(
     ["Academic Indicators"],
     "Qualitative achievement descriptor for a student",
     search_fields=[
@@ -1068,6 +1108,8 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         "course_assignment__teacher__full_name",
         "description",
         "performance_level",
+        "catalog__achievement_below_basic",
+        "catalog__achievement_basic_or_above",
     ],
     filter_fields=[
         "student",
@@ -1078,6 +1120,8 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         "academic_period",
         "academic_period__number",
         "performance_level",
+        "catalog",
+        "outcome",
     ],
 )
 class AcademicIndicatorViewSet(viewsets.ModelViewSet):
@@ -1088,6 +1132,9 @@ class AcademicIndicatorViewSet(viewsets.ModelViewSet):
         "course_assignment__subject__academic_area",
         "course_assignment__teacher",
         "academic_period",
+        "catalog",
+        "catalog__academic_area",
+        "catalog__grade_level",
     ).all()
     serializer_class = AcademicIndicatorSerializer
     permission_classes = [IsAuthenticated]
@@ -1100,6 +1147,8 @@ class AcademicIndicatorViewSet(viewsets.ModelViewSet):
         "academic_period",
         "academic_period__number",
         "performance_level",
+        "catalog",
+        "outcome",
     ]
     search_fields = [
         "student__document_number",
@@ -1108,11 +1157,18 @@ class AcademicIndicatorViewSet(viewsets.ModelViewSet):
         "course_assignment__teacher__full_name",
         "description",
         "performance_level",
+        "catalog__achievement_below_basic",
+        "catalog__achievement_basic_or_above",
     ]
 
     @bulk_csv_load_schema(
         summary="Bulk load academic indicators from CSV",
-        description="Context columns as grades; DESCRIPCION, NOTA (optional), NIVEL_DESEMPENO_TEXTO (optional). Appends rows.",
+        description=(
+            "Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE), GRADO, "
+            "LOGRO_POSITIVO, LOGRO_NEGATIVO (sin DOC_ESTUDIANTE); upsert en catálogo área+grado. "
+            "(2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, "
+            "ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION, NOTA (opcional), NIVEL_DESEMPENO_TEXTO (opcional)."
+        ),
         tags=["Academic Indicators"],
         request_serializer=BulkLoadFileSerializer,
     )

@@ -18,8 +18,10 @@ from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
 from weasyprint import HTML
 
+from .indicator_utils import resolve_indicator_outcome
 from .models import (
     AcademicIndicator,
+    AcademicIndicatorCatalog,
     AcademicPeriod,
     AcademicYear,
     Attendance,
@@ -114,6 +116,65 @@ def _indicator_badge_style(code: str) -> str:
     if c == "BS":
         return "background:#fdf0d0;color:#854f0b"
     return "background:#fce8e8;color:#a32d2d"
+
+
+def _bulletin_indicator_description(
+    ind: AcademicIndicator,
+    scales: list[GradingScale],
+) -> str:
+    """
+    Texto cualitativo para el boletín: descripción manual si existe; si no,
+    logros del :class:`~core.models.AcademicIndicatorCatalog` según resultado
+    (campo ``outcome`` o inferido desde nota / nivel de desempeño).
+    """
+    custom = (ind.description or "").strip()
+    if custom:
+        return custom
+    cat = ind.catalog
+    if cat is None:
+        return ""
+    outcome = (ind.outcome or "").strip()
+    if not outcome:
+        resolved = resolve_indicator_outcome(
+            ind.numerical_grade,
+            (ind.performance_level or "").strip() or None,
+            scales,
+        )
+        outcome = resolved or ""
+    return _bulletin_catalog_description_for_outcome(cat, outcome)
+
+
+def _bulletin_catalog_description_for_outcome(
+    cat: AcademicIndicatorCatalog, outcome: str
+) -> str:
+    if outcome == "below_basic":
+        return (cat.achievement_below_basic or "").strip()
+    if outcome == "basic_or_above":
+        return (cat.achievement_basic_or_above or "").strip()
+    return ""
+
+
+def _latest_grade_in_periods(
+    glist: list[Grade], period_order: list[UUID]
+) -> Grade | None:
+    """Nota del periodo más avanzado dentro de ``period_order`` que tenga calificación."""
+    for pid in reversed(period_order):
+        for g in glist:
+            if g.academic_period_id == pid:
+                return g
+    return None
+
+
+def _grade_level_text_for_outcome(grade: Grade) -> str | None:
+    """Código o nombre de escala para ``resolve_indicator_outcome``."""
+    pl = grade.performance_level
+    if not pl:
+        return None
+    code = (pl.code or "").strip().upper()
+    if code:
+        return code
+    name = (pl.name or "").strip()
+    return name or None
 
 
 def _parse_uuid_list(raw: str | None) -> list[UUID] | None:
@@ -223,7 +284,7 @@ def build_bulletin_context(
         student=student,
         academic_period__in=periods,
         course_assignment__in=[a.id for a in assignments],
-    ).select_related("academic_period")
+    ).select_related("academic_period", "performance_level")
 
     grades_by_ca: dict[Any, list[Grade]] = defaultdict(list)
     for g in grades_qs:
@@ -316,7 +377,11 @@ def build_bulletin_context(
             course_assignment_id__in=ca_ids,
             academic_period__in=periods,
         )
-        .select_related("academic_period", "course_assignment__subject__academic_area")
+        .select_related(
+            "academic_period",
+            "catalog",
+            "course_assignment__subject__academic_area",
+        )
         .order_by("course_assignment_id", "-academic_period__number")
     )
     ind_by_ca: dict[Any, AcademicIndicator] = {}
@@ -324,23 +389,61 @@ def build_bulletin_context(
         if ind.course_assignment_id not in ind_by_ca:
             ind_by_ca[ind.course_assignment_id] = ind
 
+    area_ids = {ca.subject.academic_area_id for ca in assignments}
+    catalog_by_area: dict[Any, AcademicIndicatorCatalog] = {}
+    if area_ids:
+        for cat in AcademicIndicatorCatalog.objects.filter(
+            grade_level_id=group.grade_level_id,
+            academic_area_id__in=area_ids,
+        ):
+            catalog_by_area[cat.academic_area_id] = cat
+
     indicators_out: list[dict[str, Any]] = []
     for ca in assignments:
         ind = ind_by_ca.get(ca.id)
-        if not ind:
+        if ind:
+            score = ind.numerical_grade
+            pl = (ind.performance_level or "").strip().upper()
+            code = _indicator_badge(score, scales)
+            if pl in ("SP", "AL", "BS", "BJ"):
+                code = pl
+            label = f"{ca.subject.academic_area.name} — {_fmt_num(score) if score is not None else '—'}"
+            indicators_out.append(
+                {
+                    "badge_code": code,
+                    "badge_style": _indicator_badge_style(code),
+                    "label": label,
+                    "description": _bulletin_indicator_description(ind, scales),
+                }
+            )
             continue
-        score = ind.numerical_grade
-        pl = (ind.performance_level or "").strip().upper()
+
+        cat = catalog_by_area.get(ca.subject.academic_area_id)
+        if not cat:
+            continue
+        glist = grades_by_ca.get(ca.id, [])
+        grade = _latest_grade_in_periods(glist, period_order)
+        if not grade:
+            continue
+        score = grade.numerical_grade
+        pl_code = ""
+        if grade.performance_level_id:
+            pl_code = (grade.performance_level.code or "").strip().upper()
         code = _indicator_badge(score, scales)
-        if pl in ("SP", "AL", "BS", "BJ"):
-            code = pl
-        label = f"{ca.subject.academic_area.name} — {_fmt_num(score) if score is not None else '—'}"
+        if pl_code in ("SP", "AL", "BS", "BJ"):
+            code = pl_code
+        level_text = _grade_level_text_for_outcome(grade)
+        outcome = (
+            resolve_indicator_outcome(score, level_text, scales) or ""
+        )
+        desc = _bulletin_catalog_description_for_outcome(cat, outcome)
+        label = f"{ca.subject.academic_area.name} — {_fmt_num(score)}"
         indicators_out.append(
             {
                 "badge_code": code,
                 "badge_style": _indicator_badge_style(code),
                 "label": label,
-                "description": (ind.description or "").strip(),
+                "description": desc,
             }
         )
 

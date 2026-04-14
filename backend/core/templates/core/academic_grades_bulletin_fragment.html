@@ -119,16 +119,20 @@
     {% endfor %}
   </div>
 
-  <div class="disciplinario">
-    <div class="rtitle">Informe disciplinario</div>
-    <div style="min-height:50px; font-size:11px; color:#333; white-space:pre-wrap;">{{ disciplinary_text }}</div>
-  </div>
+  <div class="boletin-cierre">
+    <div class="disciplinario">
+      <div class="disciplinario-inner">
+        <div class="rtitle">Informe disciplinario</div>
+        <div class="disciplinario-text">{{ disciplinary_text }}</div>
+      </div>
+    </div>
 
-  <div class="firma-area">
-    <div class="firma-box">
-      <div class="firma-linea"></div>
-      <div class="firma-nombre">{{ director_name }}</div>
-      <div class="firma-cargo">{{ director_title }}</div>
+    <div class="firma-area">
+      <div class="firma-box">
+        <div class="firma-linea"></div>
+        <div class="firma-nombre">{{ director_name }}</div>
+        <div class="firma-cargo">{{ director_title }}</div>
+      </div>
     </div>
   </div>
 

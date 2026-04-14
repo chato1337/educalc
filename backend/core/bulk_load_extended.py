@@ -1,6 +1,8 @@
 """
 Extended bulk CSV loaders. Column names align with docs/plan-implementacion-carga-masiva-csv.md.
 """
+from __future__ import annotations
+
 import logging
 import unicodedata
 
@@ -22,15 +24,18 @@ from .bulk_load_utils import (
     parse_int,
     row_col,
 )
+from .indicator_utils import resolve_indicator_outcome
 from .models import (
     AcademicArea,
     AcademicIndicator,
+    AcademicIndicatorCatalog,
     AcademicPeriod,
     Attendance,
     CourseAssignment,
     DisciplinaryReport,
     Grade,
     GradeDirector,
+    GradeLevel,
     GradingScale,
     Parent,
     PerformanceSummary,
@@ -46,6 +51,130 @@ from .performance_summary_service import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _fold_upper_name(value: str) -> str:
+    """Uppercase ASCII fold (strip accents) for tolerant name matching."""
+    s = clean_str(value).upper()
+    return "".join(
+        c
+        for c in unicodedata.normalize("NFD", s)
+        if unicodedata.category(c) != "Mn"
+    )
+
+
+def _resolve_academic_area_for_catalog(institution, area_label: str):
+    target = _fold_upper_name(area_label)
+    for aa in AcademicArea.objects.filter(institution=institution).only("id", "name"):
+        if _fold_upper_name(aa.name) == target:
+            return aa
+    return None
+
+
+def _resolve_grade_level_for_catalog(institution, grado_raw) -> GradeLevel | None:
+    gi = parse_int(grado_raw)
+    if gi is None:
+        return None
+    gl = GradeLevel.objects.filter(institution=institution, level_order=gi).first()
+    if gl:
+        return gl
+    return GradeLevel.objects.filter(
+        institution=institution, name__iexact=str(gi).strip()
+    ).first()
+
+
+def _bulk_indicator_row_is_catalog_template(row, col) -> bool:
+    """AREA_ACADEMICA + GRADO + logros por DANE (plantillas), sin DOC_ESTUDIANTE."""
+    if clean_str(col(row, ["DOC_ESTUDIANTE", "doc_estudiante"])):
+        return False
+    if not clean_str(col(row, ["DANE_COD", "dane_cod"])):
+        return False
+    if parse_int(col(row, ["GRADO", "grado"])) is None:
+        return False
+    area_academica = clean_str(
+        col(
+            row,
+            [
+                "AREA_ACADEMICA",
+                "area_academica",
+                "AREA_NOMBRE",
+                "area_nombre",
+            ],
+        )
+    )
+    if not area_academica:
+        return False
+    pos = clean_str(col(row, ["LOGRO_POSITIVO", "logro_positivo"]))
+    neg = clean_str(col(row, ["LOGRO_NEGATIVO", "logro_negativo"]))
+    return bool(pos or neg)
+
+
+def _bulk_load_indicator_catalog_row(row, col, row_num, stats) -> None:
+    """Upsert AcademicIndicatorCatalog from DANE_COD, AREA_ACADEMICA, GRADO, logros."""
+    dane = clean_str(col(row, ["DANE_COD", "dane_cod"]))
+    area_academica = clean_str(
+        col(
+            row,
+            [
+                "AREA_ACADEMICA",
+                "area_academica",
+                "AREA_NOMBRE",
+                "area_nombre",
+            ],
+        )
+    )
+    grado_raw = col(row, ["GRADO", "grado"])
+    pos = clean_str(col(row, ["LOGRO_POSITIVO", "logro_positivo"]))
+    neg = clean_str(col(row, ["LOGRO_NEGATIVO", "logro_negativo"]))
+    if not pos or not neg:
+        stats["errors"].append(
+            {
+                "row": row_num,
+                "error": "LOGRO_POSITIVO y LOGRO_NEGATIVO son obligatorios en filas de plantilla.",
+            }
+        )
+        stats["rows_skipped"] += 1
+        return
+    institution = get_institution_by_dane(dane)
+    if not institution:
+        stats["errors"].append(
+            {"row": row_num, "error": f"Institution not found DANE={dane}"}
+        )
+        stats["rows_skipped"] += 1
+        return
+    aa = _resolve_academic_area_for_catalog(institution, area_academica)
+    if not aa:
+        stats["errors"].append(
+            {
+                "row": row_num,
+                "error": f"AcademicArea not found for AREA_ACADEMICA={area_academica!r}",
+            }
+        )
+        stats["rows_skipped"] += 1
+        return
+    gl = _resolve_grade_level_for_catalog(institution, grado_raw)
+    if not gl:
+        stats["errors"].append(
+            {
+                "row": row_num,
+                "error": f"GradeLevel not found for GRADO={grado_raw!r} (level_order o nombre)",
+            }
+        )
+        stats["rows_skipped"] += 1
+        return
+    _, created = AcademicIndicatorCatalog.objects.update_or_create(
+        academic_area=aa,
+        grade_level=gl,
+        defaults={
+            "achievement_basic_or_above": pos,
+            "achievement_below_basic": neg,
+        },
+    )
+    if created:
+        stats["created"] += 1
+    else:
+        stats["updated"] += 1
+    stats["rows_processed"] += 1
 User = get_user_model()
 
 
@@ -931,11 +1060,14 @@ def bulk_load_attendance(csv_file):
 
 def bulk_load_academic_indicators(csv_file):
     col = row_col
-    stats = _empty_stats(["rows_processed", "rows_skipped", "created"])
+    stats = _empty_stats(["rows_processed", "rows_skipped", "created", "updated"])
     stats["errors"] = []
     reader = open_csv_dict_reader(csv_file)
     for row_num, row in enumerate(reader, start=2):
         try:
+            if _bulk_indicator_row_is_catalog_template(row, col):
+                _bulk_load_indicator_catalog_row(row, col, row_num, stats)
+                continue
             sdoc = clean_str(col(row, ["DOC_ESTUDIANTE", "doc_estudiante"]))
             dane = clean_str(col(row, ["DANE_COD", "dane_cod"]))
             ano = parse_int(col(row, ["ANO", "ano"]))
@@ -969,11 +1101,30 @@ def bulk_load_academic_indicators(csv_file):
             ca, _, _, _ = resolved
             ngrade = parse_decimal(col(row, ["NOTA", "nota"]))
             plevel = clean_str(col(row, ["NIVEL_DESEMPENO_TEXTO", "nivel_desempeno_texto"]))
+            catalog = AcademicIndicatorCatalog.objects.filter(
+                academic_area=ca.subject.academic_area,
+                grade_level=ca.group.grade_level,
+            ).first()
+            scales = list(
+                GradingScale.objects.filter(
+                    institution_id=ca.subject.institution_id
+                ).order_by("-min_score")
+            )
+            outcome = resolve_indicator_outcome(ngrade, plevel, scales) or ""
+            final_desc = desc
+            if catalog and outcome:
+                final_desc = (
+                    catalog.achievement_below_basic
+                    if outcome == "below_basic"
+                    else catalog.achievement_basic_or_above
+                )
             AcademicIndicator.objects.create(
                 student=student,
                 course_assignment=ca,
                 academic_period=ap,
-                description=desc,
+                catalog=catalog,
+                outcome=outcome,
+                description=final_desc,
                 numerical_grade=ngrade,
                 performance_level=plevel,
             )

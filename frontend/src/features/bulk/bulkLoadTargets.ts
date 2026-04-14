@@ -11,6 +11,8 @@ export type BulkLoadTarget = {
   hintKey?: string
   /** Descripción de columnas según OpenAPI (schema.json). */
   openApiDescription: string
+  /** operationId en `openapi.d.ts` / schema.json (si aplica). */
+  openApiOperationId?: string
   /** Estudiantes usa `BulkLoadStudentsCsvRequest`; el resto `BulkLoadCsvUploadRequest`. */
   requestSchema: 'BulkLoadCsvUploadRequest' | 'BulkLoadStudentsCsvRequest'
 }
@@ -151,13 +153,25 @@ export const bulkLoadSections: BulkLoadSection[] = [
         requestSchema: 'BulkLoadCsvUploadRequest',
       },
       {
-        id: 'academic_indicators',
-        labelKey: 'bulkLoadTargets.targets.academicIndicators',
+        id: 'academic_indicators_catalog',
+        labelKey: 'bulkLoadTargets.targets.academicIndicatorsCatalog',
         apiPath: '/api/academic-indicators/bulk-load/',
         sampleFile: 'bulk_load_academic_indicators.csv',
-        hintKey: 'bulkLoadTargets.hints.academicIndicators',
+        hintKey: 'bulkLoadTargets.hints.academicIndicatorsCatalog',
+        openApiOperationId: 'academic_indicators_bulk_load_create',
         openApiDescription:
-          'Context columns as grades; DESCRIPCION, NOTA (optional), NIVEL_DESEMPENO_TEXTO (optional). Appends rows.',
+          'POST /api/academic-indicators/bulk-load/ (modo plantillas, coincide con description en schema.json): UTF-8 CSV sin DOC_ESTUDIANTE. Columnas: DANE_COD, AREA_ACADEMICA o AREA_NOMBRE, GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO. Upsert en catálogo por (área, grado). Respuesta 200: created, updated, rows_processed, rows_skipped, errors[].',
+        requestSchema: 'BulkLoadCsvUploadRequest',
+      },
+      {
+        id: 'academic_indicators_students',
+        labelKey: 'bulkLoadTargets.targets.academicIndicatorsStudents',
+        apiPath: '/api/academic-indicators/bulk-load/',
+        sampleFile: 'bulk_load_academic_indicators_legacy.csv',
+        hintKey: 'bulkLoadTargets.hints.academicIndicatorsStudents',
+        openApiOperationId: 'academic_indicators_bulk_load_create',
+        openApiDescription:
+          'Mismo operationId (modo legacy): filas con DOC_ESTUDIANTE. DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION; NOTA y NIVEL_DESEMPENO_TEXTO opcionales. Cada fila añade un AcademicIndicator.',
         requestSchema: 'BulkLoadCsvUploadRequest',
       },
       {

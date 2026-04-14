@@ -9,6 +9,7 @@ import { AdminLayout } from '@/layouts/AdminLayout'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import {
   AcademicAreasPage,
+  AcademicIndicatorCatalogsPage,
   AcademicIndicatorsPage,
   AcademicIndicatorsReportsPage,
   AcademicPeriodsPage,
@@ -94,6 +95,10 @@ export function AppRoutes() {
           />
           <Route path="grading-scales" element={<GradingScalesPage />} />
           <Route path="grades" element={<GradesPage />} />
+          <Route
+            path="academic-indicator-catalogs"
+            element={<AcademicIndicatorCatalogsPage />}
+          />
           <Route
             path="academic-indicators"
             element={<AcademicIndicatorsPage />}

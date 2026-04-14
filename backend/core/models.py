@@ -7,6 +7,7 @@ Reference: docs/analisis-entidades-reporte-academico.md
 import uuid
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -414,6 +415,53 @@ class StudentGuardian(TimeStampedModel):
 # --- Phase 4: Evaluation models ---
 
 
+class AcademicIndicatorCatalog(TimeStampedModel):
+    """
+    Catálogo de logros cualitativos por área académica y grado.
+
+    ``achievement_below_basic`` aplica cuando el desempeño es Bajo (por debajo
+    del umbral de Básico). ``achievement_basic_or_above`` cuando el desempeño
+    es Básico, Alto o Superior, según las escalas de valoración de la institución.
+    """
+
+    academic_area = models.ForeignKey(
+        AcademicArea,
+        on_delete=models.CASCADE,
+        related_name="indicator_catalogs",
+    )
+    grade_level = models.ForeignKey(
+        GradeLevel,
+        on_delete=models.CASCADE,
+        related_name="indicator_catalogs",
+    )
+    achievement_below_basic = models.TextField()
+    achievement_basic_or_above = models.TextField()
+
+    class Meta:
+        ordering = [
+            "academic_area__name",
+            "grade_level__level_order",
+            "grade_level__name",
+        ]
+        verbose_name = "Academic Indicator Catalog"
+        verbose_name_plural = "Academic Indicator Catalogs"
+        unique_together = [["academic_area", "grade_level"]]
+
+    def clean(self):
+        super().clean()
+        if (
+            self.academic_area_id
+            and self.grade_level_id
+            and self.academic_area.institution_id != self.grade_level.institution_id
+        ):
+            raise ValidationError(
+                "El área académica y el grado deben pertenecer a la misma institución."
+            )
+
+    def __str__(self):
+        return f"{self.academic_area.name} / {self.grade_level.name}"
+
+
 class Grade(TimeStampedModel):
     """Student grade in a subject for a period."""
 
@@ -472,7 +520,7 @@ class Attendance(TimeStampedModel):
 
 
 class AcademicIndicator(TimeStampedModel):
-    """Qualitative achievement descriptor for a student in a subject/period."""
+    """Qualitative achievement for a student in a subject/period, optionally from catalog."""
 
     student = models.ForeignKey(
         Student, on_delete=models.CASCADE, related_name="academic_indicators"
@@ -482,6 +530,21 @@ class AcademicIndicator(TimeStampedModel):
     )
     academic_period = models.ForeignKey(
         AcademicPeriod, on_delete=models.CASCADE, related_name="academic_indicators"
+    )
+    catalog = models.ForeignKey(
+        AcademicIndicatorCatalog,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="student_indicators",
+    )
+    outcome = models.CharField(
+        max_length=20,
+        blank=True,
+        choices=[
+            ("below_basic", "Bajo (por debajo del umbral de Básico)"),
+            ("basic_or_above", "Básico o superior"),
+        ],
     )
     description = models.TextField()
     numerical_grade = models.DecimalField(

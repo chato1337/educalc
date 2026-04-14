@@ -4,6 +4,7 @@ import { fetchReferenceListResults } from '@/api/list'
 import { queryKeys } from '@/api/queryKeys'
 import type {
   AcademicArea,
+  AcademicIndicatorCatalog,
   AcademicYear,
   Campus,
   GradeLevel,
@@ -71,5 +72,31 @@ export function useAcademicAreasQuery(institutionId: string | null | undefined) 
         params,
       })
     },
+  })
+}
+
+/** Plantillas de logros por área y grado (misma institución en ambos filtros). */
+export function useAcademicIndicatorCatalogsQuery(
+  institutionId: string | null | undefined,
+  search?: string,
+) {
+  return useQuery({
+    queryKey: queryKeys.academicIndicatorCatalogs({
+      institution: institutionId ?? '',
+      search: search ?? '',
+    }),
+    queryFn: async () => {
+      const params: Record<string, string> = {}
+      if (institutionId != null && institutionId !== '') {
+        params.academic_area__institution = institutionId
+        params.grade_level__institution = institutionId
+      }
+      if (search) params.search = search
+      return fetchReferenceListResults<AcademicIndicatorCatalog>(
+        '/api/academic-indicator-catalogs/',
+        { params },
+      )
+    },
+    enabled: institutionId != null && institutionId !== '',
   })
 }

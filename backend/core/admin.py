@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 
 from .models import (
     AcademicArea,
+    AcademicIndicatorCatalog,
     AcademicIndicatorsReport,
     AcademicIndicator,
     AcademicPeriod,
@@ -75,6 +76,24 @@ class AcademicAreaAdmin(admin.ModelAdmin):
     search_fields = ("name", "code")
     readonly_fields = ("id", "created_at", "updated_at")
     autocomplete_fields = ("institution",)
+
+
+@admin.register(AcademicIndicatorCatalog)
+class AcademicIndicatorCatalogAdmin(admin.ModelAdmin):
+    list_display = (
+        "academic_area",
+        "grade_level",
+        "created_at",
+    )
+    list_filter = ("academic_area__institution", "grade_level__institution")
+    search_fields = (
+        "academic_area__name",
+        "grade_level__name",
+        "achievement_below_basic",
+        "achievement_basic_or_above",
+    )
+    readonly_fields = ("id", "created_at", "updated_at")
+    autocomplete_fields = ("academic_area", "grade_level")
 
 
 @admin.register(GradingScale)
@@ -199,11 +218,18 @@ class AttendanceAdmin(admin.ModelAdmin):
 
 @admin.register(AcademicIndicator)
 class AcademicIndicatorAdmin(admin.ModelAdmin):
-    list_display = ("student", "course_assignment", "academic_period", "created_at")
-    list_filter = ("academic_period",)
+    list_display = (
+        "student",
+        "course_assignment",
+        "academic_period",
+        "catalog",
+        "outcome",
+        "created_at",
+    )
+    list_filter = ("academic_period", "outcome", "catalog")
     search_fields = ("student__full_name", "description")
     readonly_fields = ("id", "created_at", "updated_at")
-    autocomplete_fields = ("student", "course_assignment", "academic_period")
+    autocomplete_fields = ("student", "course_assignment", "academic_period", "catalog")
 
 
 @admin.register(PerformanceSummary)

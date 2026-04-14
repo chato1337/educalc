@@ -2,9 +2,11 @@
 from drf_spectacular.utils import extend_schema_serializer
 from rest_framework import serializers
 
+from .indicator_utils import resolve_indicator_outcome
 from .models import (
     AcademicArea,
     AcademicIndicator,
+    AcademicIndicatorCatalog,
     AcademicIndicatorsReport,
     AcademicPeriod,
     AcademicYear,
@@ -287,6 +289,12 @@ class CourseAssignmentSerializer(serializers.ModelSerializer):
         source="teacher.document_number", read_only=True
     )
     group_name = serializers.CharField(source="group.name", read_only=True)
+    group_grade_level = serializers.UUIDField(
+        source="group.grade_level_id", read_only=True
+    )
+    group_grade_level_name = serializers.CharField(
+        source="group.grade_level.name", read_only=True
+    )
     campus = serializers.UUIDField(source="group.campus_id", read_only=True)
     campus_name = serializers.CharField(source="group.campus.name", read_only=True)
     academic_year_year = serializers.IntegerField(source="academic_year.year", read_only=True)
@@ -304,6 +312,8 @@ class CourseAssignmentSerializer(serializers.ModelSerializer):
             "teacher_document_number",
             "group",
             "group_name",
+            "group_grade_level",
+            "group_grade_level_name",
             "campus",
             "campus_name",
             "academic_year",
@@ -456,8 +466,52 @@ class AttendanceSerializer(serializers.ModelSerializer):
         ]
 
 
+class AcademicIndicatorCatalogSerializer(serializers.ModelSerializer):
+    academic_area_name = serializers.CharField(
+        source="academic_area.name", read_only=True
+    )
+    grade_level_name = serializers.CharField(source="grade_level.name", read_only=True)
+
+    class Meta:
+        model = AcademicIndicatorCatalog
+        fields = [
+            "id",
+            "academic_area",
+            "academic_area_name",
+            "grade_level",
+            "grade_level_name",
+            "achievement_below_basic",
+            "achievement_basic_or_above",
+            "created_at",
+            "updated_at",
+        ]
+
+    def validate(self, attrs):
+        instance = self.instance
+        area = attrs.get("academic_area") or (
+            instance.academic_area if instance else None
+        )
+        gl = attrs.get("grade_level") or (instance.grade_level if instance else None)
+        if (
+            area
+            and gl
+            and area.institution_id != gl.institution_id
+        ):
+            raise serializers.ValidationError(
+                "El área académica y el grado deben pertenecer a la misma institución."
+            )
+        return attrs
+
+
 class AcademicIndicatorSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source="student.full_name", read_only=True)
+    catalog_label = serializers.SerializerMethodField()
+
+    def get_catalog_label(self, obj):
+        c = obj.catalog
+        if not c:
+            return ""
+        return f"{c.academic_area.name} / {c.grade_level.name}"
 
     class Meta:
         model = AcademicIndicator
@@ -467,12 +521,96 @@ class AcademicIndicatorSerializer(serializers.ModelSerializer):
             "student_name",
             "course_assignment",
             "academic_period",
+            "catalog",
+            "catalog_label",
+            "outcome",
             "description",
             "numerical_grade",
             "performance_level",
             "created_at",
             "updated_at",
         ]
+
+    def validate(self, attrs):
+        instance = self.instance
+        ca = attrs.get("course_assignment") or (
+            instance.course_assignment if instance else None
+        )
+        if "catalog" in attrs:
+            catalog = attrs["catalog"]
+        else:
+            catalog = instance.catalog if instance else None
+
+        if "numerical_grade" in attrs:
+            num_grade = attrs["numerical_grade"]
+        else:
+            num_grade = instance.numerical_grade if instance else None
+
+        if "performance_level" in attrs:
+            perf = attrs["performance_level"]
+        else:
+            perf = instance.performance_level if instance else ""
+        perf = perf or ""
+
+        if "outcome" in attrs:
+            outcome = (attrs.get("outcome") or "").strip()
+        else:
+            outcome = (instance.outcome or "").strip() if instance else ""
+
+        if "description" in attrs:
+            desc_in = attrs["description"]
+        else:
+            desc_in = instance.description if instance else ""
+
+        if ca and catalog:
+            if catalog.academic_area_id != ca.subject.academic_area_id:
+                raise serializers.ValidationError(
+                    {
+                        "catalog": (
+                            "El catálogo debe corresponder al área académica de la "
+                            "asignatura del curso."
+                        )
+                    }
+                )
+            if catalog.grade_level_id != ca.group.grade_level_id:
+                raise serializers.ValidationError(
+                    {
+                        "catalog": (
+                            "El catálogo debe corresponder al grado del grupo de la "
+                            "asignación."
+                        )
+                    }
+                )
+            scales = list(
+                GradingScale.objects.filter(
+                    institution_id=ca.subject.institution_id
+                ).order_by("-min_score")
+            )
+            inferred = resolve_indicator_outcome(num_grade, perf, scales)
+            if inferred:
+                attrs["outcome"] = inferred
+                outcome = inferred
+
+        if catalog and (outcome or "").strip() in (
+            "below_basic",
+            "basic_or_above",
+        ):
+            attrs["description"] = (
+                catalog.achievement_below_basic
+                if outcome == "below_basic"
+                else catalog.achievement_basic_or_above
+            )
+        elif not (desc_in or "").strip():
+            raise serializers.ValidationError(
+                {
+                    "description": (
+                        "Indique el texto del logro o bien un catálogo con nota o "
+                        "nivel de desempeño para determinar Bajo vs Básico o superior."
+                    )
+                }
+            )
+
+        return attrs
 
 
 class PerformanceSummarySerializer(serializers.ModelSerializer):

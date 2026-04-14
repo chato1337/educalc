@@ -544,6 +544,7 @@
     "evaluationSection": "Evaluación",
     "grades": "Calificaciones",
     "gradingScales": "Escalas de valoración",
+    "academicIndicatorCatalogs": "Plantillas de indicadores",
     "academicIndicators": "Indicadores académicos",
     "performanceSummaries": "Resúmenes de desempeño",
     "coexistenceAttendanceSection": "Convivencia y asistencia",
@@ -672,7 +673,8 @@
     "uploading": "Subiendo...",
     "chooseCsv": "Elegir archivo CSV",
     "lastFile": "Último archivo: {{file}}",
-    "success": "Carga finalizada. Revisa el resumen, los errores por fila (si los hay) y el JSON completo."
+    "success": "Carga finalizada. Revisa el resumen, los errores por fila (si los hay) y el JSON completo.",
+    "openApiOperationId": "OpenAPI operationId: {{id}}"
   },
   "bulkLoadTargets": {
     "sections": {
@@ -695,7 +697,8 @@
       "gradeDirectors": "Directores de grupo",
       "courseAssignments": "Asignación docente-curso",
       "grades": "Calificaciones (notas)",
-      "academicIndicators": "Indicadores académicos",
+      "academicIndicatorsCatalog": "Indicadores — plantillas (catálogo)",
+      "academicIndicatorsStudents": "Indicadores — por estudiante",
       "performanceSummaries": "Resúmenes de desempeño",
       "attendance": "Asistencia",
       "disciplinaryReports": "Reportes disciplinarios"
@@ -705,7 +708,8 @@
       "teachersUsers": "Crea/actualiza usuarios de acceso para docentes existentes. Username: nombre.apellido (normalizado). Password inicial: DOC.",
       "parents": "Si EMAIL está vacío, el backend asigna un correo sintético.",
       "grades": "Requiere CourseAssignment y periodo ya cargados.",
-      "academicIndicators": "Cada fila crea un registro (no sustituye anteriores)."
+      "academicIndicatorsCatalog": "Requiere áreas y grados ya cargados. Ejemplo extenso: docs/bulk_academic_indicator.csv. La API devuelve created y updated al sustituir plantillas.",
+      "academicIndicatorsStudents": "Requiere matrícula, grupos, asignaciones y periodos. Cada ejecución añade filas (no hace upsert por estudiante)."
     }
   },
   "routePageFallback": {
@@ -869,31 +873,26 @@
     "searchAria": "Buscar en listado",
     "updating": "Actualizando..."
   },
-  "academicIndicatorsOps": {
-    "title": "Indicadores académicos",
-    "subtitle": "Descriptores cualitativos por estudiante, curso y periodo.",
-    "new": "Nuevo indicador",
-    "selectInstitution": "Selecciona una institución para ver años lectivos.",
-    "academicArea": "Área",
-    "teacherDocExact": "Doc. docente (exacto)",
-    "year": "Año",
-    "period": "Periodo",
-    "all": "(todos)",
-    "student": "Estudiante",
-    "description": "Descripción",
-    "grade": "Nota",
-    "level": "Nivel",
-    "assignment": "Asignación",
-    "searchStudent": "Buscar estudiante",
-    "numericalGradeOptional": "Nota numérica (opcional)",
-    "performanceLevel": "Nivel de desempeño (texto)",
+  "indicatorCatalogs": {
+    "title": "Plantillas de indicadores",
+    "subtitle": "Logros por área y grado (Bajo vs Básico o superior). Se usan al registrar indicadores con nota o nivel de desempeño.",
+    "selectInstitution": "Selecciona una institución en la barra superior.",
+    "new": "Nueva plantilla",
+    "area": "Área académica",
+    "grade": "Grado",
+    "belowBasic": "Logro si desempeño Bajo",
+    "basicOrAbove": "Logro si Básico o superior",
     "edit": "Editar",
     "delete": "Eliminar",
-    "editDialog": "Editar indicador",
-    "newDialog": "Nuevo indicador",
-    "academicYear": "Año lectivo",
-    "deleteDialog": "Eliminar indicador",
-    "deletePrompt": "¿Eliminar este indicador?"
+    "newDialog": "Nueva plantilla",
+    "editDialog": "Editar plantilla",
+    "deleteDialog": "Eliminar plantilla",
+    "deletePrompt": "¿Eliminar la plantilla {{label}}? No podrás borrarla si hay indicadores que la referencian."
+  },
+  "academicIndicatorsOps": {
+    "title": "Indicadores académicos",
+    "subtitle": "Catálogo de plantillas por área y grado (logros para desempeño Bajo vs Básico o superior). Se usan al registrar indicadores por estudiante con nota o nivel.",
+    "selectInstitution": "Selecciona una institución en la barra superior."
   },
   "disciplinaryReports": {
     "title": "Reportes disciplinarios",

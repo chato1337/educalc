@@ -85,6 +85,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/academic-indicator-catalogs/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Academic Indicator Catalogs
+         * @description Achievement texts per academic area and grade level (Bajo vs Básico or above) Text search available through query param `search`. Supported fields: academic_area__name, grade_level__name, achievement_below_basic, achievement_basic_or_above. Available exact-match filters via query params: academic_area, grade_level, academic_area__institution, grade_level__institution. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         */
+        get: operations["academic_indicator_catalogs_list"];
+        put?: never;
+        /** Create Academic Indicator Catalogs */
+        post: operations["academic_indicator_catalogs_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/academic-indicator-catalogs/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Academic Indicator Catalogs */
+        get: operations["academic_indicator_catalogs_retrieve"];
+        /** Update Academic Indicator Catalogs */
+        put: operations["academic_indicator_catalogs_update"];
+        post?: never;
+        /** Delete Academic Indicator Catalogs */
+        delete: operations["academic_indicator_catalogs_destroy"];
+        options?: never;
+        head?: never;
+        /** Partial update Academic Indicator Catalogs */
+        patch: operations["academic_indicator_catalogs_partial_update"];
+        trace?: never;
+    };
+    "/api/academic-indicator-catalogs/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load academic indicator catalogs from CSV
+         * @description UTF-8 CSV: modo plantillas (sin DOC_ESTUDIANTE) — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO; upsert en catálogo por (área, grado). Mismo procesador que POST /api/academic-indicators/bulk-load/; las filas con DOC_ESTUDIANTE siguen el modo legacy (indicadores por estudiante).
+         */
+        post: operations["academic_indicator_catalogs_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/academic-indicators/": {
         parameters: {
             query?: never;
@@ -94,7 +155,7 @@ export interface paths {
         };
         /**
          * List Academic Indicators
-         * @description Qualitative achievement descriptor for a student Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__subject__academic_area, course_assignment__teacher__document_number, academic_period, academic_period__number, performance_level. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Qualitative achievement descriptor for a student Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level, catalog__achievement_below_basic, catalog__achievement_basic_or_above. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__subject__academic_area, course_assignment__teacher__document_number, academic_period, academic_period__number, performance_level, catalog, outcome. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["academic_indicators_list"];
         put?: never;
@@ -201,7 +262,7 @@ export interface paths {
         put?: never;
         /**
          * Bulk load academic indicators from CSV
-         * @description Context columns as grades; DESCRIPCION, NOTA (optional), NIVEL_DESEMPENO_TEXTO (optional). Appends rows.
+         * @description Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO (sin DOC_ESTUDIANTE); upsert en catálogo área+grado. (2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION, NOTA (opcional), NIVEL_DESEMPENO_TEXTO (opcional).
          */
         post: operations["academic_indicators_bulk_load_create"];
         delete?: never;
@@ -1572,6 +1633,10 @@ export interface components {
             course_assignment: string;
             /** Format: uuid */
             academic_period: string;
+            /** Format: uuid */
+            catalog?: string | null;
+            readonly catalog_label: string;
+            outcome?: components["schemas"]["OutcomeEnum"] | components["schemas"]["BlankEnum"];
             description: string;
             /** Format: decimal */
             numerical_grade?: string | null;
@@ -1581,6 +1646,30 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
+        AcademicIndicatorCatalog: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            academic_area: string;
+            readonly academic_area_name: string;
+            /** Format: uuid */
+            grade_level: string;
+            readonly grade_level_name: string;
+            achievement_below_basic: string;
+            achievement_basic_or_above: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        AcademicIndicatorCatalogRequest: {
+            /** Format: uuid */
+            academic_area: string;
+            /** Format: uuid */
+            grade_level: string;
+            achievement_below_basic: string;
+            achievement_basic_or_above: string;
+        };
         AcademicIndicatorRequest: {
             /** Format: uuid */
             student: string;
@@ -1588,6 +1677,9 @@ export interface components {
             course_assignment: string;
             /** Format: uuid */
             academic_period: string;
+            /** Format: uuid */
+            catalog?: string | null;
+            outcome?: components["schemas"]["OutcomeEnum"] | components["schemas"]["BlankEnum"];
             description: string;
             /** Format: decimal */
             numerical_grade?: string | null;
@@ -1709,6 +1801,8 @@ export interface components {
             unexcused_absences?: number;
             excused_absences?: number;
         };
+        /** @enum {unknown} */
+        BlankEnum: "";
         /** @description Multipart CSV upload for bulk loaders (OpenAPI: multipart field ``file``). */
         BulkLoadCsvUploadRequest: {
             /**
@@ -1760,6 +1854,9 @@ export interface components {
             /** Format: uuid */
             group: string;
             readonly group_name: string;
+            /** Format: uuid */
+            readonly group_grade_level: string;
+            readonly group_grade_level_name: string;
             /** Format: uuid */
             readonly campus: string;
             readonly campus_name: string;
@@ -2075,6 +2172,12 @@ export interface components {
          * @enum {string}
          */
         ModeEnum: "from_grades" | "all_combinations";
+        /**
+         * @description * `below_basic` - Bajo (por debajo del umbral de Básico)
+         *     * `basic_or_above` - Básico o superior
+         * @enum {string}
+         */
+        OutcomeEnum: "below_basic" | "basic_or_above";
         PaginatedAcademicAreaList: {
             /** @example 123 */
             count: number;
@@ -2089,6 +2192,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["AcademicArea"][];
+        };
+        PaginatedAcademicIndicatorCatalogList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["AcademicIndicatorCatalog"][];
         };
         PaginatedAcademicIndicatorList: {
             /** @example 123 */
@@ -2474,6 +2592,14 @@ export interface components {
             code?: string;
             description?: string;
         };
+        PatchedAcademicIndicatorCatalogRequest: {
+            /** Format: uuid */
+            academic_area?: string;
+            /** Format: uuid */
+            grade_level?: string;
+            achievement_below_basic?: string;
+            achievement_basic_or_above?: string;
+        };
         PatchedAcademicIndicatorRequest: {
             /** Format: uuid */
             student?: string;
@@ -2481,6 +2607,9 @@ export interface components {
             course_assignment?: string;
             /** Format: uuid */
             academic_period?: string;
+            /** Format: uuid */
+            catalog?: string | null;
+            outcome?: components["schemas"]["OutcomeEnum"] | components["schemas"]["BlankEnum"];
             description?: string;
             /** Format: decimal */
             numerical_grade?: string | null;
@@ -3268,6 +3397,203 @@ export interface operations {
             };
         };
     };
+    academic_indicator_catalogs_list: {
+        parameters: {
+            query?: {
+                /** @description Filter by exact value of `academic_area`. */
+                academic_area?: string;
+                /** @description Filter by exact value of `academic_area__institution`. */
+                academic_area__institution?: string;
+                /** @description Filter by exact value of `grade_level`. */
+                grade_level?: string;
+                /** @description Filter by exact value of `grade_level__institution`. */
+                grade_level__institution?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description Search text across: academic_area__name, grade_level__name, achievement_below_basic, achievement_basic_or_above. */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAcademicIndicatorCatalogList"];
+                };
+            };
+        };
+    };
+    academic_indicator_catalogs_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcademicIndicatorCatalogRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AcademicIndicatorCatalogRequest"];
+                "multipart/form-data": components["schemas"]["AcademicIndicatorCatalogRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcademicIndicatorCatalog"];
+                };
+            };
+        };
+    };
+    academic_indicator_catalogs_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Academic Indicator Catalog. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcademicIndicatorCatalog"];
+                };
+            };
+        };
+    };
+    academic_indicator_catalogs_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Academic Indicator Catalog. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcademicIndicatorCatalogRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AcademicIndicatorCatalogRequest"];
+                "multipart/form-data": components["schemas"]["AcademicIndicatorCatalogRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcademicIndicatorCatalog"];
+                };
+            };
+        };
+    };
+    academic_indicator_catalogs_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Academic Indicator Catalog. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    academic_indicator_catalogs_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Academic Indicator Catalog. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedAcademicIndicatorCatalogRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedAcademicIndicatorCatalogRequest"];
+                "multipart/form-data": components["schemas"]["PatchedAcademicIndicatorCatalogRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcademicIndicatorCatalog"];
+                };
+            };
+        };
+    };
+    academic_indicator_catalogs_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     academic_indicators_list: {
         parameters: {
             query?: {
@@ -3275,6 +3601,8 @@ export interface operations {
                 academic_period?: string;
                 /** @description Filter by exact value of `academic_period__number`. */
                 academic_period__number?: string;
+                /** @description Filter by exact value of `catalog`. */
+                catalog?: string;
                 /** @description Filter by exact value of `course_assignment`. */
                 course_assignment?: string;
                 /** @description Filter by exact value of `course_assignment__subject__academic_area`. */
@@ -3287,9 +3615,11 @@ export interface operations {
                 offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
+                /** @description Filter by exact value of `outcome`. */
+                outcome?: string;
                 /** @description Filter by exact value of `performance_level`. */
                 performance_level?: string;
-                /** @description Search text across: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level. */
+                /** @description Search text across: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level, catalog__achievement_below_basic, catalog__achievement_basic_or_above. */
                 search?: string;
                 /** @description Filter by exact value of `student`. */
                 student?: string;

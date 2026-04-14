@@ -271,16 +271,33 @@ Mismas claves de contexto que notas (estudiante, grupo, asignatura, período).
 | `INASISTENCIAS_SIN_JUSTIFICAR` | No | default 0 |
 | `INASISTENCIAS_JUSTIFICADAS` | No | default 0 |
 
-### 4.12 Indicadores académicos cualitativos — `indicadores_academicos.csv`
+### 4.12 Indicadores académicos — `POST /api/academic-indicators/bulk-load/`
+
+El mismo endpoint acepta **dos formatos** (detección automática por columnas).
+
+#### A) Plantillas de logros (`AcademicIndicatorCatalog`) — p. ej. `bulk_academic_indicator.csv`
 
 | Columna | Obligatorio | Descripción |
 |---------|-------------|-------------|
-| Claves curso + estudiante + período | Como en notas | |
+| `DANE_COD` | Sí | Institución |
+| `AREA_ACADEMICA` (o `AREA_NOMBRE`) | Sí | Nombre del área académica (coincidencia sin tildes, mayúsculas) |
+| `GRADO` | Sí | Orden numérico del grado (`GradeLevel.level_order`) o nombre exacto |
+| `LOGRO_POSITIVO` | Sí | Texto para desempeño Básico o superior |
+| `LOGRO_NEGATIVO` | Sí | Texto para desempeño Bajo |
+
+**Sin** columna `DOC_ESTUDIANTE`. Cada fila hace `update_or_create` por par único `(academic_area, grade_level)`; respuesta incluye contadores `created` y `updated`.
+
+#### B) Indicadores por estudiante (legacy) — `bulk_load_academic_indicators.csv` (formato anterior)
+
+| Columna | Obligatorio | Descripción |
+|---------|-------------|-------------|
+| `DOC_ESTUDIANTE` | Sí | Marca el formato legacy |
+| Claves curso + período | Como en notas | |
 | `DESCRIPCION` | Sí | Texto largo |
 | `NOTA` | No | |
-| `NIVEL_DESEMPENO_TEXTO` | No | Campo string libre en modelo (no FK) |
+| `NIVEL_DESEMPENO_TEXTO` | No | |
 
-**Nota:** El modelo **no** tiene `unique_together`; la importación puede crear duplicados si se ejecuta dos veces. Decidir política: append vs “reemplazar por estudiante+asignación+período+hash” o añadir constraint en modelo en una migración aparte.
+**Nota (legacy):** el modelo `AcademicIndicator` no tiene `unique_together`; repetir la carga puede duplicar filas por estudiante.
 
 ### 4.13 Resumen de desempeño — `resumen_desempeno.csv`
 
@@ -356,7 +373,7 @@ Estado a **2026-03-29** (revisar al retomar el trabajo o tras cambios en modelos
 | Utilidades CSV | `backend/core/bulk_load_utils.py` |
 | Vistas bulk | `backend/core/views.py` (`_bulk_csv_response`, acciones `bulk_load`) |
 | Serializer archivo | `backend/core/serializers.py` (`BulkLoadFileSerializer`) |
-| Ejemplos CSV | `docs/bulk_load_students.csv`, `docs/bulk_load_academic_areas.csv`, `docs/bulk_load_grading_scales.csv`, `docs/bulk_load_academic_periods.csv`, `docs/bulk_load_teachers.csv`, `docs/bulk_load_subjects.csv`, `docs/bulk_load_course_assignments.csv`, `docs/bulk_load_grade_directors.csv`, `docs/bulk_load_parents.csv`, `docs/bulk_load_student_guardians.csv`, `docs/bulk_load_grades.csv`, `docs/bulk_load_attendance.csv`, `docs/bulk_load_academic_indicators.csv`, `docs/bulk_load_performance_summaries.csv`, `docs/bulk_load_disciplinary_reports.csv` |
+| Ejemplos CSV | `docs/bulk_load_students.csv`, `docs/bulk_load_academic_areas.csv`, `docs/bulk_load_grading_scales.csv`, `docs/bulk_load_academic_periods.csv`, `docs/bulk_load_teachers.csv`, `docs/bulk_load_subjects.csv`, `docs/bulk_load_course_assignments.csv`, `docs/bulk_load_grade_directors.csv`, `docs/bulk_load_parents.csv`, `docs/bulk_load_student_guardians.csv`, `docs/bulk_load_grades.csv`, `docs/bulk_load_attendance.csv`, `docs/bulk_load_academic_indicators.csv` (plantillas mínimas), `docs/bulk_academic_indicator.csv` (lote plantillas), `docs/bulk_load_academic_indicators_legacy.csv` (indicadores por estudiante), `docs/bulk_load_performance_summaries.csv`, `docs/bulk_load_disciplinary_reports.csv` |
 | UI carga masiva | `frontend/src/features/bulk/BulkLoadHubPage.tsx`, ruta `/bulk-load` |
 | Análisis de dominio | `docs/analisis-entidades-reporte-academico.md` |
 

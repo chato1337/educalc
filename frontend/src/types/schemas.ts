@@ -22,6 +22,8 @@ export type CourseAssignment = components['schemas']['CourseAssignment']
 export type Grade = components['schemas']['Grade']
 export type GradingScale = components['schemas']['GradingScale']
 export type AcademicIndicator = components['schemas']['AcademicIndicator']
+export type AcademicIndicatorCatalog =
+  components['schemas']['AcademicIndicatorCatalog']
 export type PerformanceSummary = components['schemas']['PerformanceSummary']
 export type PerformanceSummaryRecalculateByGradeRequest =
   components['schemas']['PerformanceSummaryRecalculateByGradeRequestRequest']

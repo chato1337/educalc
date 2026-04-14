@@ -149,6 +149,12 @@ export const GradesPage = lazy(() =>
   })),
 )
 
+export const AcademicIndicatorCatalogsPage = lazy(() =>
+  import('@/features/operations/AcademicIndicatorCatalogsPage').then((m) => ({
+    default: m.AcademicIndicatorCatalogsPage,
+  })),
+)
+
 export const AcademicIndicatorsPage = lazy(() =>
   import('@/features/operations/AcademicIndicatorsPage').then((m) => ({
     default: m.AcademicIndicatorsPage,
