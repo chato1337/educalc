@@ -190,3 +190,9 @@ export const AcademicIndicatorsReportsPage = lazy(() =>
     default: m.AcademicIndicatorsReportsPage,
   })),
 )
+
+export const GradingConsolidatedReportPage = lazy(() =>
+  import('@/features/reports/GradingConsolidatedReportPage').then((m) => ({
+    default: m.GradingConsolidatedReportPage,
+  })),
+)

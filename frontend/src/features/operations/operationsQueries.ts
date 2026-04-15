@@ -97,24 +97,21 @@ export function useCourseAssignmentsList(
   })
 }
 
-/** Todas las asignaciones docente–curso del profesor (paginado en servidor). */
+type ForTeacherCourseAssignmentsResponse = {
+  results: CourseAssignment[]
+  count: number
+  truncated?: boolean
+}
+
+/** Todas las asignaciones docente–curso del profesor (una petición, una consulta SQL). */
 export async function fetchAllCourseAssignmentsForTeacher(
   teacherId: string,
 ): Promise<CourseAssignment[]> {
-  const limit = 100
-  let offset = 0
-  const all: CourseAssignment[] = []
-  for (;;) {
-    const { data } = await apiClient.get<PaginatedList<CourseAssignment>>(
-      '/api/course-assignments/',
-      { params: { teacher: teacherId, limit, offset } },
-    )
-    all.push(...data.results)
-    if (!data.next || data.results.length === 0) break
-    offset += limit
-    if (offset > 5000) break
-  }
-  return all
+  const { data } = await apiClient.get<ForTeacherCourseAssignmentsResponse>(
+    '/api/course-assignments/for-teacher/',
+    { params: { teacher: teacherId } },
+  )
+  return data.results
 }
 
 export function useTeacherCourseAssignments(

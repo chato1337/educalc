@@ -24,6 +24,7 @@ import {
   GradeDirectorsPage,
   GradeLevelsPage,
   GradesPage,
+  GradingConsolidatedReportPage,
   GradingScalesPage,
   GroupRankingsPage,
   GroupsPage,
@@ -116,6 +117,10 @@ export function AppRoutes() {
           <Route
             path="academic-indicators-reports"
             element={<AcademicIndicatorsReportsPage />}
+          />
+          <Route
+            path="reports/grading-consolidated"
+            element={<GradingConsolidatedReportPage />}
           />
           {resourceListConfigs.map((config) => (
             <Route

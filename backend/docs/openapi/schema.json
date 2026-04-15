@@ -3101,7 +3101,7 @@
         "/api/course-assignments/": {
             "get": {
                 "operationId": "course_assignments_list",
-                "description": "Teacher assigned to a subject in a group for an academic year Text search available through query param `search`. Supported fields: subject__name, subject__emphasis, teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: subject, subject__name, teacher, teacher__document_number, group, group__in, group__name, academic_year, academic_year__year. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "description": "Teacher assigned to a subject in a group for an academic year Text search available through query param `search`. Supported fields: subject__name, subject__emphasis, teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: subject, subject__name, teacher, teacher__document_number, teacher__in, group, group__in, group__name, academic_year, academic_year__year. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Course Assignments",
                 "parameters": [
                     {
@@ -3208,6 +3208,14 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `teacher__document_number`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "teacher__in",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `teacher__in`."
                     }
                 ],
                 "tags": [
@@ -3520,6 +3528,61 @@
                             }
                         },
                         "description": "Validation failure or {\"error\": \"...\"}."
+                    }
+                }
+            }
+        },
+        "/api/course-assignments/for-teacher/": {
+            "get": {
+                "operationId": "course_assignments_for_teacher_retrieve",
+                "description": "Returns matching assignments in one response without pagination. Uses a single indexed lookup on `(teacher, academic_year)`. At most 2000 rows; `truncated` is true if more exist.",
+                "summary": "List course assignments for one teacher (single query)",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "academic_year",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "Optional academic year id (UUID)."
+                    },
+                    {
+                        "in": "query",
+                        "name": "teacher",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "Teacher id (UUID).",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Course Assignments"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "`results`, `count`, and optional `truncated` (boolean)."
+                    },
+                    "400": {
+                        "description": "Missing or invalid `teacher`."
                     }
                 }
             }
@@ -7557,6 +7620,130 @@
                             }
                         },
                         "description": ""
+                    }
+                }
+            }
+        },
+        "/api/reports/grading-consolidated/": {
+            "get": {
+                "operationId": "reports_grading_consolidated_retrieve",
+                "description": "Descarga CSV (UTF-8 con BOM) con una fila por cupo esperado de calificación: matrícula activa × asignación de curso en el mismo grupo y año × cada periodo del año. ``estado_calificacion`` es ``CALIFICADO`` si existe nota en ``core_grade`` para esa terna (estudiante, asignación, periodo); en caso contrario ``PENDIENTE``. Incluye institución, sede, grado, grupo, área, asignatura, docente, periodo e identificadores UUID para cruzar con otros extractos. La consulta usa un único ``SELECT`` con ``JOIN``/``LEFT JOIN`` (sin subconsultas correlacionadas por fila). **COORDINATOR:** el conjunto queda restringido al ``UserProfile.institution`` del usuario. **ADMIN:** sin ``institution`` se exporta el año lectivo indicado (una institución por año); con ``institution`` se valida que coincida con la institución del año.",
+                "summary": "CSV: consolidado calificados vs pendientes",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "academic_area",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "Filtrar por área académica (misma institución)."
+                    },
+                    {
+                        "in": "query",
+                        "name": "academic_period",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "UUID del periodo; si se omite, se incluyen todos los periodos del año."
+                    },
+                    {
+                        "in": "query",
+                        "name": "academic_year",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "UUID del año lectivo (define cohorte e institución).",
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "campus",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "Filtrar por sede (de la misma institución del año)."
+                    },
+                    {
+                        "in": "query",
+                        "name": "grade_level",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "Filtrar por nivel/grado (de la misma institución)."
+                    },
+                    {
+                        "in": "query",
+                        "name": "group",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "Filtrar por grupo (del mismo año lectivo)."
+                    },
+                    {
+                        "in": "query",
+                        "name": "institution",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "Solo ADMIN: debe ser la misma institución del año lectivo (doble chequeo)."
+                    },
+                    {
+                        "in": "query",
+                        "name": "subject",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "Filtrar por asignatura (misma institución)."
+                    },
+                    {
+                        "in": "query",
+                        "name": "teacher",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "Filtrar por docente (con asignación en ese año lectivo)."
+                    }
+                ],
+                "tags": [
+                    "Reports"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "text/csv": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Parámetros inválidos o combinación no permitida."
+                    },
+                    "403": {
+                        "description": "Sin permiso (solo ADMIN/COORDINATOR)."
+                    },
+                    "404": {
+                        "description": "Año lectivo no encontrado."
                     }
                 }
             }

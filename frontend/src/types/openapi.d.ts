@@ -1209,6 +1209,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/grading-consolidated/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * CSV: consolidado calificados vs pendientes
+         * @description Descarga CSV (UTF-8 con BOM) con una fila por cupo esperado de calificación. Requiere rol ADMIN o COORDINATOR.
+         */
+        get: operations["reports_grading_consolidated_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/school-records/": {
         parameters: {
             query?: never;
@@ -6860,6 +6880,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PerformanceSummaryRecalculateByInstitutionResponse"];
+                };
+            };
+        };
+    };
+    reports_grading_consolidated_retrieve: {
+        parameters: {
+            query: {
+                /** @description Filtrar por área académica (misma institución). */
+                academic_area?: string;
+                /** @description UUID del periodo; si se omite, se incluyen todos los periodos del año. */
+                academic_period?: string;
+                /** @description UUID del año lectivo (define cohorte e institución). */
+                academic_year: string;
+                /** @description Filtrar por sede (de la misma institución del año). */
+                campus?: string;
+                /** @description Filtrar por nivel/grado (de la misma institución). */
+                grade_level?: string;
+                /** @description Filtrar por grupo (del mismo año lectivo). */
+                group?: string;
+                /** @description Solo ADMIN: debe ser la misma institución del año lectivo (doble chequeo). */
+                institution?: string;
+                /** @description Filtrar por asignatura (misma institución). */
+                subject?: string;
+                /** @description Filtrar por docente (con asignación en ese año lectivo). */
+                teacher?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

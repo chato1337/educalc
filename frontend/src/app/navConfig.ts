@@ -21,6 +21,7 @@ import {
   School,
   Subject,
   SwapHoriz,
+  TableChart,
   EventAvailable,
 } from '@mui/icons-material'
 
@@ -246,6 +247,17 @@ export const navSections: NavSection[] = [
         path: '/academic-indicators-reports',
         icon: Report,
         rolesAllowed: STAFF_ROLES,
+      },
+    ],
+  },
+  {
+    titleKey: 'nav.reportsSection',
+    items: [
+      {
+        labelKey: 'nav.reportsGradingConsolidated',
+        path: '/reports/grading-consolidated',
+        icon: TableChart,
+        rolesAllowed: ADMIN_COORDINATOR,
       },
     ],
   },

@@ -552,7 +552,36 @@
     "disciplinaryReports": "Reportes disciplinarios",
     "recordsReportsSection": "Expedientes e informes",
     "schoolRecords": "Libro final de calificaciones",
-    "academicIndicatorsReports": "Informes de indicadores"
+    "academicIndicatorsReports": "Informes de indicadores",
+    "reportsSection": "Reportes y auditoría",
+    "reportsGradingConsolidated": "Consolidado calificaciones (CSV)"
+  },
+  "reports": {
+    "gradingConsolidated": {
+      "title": "Consolidado: calificados y pendientes",
+      "intro": "Exporta un CSV con un registro por cada cupo de nota esperado (matrícula activa × asignación de curso × periodo). Incluye área, grado, grupo, docente e identificadores para filtrar en hoja de cálculo. Requiere rol administrador o coordinador.",
+      "pickYear": "Selecciona año lectivo…",
+      "allPeriods": "Todos los periodos del año",
+      "any": "Todos",
+      "download": "Descargar CSV",
+      "downloading": "Generando archivo…",
+      "coordinatorNoInstitution": "Tu usuario coordinador no tiene institución asignada; no se puede acotar el listado de años lectivos.",
+      "teacherSearchPlaceholder": "Buscar por nombre o documento…",
+      "fields": {
+        "academicYear": "Año lectivo",
+        "academicPeriod": "Periodo (opcional)",
+        "campus": "Sede (opcional)",
+        "gradeLevel": "Grado / nivel (opcional)",
+        "group": "Grupo (opcional)",
+        "academicArea": "Área académica (opcional)",
+        "subject": "Asignatura (opcional)",
+        "teacher": "Docente (opcional)"
+      },
+      "errors": {
+        "yearRequired": "Indica el año lectivo.",
+        "yearInvalid": "El año lectivo no es válido."
+      }
+    }
   },
   "dashboard": {
     "title": "Inicio",

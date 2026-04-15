@@ -169,6 +169,9 @@ OPENAPI_LIST_PAGINATION_DESCRIPTION = (
     "(array of resources). Use `limit` and `offset` to page through `results`."
 )
 
+# Single-response cap for GET /course-assignments/for-teacher/ (one DB query, no pagination).
+_COURSE_ASSIGNMENT_FOR_TEACHER_MAX = 2000
+
 
 def schema_viewset(
     tags: list,
@@ -720,6 +723,7 @@ class AcademicPeriodViewSet(viewsets.ModelViewSet):
         "subject__name",
         "teacher",
         "teacher__document_number",
+        "teacher__in",
         "group",
         "group__in",
         "group__name",
@@ -759,6 +763,64 @@ class CourseAssignmentViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_course_assignments)
+
+    @extend_schema(
+        summary="List course assignments for one teacher (single query)",
+        description=(
+            "Returns matching assignments in one response without pagination. "
+            "Uses a single indexed lookup on `(teacher, academic_year)`. "
+            f"At most {_COURSE_ASSIGNMENT_FOR_TEACHER_MAX} rows; `truncated` is true if more exist."
+        ),
+        tags=["Course Assignments"],
+        parameters=[
+            OpenApiParameter(
+                name="teacher",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="Teacher id (UUID).",
+            ),
+            OpenApiParameter(
+                name="academic_year",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Optional academic year id (UUID).",
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=OpenApiTypes.OBJECT,
+                description="`results`, `count`, and optional `truncated` (boolean).",
+            ),
+            400: OpenApiResponse(description="Missing or invalid `teacher`."),
+        },
+    )
+    @action(detail=False, methods=["get"], url_path="for-teacher", pagination_class=None)
+    def for_teacher(self, request):
+        teacher_id = request.query_params.get("teacher")
+        if not teacher_id:
+            return Response(
+                {"detail": "Query parameter 'teacher' is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        qs = self.get_queryset().filter(teacher_id=teacher_id)
+        academic_year_id = request.query_params.get("academic_year")
+        if academic_year_id:
+            qs = qs.filter(academic_year_id=academic_year_id)
+        cap = _COURSE_ASSIGNMENT_FOR_TEACHER_MAX
+        sliced = qs[: cap + 1]
+        rows = list(sliced)
+        truncated = len(rows) > cap
+        rows = rows[:cap]
+        serializer = self.get_serializer(rows, many=True)
+        return Response(
+            {
+                "results": serializer.data,
+                "count": len(rows),
+                "truncated": truncated,
+            }
+        )
 
 
 @schema_viewset(

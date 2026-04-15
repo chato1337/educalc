@@ -20,6 +20,7 @@ from .models import (
     Student,
     Subject,
     Teacher,
+    UserProfile,
 )
 
 
@@ -461,3 +462,236 @@ class GroupsListApiTests(TestCase):
         self.assertFalse(
             any(row["name"] == "ZZZ" for row in r.data["results"]),
         )
+
+
+class CourseAssignmentForTeacherApiTests(TestCase):
+    """GET /api/course-assignments/for-teacher/ — single-query list for pickers and teacher scope."""
+
+    def setUp(self):
+        self.client = APIClient()
+        user = get_user_model().objects.create_user(username="cafteacher", password="x")
+        self.client.force_authenticate(user=user)
+        self.inst = Institution.objects.create(name="IE CA", dane_code="DANE992001")
+        self.campus = Campus.objects.create(institution=self.inst, name="Sede 1")
+        self.ay = AcademicYear.objects.create(institution=self.inst, year=2026)
+        self.ay2 = AcademicYear.objects.create(institution=self.inst, year=2027)
+        self.gl = GradeLevel.objects.create(
+            institution=self.inst, name="SEXTO", level_order=6
+        )
+        self.group = Group.objects.create(
+            grade_level=self.gl,
+            academic_year=self.ay,
+            campus=self.campus,
+            name="601",
+        )
+        self.area = AcademicArea.objects.create(institution=self.inst, name="Área")
+        self.teacher = Teacher.objects.create(
+            document_number="DOC900",
+            first_name="Luis",
+            first_last_name="Ruiz",
+            full_name="Luis Ruiz",
+        )
+        self.other_teacher = Teacher.objects.create(
+            document_number="DOC901",
+            first_name="Ana",
+            first_last_name="Díaz",
+            full_name="Ana Díaz",
+        )
+        self.subject = Subject.objects.create(
+            academic_area=self.area,
+            institution=self.inst,
+            name="Matemáticas",
+        )
+        self.subject2 = Subject.objects.create(
+            academic_area=self.area,
+            institution=self.inst,
+            name="Ciencias",
+        )
+        self.ca = CourseAssignment.objects.create(
+            subject=self.subject,
+            teacher=self.teacher,
+            group=self.group,
+            academic_year=self.ay,
+        )
+        self.group2 = Group.objects.create(
+            grade_level=self.gl,
+            academic_year=self.ay2,
+            campus=self.campus,
+            name="601",
+        )
+        self.ca_other_year = CourseAssignment.objects.create(
+            subject=self.subject,
+            teacher=self.teacher,
+            group=self.group2,
+            academic_year=self.ay2,
+        )
+        CourseAssignment.objects.create(
+            subject=self.subject2,
+            teacher=self.other_teacher,
+            group=self.group,
+            academic_year=self.ay,
+        )
+
+    def test_for_teacher_requires_param(self):
+        url = reverse("courseassignment-for-teacher")
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 400)
+
+    def test_for_teacher_returns_only_that_teacher(self):
+        url = reverse("courseassignment-for-teacher")
+        r = self.client.get(url, {"teacher": str(self.teacher.id)})
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("results", r.data)
+        self.assertIn("count", r.data)
+        self.assertFalse(r.data.get("truncated", False))
+        ids = {row["id"] for row in r.data["results"]}
+        self.assertEqual(ids, {str(self.ca.id), str(self.ca_other_year.id)})
+
+    def test_for_teacher_academic_year_filter(self):
+        url = reverse("courseassignment-for-teacher")
+        r = self.client.get(
+            url,
+            {"teacher": str(self.teacher.id), "academic_year": str(self.ay.id)},
+        )
+        self.assertEqual(r.status_code, 200)
+        ids = {row["id"] for row in r.data["results"]}
+        self.assertEqual(ids, {str(self.ca.id)})
+
+    def test_list_teacher_in_filter(self):
+        url = reverse("courseassignment-list")
+        r = self.client.get(
+            url,
+            {
+                "teacher__in": ",".join(
+                    [str(self.teacher.id), str(self.other_teacher.id)]
+                ),
+                "limit": 50,
+                "offset": 0,
+            },
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["count"], 3)
+
+
+class GradingConsolidatedCsvExportApiTests(TestCase):
+    """GET /api/reports/grading-consolidated/ — audit CSV (ADMIN / COORDINATOR)."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.admin_user = get_user_model().objects.create_user(username="repadmin", password="x")
+        self.coord_user = get_user_model().objects.create_user(username="repcoord", password="x")
+        self.teacher_user = get_user_model().objects.create_user(username="repteach", password="x")
+
+        UserProfile.objects.filter(user=self.admin_user).update(role="ADMIN")
+        UserProfile.objects.filter(user=self.coord_user).update(
+            role="COORDINATOR", institution_id=None
+        )
+        UserProfile.objects.filter(user=self.teacher_user).update(role="TEACHER")
+
+        self.inst = Institution.objects.create(name="IE Report", dane_code="DANE993500")
+        self.campus = Campus.objects.create(institution=self.inst, name="Sede Norte")
+        self.ay = AcademicYear.objects.create(institution=self.inst, year=2026)
+        self.gl = GradeLevel.objects.create(
+            institution=self.inst, name="QUINTO", level_order=5
+        )
+        self.group = Group.objects.create(
+            grade_level=self.gl,
+            academic_year=self.ay,
+            campus=self.campus,
+            name="501",
+        )
+        self.p1 = AcademicPeriod.objects.create(academic_year=self.ay, number=1, name="P1")
+        self.p2 = AcademicPeriod.objects.create(academic_year=self.ay, number=2, name="P2")
+        self.area = AcademicArea.objects.create(institution=self.inst, name="Humanidades")
+        self.teacher = Teacher.objects.create(
+            document_number="TDOC500",
+            first_name="Profe",
+            first_last_name="CSV",
+            full_name="Profe CSV",
+        )
+        self.subject = Subject.objects.create(
+            academic_area=self.area,
+            institution=self.inst,
+            name="Lengua",
+        )
+        self.ca = CourseAssignment.objects.create(
+            subject=self.subject,
+            teacher=self.teacher,
+            group=self.group,
+            academic_year=self.ay,
+        )
+        self.student = Student.objects.create(
+            document_number="ST500",
+            first_name="Ana",
+            first_last_name="Lista",
+            full_name="Ana Lista",
+        )
+        Enrollment.objects.create(
+            student=self.student,
+            group=self.group,
+            academic_year=self.ay,
+            status="active",
+        )
+        Grade.objects.create(
+            student=self.student,
+            course_assignment=self.ca,
+            academic_period=self.p1,
+            numerical_grade=Decimal("4.50"),
+        )
+
+        UserProfile.objects.filter(user=self.coord_user).update(
+            institution_id=self.inst.id,
+        )
+
+        # Reload users so ``.profile`` matches DB (create_user + signal can leave a
+        # stale reverse relation on the in-memory instance before role updates).
+        User = get_user_model()
+        self.admin_user = User.objects.select_related("profile").get(pk=self.admin_user.pk)
+        self.coord_user = User.objects.select_related("profile").get(pk=self.coord_user.pk)
+        self.teacher_user = User.objects.select_related("profile").get(pk=self.teacher_user.pk)
+
+        self.url = reverse("report-grading-consolidated-csv")
+
+    def test_teacher_forbidden(self):
+        self.client.force_authenticate(user=self.teacher_user)
+        r = self.client.get(self.url, {"academic_year": str(self.ay.id)})
+        self.assertEqual(r.status_code, 403)
+
+    def test_admin_csv_contains_graded_and_pending(self):
+        self.assertEqual(self.admin_user.profile.role, "ADMIN")
+        self.client.force_authenticate(user=self.admin_user)
+        r = self.client.get(self.url, {"academic_year": str(self.ay.id)})
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("text/csv", r["Content-Type"])
+        body = b"".join(r.streaming_content).decode("utf-8-sig")
+        lines = [ln for ln in body.strip().splitlines() if ln]
+        self.assertGreaterEqual(len(lines), 3)
+        header = lines[0].split(",")
+        self.assertIn("estado_calificacion", header)
+        status_idx = header.index("estado_calificacion")
+        statuses = {line.split(",")[status_idx] for line in lines[1:]}
+        self.assertIn("CALIFICADO", statuses)
+        self.assertIn("PENDIENTE", statuses)
+
+    def test_coordinator_wrong_institution_forbidden(self):
+        self.client.force_authenticate(user=self.coord_user)
+        other = Institution.objects.create(name="Otra IE", dane_code="DANE993501")
+        ay_other = AcademicYear.objects.create(institution=other, year=2030)
+        r = self.client.get(self.url, {"academic_year": str(ay_other.id)})
+        self.assertEqual(r.status_code, 403)
+
+    def test_coordinator_ok(self):
+        self.client.force_authenticate(user=self.coord_user)
+        r = self.client.get(self.url, {"academic_year": str(self.ay.id)})
+        self.assertEqual(r.status_code, 200)
+
+    def test_invalid_period_for_year(self):
+        self.client.force_authenticate(user=self.admin_user)
+        other = Institution.objects.create(name="IE X", dane_code="DANE993502")
+        ay2 = AcademicYear.objects.create(institution=other, year=2031)
+        p_wrong = AcademicPeriod.objects.create(academic_year=ay2, number=1, name="PX")
+        r = self.client.get(
+            self.url,
+            {"academic_year": str(self.ay.id), "academic_period": str(p_wrong.id)},
+        )
+        self.assertEqual(r.status_code, 400)

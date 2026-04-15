@@ -88,25 +88,47 @@ export function CourseAssignmentsPage() {
   const { data: subjects = [] } = useSubjectsForInstitution(
     selectedInstitutionId,
   )
-  const { data: teachersForFilter = [] } = useTeachersSearch(
-    appliedTeacherSearch,
-  )
+  const teachersForFilterQuery = useTeachersSearch(appliedTeacherSearch)
+  const teachersForFilter = teachersForFilterQuery.data ?? []
   const { data: teachersForForm = [] } = useTeachersSearch(
     appliedFormTeacherSearch,
   )
 
-  const listParams = {
-    academic_year: filterYearId ?? undefined,
-    search: appliedSearch || undefined,
-  }
+  const teacherSearchApplied = appliedTeacherSearch.trim() !== ''
+  const teacherIdsCsv = useMemo(
+    () =>
+      teacherSearchApplied
+        ? teachersForFilter.map((x) => x.id).join(',')
+        : '',
+    [teacherSearchApplied, teachersForFilter],
+  )
+  const teacherFilterReady =
+    !teacherSearchApplied ||
+    (teachersForFilterQuery.status === 'success' && teacherIdsCsv.length > 0)
+  const teacherFilterEmpty =
+    teacherSearchApplied &&
+    teachersForFilterQuery.status === 'success' &&
+    teacherIdsCsv.length === 0
+
+  const listParams = useMemo(
+    () => ({
+      academic_year: filterYearId ?? undefined,
+      search: appliedSearch || undefined,
+      ...(teacherIdsCsv ? { teacher__in: teacherIdsCsv } : {}),
+    }),
+    [filterYearId, appliedSearch, teacherIdsCsv],
+  )
 
   const listQuery = useInfiniteList<CourseAssignment>({
     queryKey: queryKeys.courseAssignments(listParams),
     url: '/api/course-assignments/',
     params: listParams,
+    enabled: teacherFilterReady,
   })
-  const rows = useMemo(() => flatInfinitePages(listQuery.data), [listQuery.data])
-  const isLoading = listQuery.isLoading
+  const rows = useMemo(() => {
+    if (teacherFilterEmpty) return []
+    return flatInfinitePages(listQuery.data)
+  }, [listQuery.data, teacherFilterEmpty])
   const error = listQuery.error
 
   const form = useForm<FormValues>({
@@ -279,12 +301,11 @@ export function CourseAssignmentsPage() {
 
   const yearLabel = (y: AcademicYear) => String(y.year)
 
-  const rowsFiltered =
-    appliedTeacherSearch.trim() === ''
-      ? rows
-      : rows.filter((r) =>
-          teachersForFilter.some((t) => t.id === r.teacher),
-        )
+  const listLoading =
+    listQuery.isLoading ||
+    (teacherSearchApplied &&
+      teachersForFilterQuery.isFetching &&
+      !teacherFilterReady)
 
   return (
     <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
@@ -371,10 +392,10 @@ export function CourseAssignmentsPage() {
 
       <Paper sx={{ width: '100%', p: 0, overflow: 'hidden' }}>
         <DataGrid
-          rows={rowsFiltered}
+          rows={rows}
           columns={columns}
           getRowId={(row) => row.id}
-          loading={isLoading}
+          loading={listLoading}
           autoHeight
           hideFooter
           disableRowSelectionOnClick
@@ -384,7 +405,7 @@ export function CourseAssignmentsPage() {
         />
       </Paper>
       <InfiniteDataGridFooter
-        show={rows.length > 0 && !isLoading}
+        show={rows.length > 0 && !listLoading}
         isFetchingNextPage={listQuery.isFetchingNextPage}
         hasNextPage={listQuery.hasNextPage ?? false}
         onLoadMore={() => void listQuery.fetchNextPage()}

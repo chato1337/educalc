@@ -334,6 +334,12 @@ class CourseAssignment(TimeStampedModel):
         verbose_name = "Course Assignment"
         verbose_name_plural = "Course Assignments"
         unique_together = [["subject", "group", "academic_year"]]
+        indexes = [
+            models.Index(
+                fields=["teacher", "academic_year"],
+                name="core_course_teacher_year_idx",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.subject.name} - {self.group.name} ({self.academic_year.year})"
@@ -387,6 +393,12 @@ class Enrollment(TimeStampedModel):
         verbose_name = "Enrollment"
         verbose_name_plural = "Enrollments"
         unique_together = [["student", "group", "academic_year"]]
+        indexes = [
+            models.Index(
+                fields=["academic_year", "status"],
+                name="core_enroll_year_status_idx",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.student.full_name} - {self.group.name} ({self.academic_year.year})"
