@@ -657,7 +657,7 @@ class GradingConsolidatedCsvExportApiTests(TestCase):
         r = self.client.get(self.url, {"academic_year": str(self.ay.id)})
         self.assertEqual(r.status_code, 403)
 
-    def test_admin_csv_contains_graded_and_pending(self):
+    def test_admin_csv_is_pivoted_one_row_per_student(self):
         self.assertEqual(self.admin_user.profile.role, "ADMIN")
         self.client.force_authenticate(user=self.admin_user)
         r = self.client.get(self.url, {"academic_year": str(self.ay.id)})
@@ -665,13 +665,27 @@ class GradingConsolidatedCsvExportApiTests(TestCase):
         self.assertIn("text/csv", r["Content-Type"])
         body = b"".join(r.streaming_content).decode("utf-8-sig")
         lines = [ln for ln in body.strip().splitlines() if ln]
-        self.assertGreaterEqual(len(lines), 3)
+        # Header + exactly one enrolled student.
+        self.assertEqual(len(lines), 2)
         header = lines[0].split(",")
-        self.assertIn("estado_calificacion", header)
-        status_idx = header.index("estado_calificacion")
-        statuses = {line.split(",")[status_idx] for line in lines[1:]}
-        self.assertIn("CALIFICADO", statuses)
-        self.assertIn("PENDIENTE", statuses)
+        # Fixed identification columns.
+        self.assertIn("estudiante_nombre_completo", header)
+        self.assertIn("asignaturas_calificadas", header)
+        self.assertIn("asignaturas_pendientes", header)
+        self.assertIn("promedio_numerico", header)
+        # Two periods => subject is emitted twice: "Lengua (P1)" and "Lengua (P2)".
+        self.assertIn("Lengua (P1)", header)
+        self.assertIn("Lengua (P2)", header)
+
+        data = lines[1].split(",")
+        row = dict(zip(header, data))
+        self.assertEqual(row["estudiante_nombre_completo"], "Ana Lista")
+        # P1 calificada (4.50), P2 pendiente (vacía).
+        self.assertEqual(row["Lengua (P1)"], "4.50")
+        self.assertEqual(row["Lengua (P2)"], "")
+        self.assertEqual(row["asignaturas_calificadas"], "1")
+        self.assertEqual(row["asignaturas_pendientes"], "1")
+        self.assertEqual(row["promedio_numerico"], "4.50")
 
     def test_coordinator_wrong_institution_forbidden(self):
         self.client.force_authenticate(user=self.coord_user)

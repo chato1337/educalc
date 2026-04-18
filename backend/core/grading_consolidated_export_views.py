@@ -1,4 +1,4 @@
-"""CSV audit export: grading slots (calificado / pendiente) per enrollment × assignment × period."""
+"""CSV export: pivoted consolidated grading per student (subjects as columns)."""
 from __future__ import annotations
 
 import re
@@ -61,18 +61,24 @@ class GradingConsolidatedCsvExportView(APIView):
     permission_classes = [IsAuthenticated, IsCoordinator]
 
     @extend_schema(
-        summary="CSV: consolidado calificados vs pendientes",
+        summary="CSV: consolidado de calificaciones pivoteado por estudiante",
         description=(
-            "Descarga CSV (UTF-8 con BOM) con una fila por cupo esperado de calificación: "
-            "matrícula activa × asignación de curso en el mismo grupo y año × cada periodo del año. "
-            "``estado_calificacion`` es ``CALIFICADO`` si existe nota en ``core_grade`` para esa "
-            "terna (estudiante, asignación, periodo); en caso contrario ``PENDIENTE``. "
-            "Incluye institución, sede, grado, grupo, área, asignatura, docente, periodo e identificadores "
-            "UUID para cruzar con otros extractos. "
-            "La consulta usa un único ``SELECT`` con ``JOIN``/``LEFT JOIN`` (sin subconsultas correlacionadas por fila). "
-            "**COORDINATOR:** el conjunto queda restringido al ``UserProfile.institution`` del usuario. "
-            "**ADMIN:** sin ``institution`` se exporta el año lectivo indicado (una institución por año); "
-            "con ``institution`` se valida que coincida con la institución del año."
+            "Descarga CSV (UTF-8 con BOM) con **una única fila por estudiante** (matrícula "
+            "activa) y **una columna por asignatura**. Cuando la exportación cubre más de un "
+            "periodo, cada asignatura se despliega en varias columnas con el sufijo "
+            "``(P1)``, ``(P2)``, … por número de periodo. "
+            "El valor de cada celda es la nota numérica (o la definitiva si no hay numérica) "
+            "para esa terna (estudiante, asignatura, periodo); una celda vacía significa "
+            "**PENDIENTE**. Al final se incluyen columnas de resumen "
+            "``asignaturas_calificadas``, ``asignaturas_pendientes`` y ``promedio_numerico`` "
+            "(promedio simple sobre las notas existentes del estudiante). "
+            "La consulta base usa un único ``SELECT`` con ``JOIN``/``LEFT JOIN`` (sin "
+            "subconsultas correlacionadas por fila); el pivoteo se realiza en memoria tras el "
+            "fetch. "
+            "**COORDINATOR:** el conjunto queda restringido al ``UserProfile.institution`` "
+            "del usuario. **ADMIN:** sin ``institution`` se exporta el año lectivo indicado "
+            "(una institución por año); con ``institution`` se valida que coincida con la "
+            "institución del año."
         ),
         tags=["Reports"],
         parameters=[
