@@ -469,7 +469,7 @@ def build_bulletin_context(
         .first()
     )
     director_name = gd.teacher.full_name if gd else "—"
-    director_title = "Directora de grado"  # could be parametrized later
+    director_title = "Director de grado"  # could be parametrized later
 
     legal_bits = [
         (institution.legal_reference or "").strip(),
