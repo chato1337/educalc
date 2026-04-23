@@ -30,6 +30,11 @@ import {
   useMuiDataGridLocaleText,
 } from '@/hooks/useMuiDataGridLocaleText'
 import {
+  formatScaleBoundLabel,
+  getGradingScaleAggregateBounds,
+  parseScaleBound,
+} from '@/features/operations/gradingScaleBounds'
+import {
   fetchAllEnrollments,
   fetchAllGrades,
   useAcademicPeriodsForYear,
@@ -59,11 +64,6 @@ type BulkGradeRow = GridRowModel & {
   performanceLevelId: string | null
   performanceLevelName: string
   definitiveGrade: string
-}
-
-function parseScaleBound(s: string): number | null {
-  const n = Number(String(s).trim().replace(',', '.'))
-  return Number.isFinite(n) ? n : null
 }
 
 function matchGradingScaleId(
@@ -162,6 +162,11 @@ export function GradesByGroupModal({
   const uniqueGroups = useMemo(
     () => uniqueGroupsFromAssignments(teacherAssignments),
     [teacherAssignments],
+  )
+
+  const scaleBounds = useMemo(
+    () => getGradingScaleAggregateBounds(gradingScales),
+    [gradingScales],
   )
 
   const selectedGroupId = useMemo(() => {
@@ -342,6 +347,26 @@ export function GradesByGroupModal({
         throw new Error('validation')
       }
 
+      const numericalValue = Number(String(parsedNum.data).trim())
+      if (scaleBounds) {
+        if (numericalValue < scaleBounds.min) {
+          setSheetError(
+            t('grades.numericalGradeBelowMin', {
+              min: formatScaleBoundLabel(scaleBounds.min),
+            }),
+          )
+          throw new Error('validation')
+        }
+        if (numericalValue > scaleBounds.max) {
+          setSheetError(
+            t('grades.numericalGradeAboveMax', {
+              max: formatScaleBoundLabel(scaleBounds.max),
+            }),
+          )
+          throw new Error('validation')
+        }
+      }
+
       if (rawDef !== '') {
         const defParsed = decOpt.safeParse(rawDef.replace(',', '.'))
         if (!defParsed.success) {
@@ -399,6 +424,7 @@ export function GradesByGroupModal({
       createMutation,
       deleteMutation,
       gradingScales,
+      scaleBounds,
       selectedAssignmentId,
       selectedPeriodId,
       t,
@@ -452,9 +478,19 @@ export function GradesByGroupModal({
     <Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth>
       <DialogTitle>{t('grades.byGroupTitle')}</DialogTitle>
       <DialogContent>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {t('grades.byGroupHint')}
-        </Typography>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            {t('grades.byGroupHint')}
+          </Typography>
+          {scaleBounds ? (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {t('grades.numericalGradeScaleRangeHint', {
+                min: formatScaleBoundLabel(scaleBounds.min),
+                max: formatScaleBoundLabel(scaleBounds.max),
+              })}
+            </Typography>
+          ) : null}
+        </Box>
         <Box
           sx={{
             display: 'flex',

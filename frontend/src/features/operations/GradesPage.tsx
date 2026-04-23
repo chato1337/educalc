@@ -35,6 +35,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { resolvedAppRole } from '@/app/roleMatrix'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import {
   Controller,
@@ -59,6 +60,11 @@ import {
 import { createServerSortHandlers } from '@/lib/dataGridServerSort'
 import { PageHeader } from '@/components/PageHeader'
 import { GradesByGroupModal } from '@/features/operations/GradesByGroupModal'
+import {
+  formatScaleBoundLabel,
+  getGradingScaleAggregateBounds,
+  parseScaleBound,
+} from '@/features/operations/gradingScaleBounds'
 import {
   useAcademicAreasQuery,
   useAcademicYearsQuery,
@@ -95,7 +101,7 @@ const decOpt = z
   .optional()
   .or(z.literal(''))
 
-const schema = z.object({
+const gradeFormBaseSchema = z.object({
   student: z.string().uuid('Selecciona estudiante'),
   course_assignment: z.string().uuid('Selecciona asignación'),
   academic_period: z.string().uuid('Selecciona período'),
@@ -104,7 +110,39 @@ const schema = z.object({
   definitive_grade: decOpt,
 })
 
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<typeof gradeFormBaseSchema>
+
+function createGradeFormSchema(
+  scaleBounds: { min: number; max: number } | null,
+  translate: TFunction,
+) {
+  if (!scaleBounds) return gradeFormBaseSchema
+  return gradeFormBaseSchema.superRefine((data, ctx) => {
+    const parsed = dec.safeParse(data.numerical_grade)
+    if (!parsed.success) return
+    const n = Number(String(parsed.data).trim().replace(',', '.'))
+    if (!Number.isFinite(n)) return
+    if (n < scaleBounds.min) {
+      ctx.addIssue({
+        code: 'custom',
+        message: translate('grades.numericalGradeBelowMin', {
+          min: formatScaleBoundLabel(scaleBounds.min),
+        }),
+        path: ['numerical_grade'],
+      })
+      return
+    }
+    if (n > scaleBounds.max) {
+      ctx.addIssue({
+        code: 'custom',
+        message: translate('grades.numericalGradeAboveMax', {
+          max: formatScaleBoundLabel(scaleBounds.max),
+        }),
+        path: ['numerical_grade'],
+      })
+    }
+  })
+}
 
 type GradeRow = Grade & {
   student_document_number: string
@@ -169,11 +207,6 @@ function getDocumentTypeAbbr(documentType: string): string {
   if (!normalized) return ''
   const [left] = normalized.split(':', 1)
   return left.trim()
-}
-
-function parseScaleBound(s: string): number | null {
-  const n = Number(String(s).trim().replace(',', '.'))
-  return Number.isFinite(n) ? n : null
 }
 
 /** Nivel de desempeño cuyo rango [min_score, max_score] contiene la nota. */
@@ -325,6 +358,21 @@ export function GradesPage() {
   const { data: gradingScales = [] } = useGradingScalesForInstitution(
     selectedInstitutionId,
   )
+  const scaleBounds = useMemo(
+    () => getGradingScaleAggregateBounds(gradingScales),
+    [gradingScales],
+  )
+  const gradeFormSchema = useMemo(
+    () => createGradeFormSchema(scaleBounds, t),
+    [scaleBounds, t],
+  )
+  const numericalGradeFieldHint = useMemo(() => {
+    if (!scaleBounds) return undefined
+    return t('grades.numericalGradeScaleRangeHint', {
+      min: formatScaleBoundLabel(scaleBounds.min),
+      max: formatScaleBoundLabel(scaleBounds.max),
+    })
+  }, [scaleBounds, t])
   const { data: studentOptions = [] } = useStudentsSearch(appliedStudentSearch)
 
   const { data: periodsForDialog = [] } = useAcademicPeriodsForYear(
@@ -350,7 +398,7 @@ export function GradesPage() {
   }, [editing, editingDialogCourseAssignment?.academic_year])
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema) as Resolver<FormValues>,
+    resolver: zodResolver(gradeFormSchema) as Resolver<FormValues>,
     defaultValues: {
       student: '',
       course_assignment: '',
@@ -360,6 +408,13 @@ export function GradesPage() {
       definitive_grade: '',
     },
   })
+
+  useEffect(() => {
+    if (!dialogOpen) return
+    const ng = form.getValues('numerical_grade')
+    if (!String(ng ?? '').trim()) return
+    void form.trigger('numerical_grade')
+  }, [gradeFormSchema, dialogOpen, form])
 
   const watchedStudent = useWatch({ control: form.control, name: 'student' })
   const dialogStudentId =
@@ -1241,7 +1296,16 @@ export function GradesPage() {
               required
               {...form.register('numerical_grade')}
               error={!!form.formState.errors.numerical_grade}
-              helperText={form.formState.errors.numerical_grade?.message}
+              helperText={(() => {
+                const err = form.formState.errors.numerical_grade?.message
+                const parts = [err, numericalGradeFieldHint].filter(Boolean)
+                return parts.length > 0 ? parts.join('\n') : undefined
+              })()}
+              FormHelperTextProps={
+                numericalGradeFieldHint
+                  ? { sx: { whiteSpace: 'pre-line' } }
+                  : undefined
+              }
             />
             <Controller
               name="performance_level"
