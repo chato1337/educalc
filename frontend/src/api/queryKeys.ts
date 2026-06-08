@@ -37,6 +37,17 @@ export const queryKeys = {
     ['course-assignments', params] as const,
   grades: (params: Record<string, string | undefined>) =>
     ['grades', params] as const,
+  gradingSchemes: (params: Record<string, string | undefined>) =>
+    ['grading-schemes', params] as const,
+  gradingScheme: (id: string) => ['grading-schemes', id] as const,
+  gradingSchemeStructure: (schemeId: string) =>
+    ['grading-schemes', schemeId, 'structure'] as const,
+  gradingSchemeBreakdown: (schemeId: string, studentId: string) =>
+    ['grading-schemes', schemeId, 'breakdown', studentId] as const,
+  gradingSchemeValidateWeights: (schemeId: string) =>
+    ['grading-schemes', schemeId, 'validate-weights'] as const,
+  studentActivityScores: (params: Record<string, string | undefined>) =>
+    ['student-activity-scores', params] as const,
   gradingScales: (institutionId?: string | null, search?: string) =>
     ['grading-scales', { institutionId, search: search ?? '' }] as const,
   academicIndicatorCatalogs: (params: Record<string, string | undefined>) =>

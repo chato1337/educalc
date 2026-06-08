@@ -12,11 +12,14 @@ from .models import (
     AcademicYear,
     Attendance,
     Campus,
+    ComponentSegment,
     CourseAssignment,
     DisciplinaryReport,
     Enrollment,
     Grade,
     GradeDirector,
+    GradingActivity,
+    GradingScheme,
     GradingScale,
     GradeLevel,
     Group,
@@ -25,8 +28,10 @@ from .models import (
     PerformanceSummary,
     SchoolRecord,
     Student,
+    StudentActivityScore,
     StudentGuardian,
     Subject,
+    SubjectComponent,
     Teacher,
     UserProfile,
 )
@@ -267,6 +272,67 @@ class AcademicIndicatorsReportAdmin(admin.ModelAdmin):
     search_fields = ("student__full_name",)
     readonly_fields = ("id", "created_at", "updated_at")
     autocomplete_fields = ("student", "group", "academic_period", "grade_director")
+
+
+# Phase 6: Activity-based grading
+@admin.register(GradingScheme)
+class GradingSchemeAdmin(admin.ModelAdmin):
+    list_display = (
+        "course_assignment",
+        "academic_period",
+        "is_active",
+        "created_at",
+    )
+    list_filter = ("is_active", "academic_period")
+    search_fields = (
+        "course_assignment__subject__name",
+        "course_assignment__group__name",
+    )
+    readonly_fields = ("id", "created_at", "updated_at")
+    autocomplete_fields = ("course_assignment", "academic_period")
+
+
+@admin.register(SubjectComponent)
+class SubjectComponentAdmin(admin.ModelAdmin):
+    list_display = ("name", "subject", "weight_percent", "sort_order", "created_at")
+    list_filter = ("subject",)
+    search_fields = ("name",)
+    readonly_fields = ("id", "created_at", "updated_at")
+    autocomplete_fields = ("subject",)
+
+
+@admin.register(ComponentSegment)
+class ComponentSegmentAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "grading_scheme",
+        "subject_component",
+        "weight_percent",
+        "sort_order",
+        "created_at",
+    )
+    list_filter = ("grading_scheme", "subject_component")
+    search_fields = ("name",)
+    readonly_fields = ("id", "created_at", "updated_at")
+    autocomplete_fields = ("grading_scheme", "subject_component")
+
+
+@admin.register(GradingActivity)
+class GradingActivityAdmin(admin.ModelAdmin):
+    list_display = ("name", "segment", "activity_date", "max_score", "created_at")
+    list_filter = ("activity_date",)
+    search_fields = ("name",)
+    readonly_fields = ("id", "created_at", "updated_at")
+    autocomplete_fields = ("segment",)
+
+
+@admin.register(StudentActivityScore)
+class StudentActivityScoreAdmin(admin.ModelAdmin):
+    list_display = ("student", "activity", "score", "created_at")
+    list_filter = ("activity__segment",)
+    search_fields = ("student__full_name", "activity__name")
+    readonly_fields = ("id", "created_at", "updated_at")
+    autocomplete_fields = ("student", "activity")
 
 
 @admin.register(UserProfile)

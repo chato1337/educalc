@@ -515,6 +515,97 @@ export interface paths {
         patch: operations["campuses_partial_update"];
         trace?: never;
     };
+    "/api/component-segments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Component Segments
+         * @description Subdivisiones configurables por el docente dentro de un componente de la asignatura. Los pesos de segmentos deben sumar 100% dentro de cada componente del esquema. Text search available through query param `search`. Supported fields: name, subject_component__name. Available exact-match filters via query params: grading_scheme, subject_component, subject_component__subject. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         */
+        get: operations["component_segments_list"];
+        put?: never;
+        /**
+         * Create Component Segments
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        post: operations["component_segments_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/component-segments/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Component Segments
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        get: operations["component_segments_retrieve"];
+        /**
+         * Update Component Segments
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        put: operations["component_segments_update"];
+        post?: never;
+        /**
+         * Delete Component Segments
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        delete: operations["component_segments_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * Partial update Component Segments
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        patch: operations["component_segments_partial_update"];
+        trace?: never;
+    };
     "/api/course-assignments/": {
         parameters: {
             query?: never;
@@ -884,6 +975,117 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/grades/suggested/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Suggested grade from activity scores
+         * @description Calcula la nota sugerida del periodo a partir de las notas por actividad registradas en el ``GradingScheme`` activo. Devuelve desglose por componentes, segmentos y actividades. La sugerencia no persiste en ``Grade``; el docente decide la nota oficial.
+         */
+        get: operations["grades_suggested_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/grading-activities/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Grading Activities
+         * @description Actividades puntuales dentro de un segmento (plantilla compartida por el grupo). Text search available through query param `search`. Supported fields: name, segment__name. Available exact-match filters via query params: segment, segment__grading_scheme, segment__subject_component. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         */
+        get: operations["grading_activities_list"];
+        put?: never;
+        /**
+         * Create Grading Activities
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        post: operations["grading_activities_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/grading-activities/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Grading Activities
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        get: operations["grading_activities_retrieve"];
+        /**
+         * Update Grading Activities
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        put: operations["grading_activities_update"];
+        post?: never;
+        /**
+         * Delete Grading Activities
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        delete: operations["grading_activities_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * Partial update Grading Activities
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        patch: operations["grading_activities_partial_update"];
+        trace?: never;
+    };
     "/api/grading-scales/": {
         parameters: {
             query?: never;
@@ -939,6 +1141,177 @@ export interface paths {
          * @description Columns: DANE_COD, COD_NIVEL, NOMBRE_NIVEL, NOTA_MIN, NOTA_MAX, DESCRIPCION.
          */
         post: operations["grading_scales_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/grading-schemes/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Grading Schemes
+         * @description Esquema ponderado de evaluación por asignación de curso y periodo académico. Los componentes son catálogo por asignatura (admin); los docentes configuran segmentos. La nota sugerida calculada es autocompletado; la nota oficial permanece en Grade. Text search available through query param `search`. Supported fields: course_assignment__subject__name, course_assignment__group__name, course_assignment__teacher__full_name, academic_period__name. Available exact-match filters via query params: course_assignment, course_assignment__group, academic_period, is_active. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         */
+        get: operations["grading_schemes_list"];
+        put?: never;
+        /**
+         * Create Grading Schemes
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        post: operations["grading_schemes_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/grading-schemes/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Grading Schemes
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        get: operations["grading_schemes_retrieve"];
+        /**
+         * Update Grading Schemes
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        put: operations["grading_schemes_update"];
+        post?: never;
+        /**
+         * Delete Grading Schemes
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        delete: operations["grading_schemes_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * Partial update Grading Schemes
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        patch: operations["grading_schemes_partial_update"];
+        trace?: never;
+    };
+    "/api/grading-schemes/{id}/apply-suggestion/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply suggested grade to Grade.numerical_grade
+         * @description Calcula la nota sugerida desde las actividades y la escribe en ``Grade.numerical_grade``, asignando también ``performance_level`` según la escala de la institución. No modifica ``definitive_grade``. Crea el registro ``Grade`` si no existe.
+         */
+        post: operations["grading_schemes_apply_suggestion_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/grading-schemes/{id}/breakdown/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Grade breakdown and suggested grade for a student
+         * @description Desglose ponderado y nota sugerida para un estudiante en el esquema indicado. Requiere que los pesos de componentes y segmentos sumen 100%.
+         */
+        get: operations["grading_schemes_breakdown_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/grading-schemes/{id}/validate-weights/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Validate component and segment weights sum to 100%
+         * @description Verifica que la suma de ``weight_percent`` de componentes del esquema sea 100% y que cada componente tenga segmentos que también sumen 100%.
+         */
+        get: operations["grading_schemes_validate_weights_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/grading-schemes/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load grading structure from CSV
+         * @description Carga masiva de estructura de evaluación por fila (componente → segmento → actividad). Requiere ``CourseAssignment`` existente. Referencia: ``docs/bulk_load_grading_structure.csv``. Columnas: DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, ENFASIS (opcional), AREA_NOMBRE (opcional), DOC_DOCENTE (opcional), PERIODO_NUM, COMPONENTE_NOMBRE, COMPONENTE_PESO, COMPONENTE_ORDEN (opcional), SEGMENTO_NOMBRE, SEGMENTO_PESO, SEGMENTO_ORDEN (opcional), ACTIVIDAD_NOMBRE, ACTIVIDAD_FECHA, NOTA_MAXIMA (opcional), ACTIVIDAD_DESCRIPCION (opcional), ACTIVIDAD_ORDEN (opcional).
+         */
+        post: operations["grading_schemes_bulk_load_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1293,6 +1666,117 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/student-activity-scores/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Student Activity Scores
+         * @description Notas individuales de estudiantes por actividad. score null = pendiente. No actualiza Grade automáticamente. Text search available through query param `search`. Supported fields: student__full_name, student__document_number, activity__name. Available exact-match filters via query params: activity, student, student__document_number, activity__segment, activity__segment__grading_scheme. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         */
+        get: operations["student_activity_scores_list"];
+        put?: never;
+        /**
+         * Create Student Activity Scores
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        post: operations["student_activity_scores_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/student-activity-scores/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Student Activity Scores
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        get: operations["student_activity_scores_retrieve"];
+        /**
+         * Update Student Activity Scores
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        put: operations["student_activity_scores_update"];
+        post?: never;
+        /**
+         * Delete Student Activity Scores
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        delete: operations["student_activity_scores_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * Partial update Student Activity Scores
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        patch: operations["student_activity_scores_partial_update"];
+        trace?: never;
+    };
+    "/api/student-activity-scores/bulk-load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk load student activity scores from CSV
+         * @description Carga masiva de notas por estudiante y actividad. Requiere estructura de calificación cargada. No modifica registros ``Grade``. Referencia: ``docs/bulk_load_student_activity_scores.csv``. Columnas: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, ENFASIS (opcional), AREA_NOMBRE (opcional), DOC_DOCENTE (opcional), PERIODO_NUM, COMPONENTE_NOMBRE, SEGMENTO_NOMBRE, ACTIVIDAD_NOMBRE, ACTIVIDAD_FECHA (opcional), NOTA, OBSERVACIONES (opcional).
+         */
+        post: operations["student_activity_scores_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/student-guardians/": {
         parameters: {
             query?: never;
@@ -1462,6 +1946,97 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/subject-components/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Subject Components
+         * @description Catálogo de dimensiones de evaluación por asignatura (ej. cognitivo, actitudinal). Solo administradores pueden crear o modificar; los pesos deben sumar 100% por asignatura. Text search available through query param `search`. Supported fields: name, subject__name. Available exact-match filters via query params: subject. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         */
+        get: operations["subject_components_list"];
+        put?: never;
+        /**
+         * Create Subject Components
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        post: operations["subject_components_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/subject-components/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Subject Components
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        get: operations["subject_components_retrieve"];
+        /**
+         * Update Subject Components
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        put: operations["subject_components_update"];
+        post?: never;
+        /**
+         * Delete Subject Components
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        delete: operations["subject_components_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * Partial update Subject Components
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
+        patch: operations["subject_components_partial_update"];
         trace?: never;
     };
     "/api/subjects/": {
@@ -1823,6 +2398,26 @@ export interface components {
             end_date?: string | null;
             is_active?: boolean;
         };
+        ApplySuggestionRequestRequest: {
+            /**
+             * Format: uuid
+             * @description UUID del estudiante.
+             */
+            student: string;
+        };
+        ApplySuggestionResponse: {
+            /** Format: uuid */
+            grade_id: string;
+            /** Format: decimal */
+            numerical_grade: string;
+            /** Format: uuid */
+            performance_level: string | null;
+            performance_level_name: string | null;
+            /** Format: decimal */
+            definitive_grade: string | null;
+            /** @description True si se creó un nuevo registro Grade. */
+            created: boolean;
+        };
         Attendance: {
             /** Format: uuid */
             readonly id: string;
@@ -1859,6 +2454,31 @@ export interface components {
              * @description UTF-8 CSV file (.csv)
              */
             file: string;
+        };
+        BulkLoadGradingStructureStats: {
+            rows_processed: number;
+            rows_skipped: number;
+            schemes_created: number;
+            components_created: number;
+            components_updated: number;
+            segments_created: number;
+            segments_updated: number;
+            activities_created: number;
+            activities_updated: number;
+            /** @description Lista de {row, error}. */
+            errors: {
+                [key: string]: unknown;
+            }[];
+        };
+        BulkLoadStudentActivityScoresStats: {
+            rows_processed: number;
+            rows_skipped: number;
+            created: number;
+            updated: number;
+            /** @description Lista de {row, error}. */
+            errors: {
+                [key: string]: unknown;
+            }[];
         };
         /** @description Request serializer for student bulk load (OpenAPI: multipart field ``file``). */
         BulkLoadStudentsCsvRequest: {
@@ -1897,6 +2517,35 @@ export interface components {
          * @enum {string}
          */
         CodeEnum: "invalid_transfer" | "student_not_found" | "group_not_found" | "no_active_enrollment" | "same_group" | "institution_mismatch";
+        ComponentSegment: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            grading_scheme: string;
+            /** Format: uuid */
+            subject_component: string;
+            readonly subject_component_name: string;
+            name: string;
+            description?: string;
+            /** Format: decimal */
+            weight_percent: string;
+            sort_order?: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        ComponentSegmentRequest: {
+            /** Format: uuid */
+            grading_scheme: string;
+            /** Format: uuid */
+            subject_component: string;
+            name: string;
+            description?: string;
+            /** Format: decimal */
+            weight_percent: string;
+            sort_order?: number;
+        };
         CourseAssignment: {
             /** Format: uuid */
             readonly id: string;
@@ -2076,6 +2725,47 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
+        GradeBreakdown: {
+            /** Format: uuid */
+            student_id: string;
+            student_name: string;
+            /** Format: uuid */
+            grading_scheme_id: string;
+            /** Format: decimal */
+            suggested_grade: string | null;
+            components: components["schemas"]["GradeBreakdownComponent"][];
+        };
+        GradeBreakdownActivity: {
+            /** Format: uuid */
+            activity_id: string;
+            name: string;
+            activity_date: string;
+            /** Format: decimal */
+            max_score: string;
+            /** Format: decimal */
+            score: string | null;
+            notes: string;
+        };
+        GradeBreakdownComponent: {
+            /** Format: uuid */
+            component_id: string;
+            name: string;
+            /** Format: decimal */
+            weight_percent: string;
+            /** Format: decimal */
+            component_score: string | null;
+            segments: components["schemas"]["GradeBreakdownSegment"][];
+        };
+        GradeBreakdownSegment: {
+            /** Format: uuid */
+            segment_id: string;
+            name: string;
+            /** Format: decimal */
+            weight_percent: string;
+            /** Format: decimal */
+            segment_average: string | null;
+            activities: components["schemas"]["GradeBreakdownActivity"][];
+        };
         GradeDirector: {
             /** Format: uuid */
             readonly id: string;
@@ -2134,6 +2824,36 @@ export interface components {
             /** Format: decimal */
             definitive_grade?: string | null;
         };
+        GradingActivity: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            segment: string;
+            readonly segment_name: string;
+            readonly component_name: string;
+            name: string;
+            description?: string;
+            /** Format: date */
+            activity_date: string;
+            /** Format: decimal */
+            max_score?: string;
+            sort_order?: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        GradingActivityRequest: {
+            /** Format: uuid */
+            segment: string;
+            name: string;
+            description?: string;
+            /** Format: date */
+            activity_date: string;
+            /** Format: decimal */
+            max_score?: string;
+            sort_order?: number;
+        };
         GradingScale: {
             /** Format: uuid */
             readonly id: string;
@@ -2162,6 +2882,33 @@ export interface components {
             /** Format: decimal */
             max_score: string;
             description?: string;
+        };
+        GradingScheme: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            course_assignment: string;
+            readonly course_assignment_subject_name: string;
+            readonly course_assignment_group_name: string;
+            readonly course_assignment_teacher_name: string;
+            /** Format: uuid */
+            academic_period: string;
+            readonly academic_period_name: string;
+            readonly academic_period_number: number;
+            is_active?: boolean;
+            readonly subject_component_weights_valid: boolean;
+            readonly segment_weights_valid: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        GradingSchemeRequest: {
+            /** Format: uuid */
+            course_assignment: string;
+            /** Format: uuid */
+            academic_period: string;
+            is_active?: boolean;
         };
         Group: {
             /** Format: uuid */
@@ -2357,6 +3104,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Campus"][];
         };
+        PaginatedComponentSegmentList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["ComponentSegment"][];
+        };
         PaginatedCourseAssignmentList: {
             /** @example 123 */
             count: number;
@@ -2447,6 +3209,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Grade"][];
         };
+        PaginatedGradingActivityList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["GradingActivity"][];
+        };
         PaginatedGradingScaleList: {
             /** @example 123 */
             count: number;
@@ -2461,6 +3238,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["GradingScale"][];
+        };
+        PaginatedGradingSchemeList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["GradingScheme"][];
         };
         PaginatedGroupList: {
             /** @example 123 */
@@ -2537,6 +3329,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["SchoolRecord"][];
         };
+        PaginatedStudentActivityScoreList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["StudentActivityScore"][];
+        };
         PaginatedStudentGuardianList: {
             /** @example 123 */
             count: number;
@@ -2566,6 +3373,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Student"][];
+        };
+        PaginatedSubjectComponentList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["SubjectComponent"][];
         };
         PaginatedSubjectList: {
             /** @example 123 */
@@ -2710,6 +3532,17 @@ export interface components {
             name?: string;
             code?: string;
         };
+        PatchedComponentSegmentRequest: {
+            /** Format: uuid */
+            grading_scheme?: string;
+            /** Format: uuid */
+            subject_component?: string;
+            name?: string;
+            description?: string;
+            /** Format: decimal */
+            weight_percent?: string;
+            sort_order?: number;
+        };
         PatchedCourseAssignmentRequest: {
             /** Format: uuid */
             subject?: string;
@@ -2768,6 +3601,17 @@ export interface components {
             /** Format: decimal */
             definitive_grade?: string | null;
         };
+        PatchedGradingActivityRequest: {
+            /** Format: uuid */
+            segment?: string;
+            name?: string;
+            description?: string;
+            /** Format: date */
+            activity_date?: string;
+            /** Format: decimal */
+            max_score?: string;
+            sort_order?: number;
+        };
         PatchedGradingScaleRequest: {
             /** Format: uuid */
             institution?: string;
@@ -2778,6 +3622,13 @@ export interface components {
             /** Format: decimal */
             max_score?: string;
             description?: string;
+        };
+        PatchedGradingSchemeRequest: {
+            /** Format: uuid */
+            course_assignment?: string;
+            /** Format: uuid */
+            academic_period?: string;
+            is_active?: boolean;
         };
         PatchedGroupRequest: {
             /** Format: uuid */
@@ -2820,6 +3671,15 @@ export interface components {
             /** Format: decimal */
             definitive_average?: string | null;
         };
+        PatchedStudentActivityScoreRequest: {
+            /** Format: uuid */
+            activity?: string;
+            /** Format: uuid */
+            student?: string;
+            /** Format: decimal */
+            score?: string | null;
+            notes?: string;
+        };
         PatchedStudentGuardianRequest: {
             /** Format: uuid */
             student?: string;
@@ -2847,6 +3707,15 @@ export interface components {
             blood_type?: string;
             disability?: string;
             phone?: string;
+        };
+        PatchedSubjectComponentRequest: {
+            /** Format: uuid */
+            subject?: string;
+            name?: string;
+            description?: string;
+            /** Format: decimal */
+            weight_percent?: string;
+            sort_order?: number;
         };
         PatchedSubjectRequest: {
             /** Format: uuid */
@@ -3085,6 +3954,38 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
+        StudentActivityScore: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            activity: string;
+            readonly activity_name: string;
+            /** Format: date */
+            readonly activity_date: string;
+            /** Format: decimal */
+            readonly max_score: string;
+            /** Format: uuid */
+            student: string;
+            readonly student_name: string;
+            readonly student_document_number: string;
+            /** Format: decimal */
+            score?: string | null;
+            readonly score_pending: boolean;
+            notes?: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        StudentActivityScoreRequest: {
+            /** Format: uuid */
+            activity: string;
+            /** Format: uuid */
+            student: string;
+            /** Format: decimal */
+            score?: string | null;
+            notes?: string;
+        };
         StudentGuardian: {
             /** Format: uuid */
             readonly id: string;
@@ -3215,6 +4116,31 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
+        SubjectComponent: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            subject: string;
+            readonly subject_name: string;
+            name: string;
+            description?: string;
+            /** Format: decimal */
+            weight_percent: string;
+            sort_order?: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        SubjectComponentRequest: {
+            /** Format: uuid */
+            subject: string;
+            name: string;
+            description?: string;
+            /** Format: decimal */
+            weight_percent: string;
+            sort_order?: number;
+        };
         SubjectRequest: {
             /** Format: uuid */
             academic_area: string;
@@ -3289,6 +4215,10 @@ export interface components {
             parent?: string | null;
             /** Format: uuid */
             institution?: string | null;
+        };
+        ValidateWeights: {
+            valid: boolean;
+            message: string;
         };
     };
     responses: never;
@@ -4795,6 +5725,164 @@ export interface operations {
             };
         };
     };
+    component_segments_list: {
+        parameters: {
+            query?: {
+                /** @description Filter by exact value of `grading_scheme`. */
+                grading_scheme?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description Search text across: name, subject_component__name. */
+                search?: string;
+                /** @description Filter by exact value of `subject_component`. */
+                subject_component?: string;
+                /** @description Filter by exact value of `subject_component__subject`. */
+                subject_component__subject?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedComponentSegmentList"];
+                };
+            };
+        };
+    };
+    component_segments_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComponentSegmentRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ComponentSegmentRequest"];
+                "multipart/form-data": components["schemas"]["ComponentSegmentRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComponentSegment"];
+                };
+            };
+        };
+    };
+    component_segments_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Component Segment. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComponentSegment"];
+                };
+            };
+        };
+    };
+    component_segments_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Component Segment. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComponentSegmentRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ComponentSegmentRequest"];
+                "multipart/form-data": components["schemas"]["ComponentSegmentRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComponentSegment"];
+                };
+            };
+        };
+    };
+    component_segments_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Component Segment. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    component_segments_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Component Segment. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedComponentSegmentRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedComponentSegmentRequest"];
+                "multipart/form-data": components["schemas"]["PatchedComponentSegmentRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComponentSegment"];
+                };
+            };
+        };
+    };
     course_assignments_list: {
         parameters: {
             query?: {
@@ -5997,6 +7085,212 @@ export interface operations {
             };
         };
     };
+    grades_suggested_retrieve: {
+        parameters: {
+            query: {
+                /** @description UUID del periodo académico. */
+                academic_period: string;
+                /** @description UUID de la asignación de curso. */
+                course_assignment: string;
+                /** @description UUID del estudiante. */
+                student: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradeBreakdown"];
+                };
+            };
+            /** @description Error payload with an ``error`` message. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Resource not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    grading_activities_list: {
+        parameters: {
+            query?: {
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description Search text across: name, segment__name. */
+                search?: string;
+                /** @description Filter by exact value of `segment`. */
+                segment?: string;
+                /** @description Filter by exact value of `segment__grading_scheme`. */
+                segment__grading_scheme?: string;
+                /** @description Filter by exact value of `segment__subject_component`. */
+                segment__subject_component?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedGradingActivityList"];
+                };
+            };
+        };
+    };
+    grading_activities_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GradingActivityRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["GradingActivityRequest"];
+                "multipart/form-data": components["schemas"]["GradingActivityRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradingActivity"];
+                };
+            };
+        };
+    };
+    grading_activities_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Grading Activity. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradingActivity"];
+                };
+            };
+        };
+    };
+    grading_activities_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Grading Activity. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GradingActivityRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["GradingActivityRequest"];
+                "multipart/form-data": components["schemas"]["GradingActivityRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradingActivity"];
+                };
+            };
+        };
+    };
+    grading_activities_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Grading Activity. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    grading_activities_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Grading Activity. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedGradingActivityRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedGradingActivityRequest"];
+                "multipart/form-data": components["schemas"]["PatchedGradingActivityRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradingActivity"];
+                };
+            };
+        };
+    };
     grading_scales_list: {
         parameters: {
             query?: {
@@ -6179,6 +7473,320 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    grading_schemes_list: {
+        parameters: {
+            query?: {
+                /** @description Filter by exact value of `academic_period`. */
+                academic_period?: string;
+                /** @description Filter by exact value of `course_assignment`. */
+                course_assignment?: string;
+                /** @description Filter by exact value of `course_assignment__group`. */
+                course_assignment__group?: string;
+                /** @description Filter by exact value of `is_active`. */
+                is_active?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description Search text across: course_assignment__subject__name, course_assignment__group__name, course_assignment__teacher__full_name, academic_period__name. */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedGradingSchemeList"];
+                };
+            };
+        };
+    };
+    grading_schemes_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GradingSchemeRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["GradingSchemeRequest"];
+                "multipart/form-data": components["schemas"]["GradingSchemeRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradingScheme"];
+                };
+            };
+        };
+    };
+    grading_schemes_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Grading Scheme. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradingScheme"];
+                };
+            };
+        };
+    };
+    grading_schemes_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Grading Scheme. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GradingSchemeRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["GradingSchemeRequest"];
+                "multipart/form-data": components["schemas"]["GradingSchemeRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradingScheme"];
+                };
+            };
+        };
+    };
+    grading_schemes_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Grading Scheme. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    grading_schemes_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Grading Scheme. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedGradingSchemeRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedGradingSchemeRequest"];
+                "multipart/form-data": components["schemas"]["PatchedGradingSchemeRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradingScheme"];
+                };
+            };
+        };
+    };
+    grading_schemes_apply_suggestion_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Grading Scheme. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplySuggestionRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ApplySuggestionRequestRequest"];
+                "multipart/form-data": components["schemas"]["ApplySuggestionRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplySuggestionResponse"];
+                };
+            };
+            /** @description Error payload with an ``error`` message. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Resource not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    grading_schemes_breakdown_retrieve: {
+        parameters: {
+            query: {
+                /** @description UUID del estudiante. */
+                student: string;
+            };
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Grading Scheme. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradeBreakdown"];
+                };
+            };
+            /** @description Error payload with an ``error`` message. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Resource not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    grading_schemes_validate_weights_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Grading Scheme. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidateWeights"];
+                };
+            };
+        };
+    };
+    grading_schemes_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Estadísticas: schemes_created, components_created/updated, segments_created/updated, activities_created/updated, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkLoadGradingStructureStats"];
                 };
             };
             /** @description Validation failure or {"error": "..."}. */
@@ -7160,6 +8768,203 @@ export interface operations {
             };
         };
     };
+    student_activity_scores_list: {
+        parameters: {
+            query?: {
+                /** @description Filter by exact value of `activity`. */
+                activity?: string;
+                /** @description Filter by exact value of `activity__segment`. */
+                activity__segment?: string;
+                /** @description Filter by exact value of `activity__segment__grading_scheme`. */
+                activity__segment__grading_scheme?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description Search text across: student__full_name, student__document_number, activity__name. */
+                search?: string;
+                /** @description Filter by exact value of `student`. */
+                student?: string;
+                /** @description Filter by exact value of `student__document_number`. */
+                student__document_number?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedStudentActivityScoreList"];
+                };
+            };
+        };
+    };
+    student_activity_scores_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudentActivityScoreRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["StudentActivityScoreRequest"];
+                "multipart/form-data": components["schemas"]["StudentActivityScoreRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentActivityScore"];
+                };
+            };
+        };
+    };
+    student_activity_scores_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Student Activity Score. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentActivityScore"];
+                };
+            };
+        };
+    };
+    student_activity_scores_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Student Activity Score. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudentActivityScoreRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["StudentActivityScoreRequest"];
+                "multipart/form-data": components["schemas"]["StudentActivityScoreRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentActivityScore"];
+                };
+            };
+        };
+    };
+    student_activity_scores_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Student Activity Score. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    student_activity_scores_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Student Activity Score. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedStudentActivityScoreRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedStudentActivityScoreRequest"];
+                "multipart/form-data": components["schemas"]["PatchedStudentActivityScoreRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentActivityScore"];
+                };
+            };
+        };
+    };
+    student_activity_scores_bulk_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Estadísticas: created, updated, rows_processed, rows_skipped, errors[]. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkLoadStudentActivityScoresStats"];
+                };
+            };
+            /** @description Validation failure or {"error": "..."}. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     student_guardians_list: {
         parameters: {
             query?: {
@@ -7619,6 +9424,160 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    subject_components_list: {
+        parameters: {
+            query?: {
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description Search text across: name, subject__name. */
+                search?: string;
+                /** @description Filter by exact value of `subject`. */
+                subject?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedSubjectComponentList"];
+                };
+            };
+        };
+    };
+    subject_components_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubjectComponentRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SubjectComponentRequest"];
+                "multipart/form-data": components["schemas"]["SubjectComponentRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectComponent"];
+                };
+            };
+        };
+    };
+    subject_components_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Subject Component. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectComponent"];
+                };
+            };
+        };
+    };
+    subject_components_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Subject Component. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubjectComponentRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SubjectComponentRequest"];
+                "multipart/form-data": components["schemas"]["SubjectComponentRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectComponent"];
+                };
+            };
+        };
+    };
+    subject_components_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Subject Component. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    subject_components_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Subject Component. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSubjectComponentRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSubjectComponentRequest"];
+                "multipart/form-data": components["schemas"]["PatchedSubjectComponentRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectComponent"];
                 };
             };
         };

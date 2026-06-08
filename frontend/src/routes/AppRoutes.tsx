@@ -1,10 +1,11 @@
 import { Suspense } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 
 import { RoutePageFallback } from '@/components/RoutePageFallback'
 
 import { GenericListPage } from '@/features/admin/GenericListPage'
 import { resourceListConfigs } from '@/features/admin/resourceConfig'
+import { ActivityGradingLayout } from '@/layouts/ActivityGradingLayout'
 import { AdminLayout } from '@/layouts/AdminLayout'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import {
@@ -24,6 +25,8 @@ import {
   GradeDirectorsPage,
   GradeLevelsPage,
   GradesPage,
+  GradingSchemeDetailPage,
+  GradingSchemesPage,
   GradingConsolidatedReportPage,
   GradingScalesPage,
   GroupRankingsPage,
@@ -33,15 +36,24 @@ import {
   ParentsPage,
   PerformanceSummariesPage,
   SchoolRecordsPage,
+  StudentActivityScoresPage,
   StudentDetailPage,
   StudentFormPage,
   StudentGradesSummaryPage,
   StudentGuardiansPage,
   StudentsPage,
   SubjectsPage,
+  SuggestedGradesPage,
   TeachersPage,
   UsersPage,
 } from '@/routes/lazyPages'
+
+function RedirectLegacyGradingSchemeDetail() {
+  const { id } = useParams<{ id: string }>()
+  return (
+    <Navigate to={`/activity-grading/schemes/${id ?? ''}`} replace />
+  )
+}
 
 function LoginRoute() {
   return (
@@ -95,6 +107,27 @@ export function AppRoutes() {
             element={<CourseAssignmentsPage />}
           />
           <Route path="grading-scales" element={<GradingScalesPage />} />
+          <Route path="activity-grading" element={<ActivityGradingLayout />}>
+            <Route index element={<Navigate to="schemes" replace />} />
+            <Route path="schemes" element={<GradingSchemesPage />} />
+            <Route path="schemes/:id" element={<GradingSchemeDetailPage />} />
+            <Route
+              path="activity-scores"
+              element={<StudentActivityScoresPage />}
+            />
+            <Route
+              path="suggested-grades"
+              element={<SuggestedGradesPage />}
+            />
+          </Route>
+          <Route
+            path="grading-schemes"
+            element={<Navigate to="/activity-grading/schemes" replace />}
+          />
+          <Route
+            path="grading-schemes/:id"
+            element={<RedirectLegacyGradingSchemeDetail />}
+          />
           <Route path="grades" element={<GradesPage />} />
           <Route
             path="academic-indicator-catalogs"

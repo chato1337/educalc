@@ -3098,6 +3098,337 @@
                 }
             }
         },
+        "/api/component-segments/": {
+            "get": {
+                "operationId": "component_segments_list",
+                "description": "Subdivisiones configurables por el docente dentro de un componente de la asignatura. Los pesos de segmentos deben sumar 100% dentro de cada componente del esquema. Text search available through query param `search`. Supported fields: name, subject_component__name. Available exact-match filters via query params: grading_scheme, subject_component, subject_component__subject. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "summary": "List Component Segments",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "grading_scheme",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `grading_scheme`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Search text across: name, subject_component__name."
+                    },
+                    {
+                        "in": "query",
+                        "name": "subject_component",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `subject_component`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "subject_component__subject",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `subject_component__subject`."
+                    }
+                ],
+                "tags": [
+                    "Component Segments"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedComponentSegmentList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "component_segments_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Create Component Segments",
+                "tags": [
+                    "Component Segments"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ComponentSegmentRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ComponentSegmentRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ComponentSegmentRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ComponentSegment"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/component-segments/{id}/": {
+            "get": {
+                "operationId": "component_segments_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Get Component Segments",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Component Segment.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Component Segments"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ComponentSegment"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "component_segments_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Update Component Segments",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Component Segment.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Component Segments"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ComponentSegmentRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ComponentSegmentRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ComponentSegmentRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ComponentSegment"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "component_segments_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Partial update Component Segments",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Component Segment.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Component Segments"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedComponentSegmentRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedComponentSegmentRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedComponentSegmentRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ComponentSegment"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "component_segments_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Delete Component Segments",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Component Segment.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Component Segments"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
         "/api/course-assignments/": {
             "get": {
                 "operationId": "course_assignments_list",
@@ -5558,6 +5889,418 @@
                 }
             }
         },
+        "/api/grades/suggested/": {
+            "get": {
+                "operationId": "grades_suggested_retrieve",
+                "description": "Calcula la nota sugerida del periodo a partir de las notas por actividad registradas en el ``GradingScheme`` activo. Devuelve desglose por componentes, segmentos y actividades. La sugerencia no persiste en ``Grade``; el docente decide la nota oficial.",
+                "summary": "Suggested grade from activity scores",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "academic_period",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "UUID del periodo académico.",
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "course_assignment",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "UUID de la asignación de curso.",
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "student",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "UUID del estudiante.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Grades"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GradeBreakdown"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Error payload with an ``error`` message."
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Resource not found."
+                    }
+                }
+            }
+        },
+        "/api/grading-activities/": {
+            "get": {
+                "operationId": "grading_activities_list",
+                "description": "Actividades puntuales dentro de un segmento (plantilla compartida por el grupo). Text search available through query param `search`. Supported fields: name, segment__name. Available exact-match filters via query params: segment, segment__grading_scheme, segment__subject_component. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "summary": "List Grading Activities",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Search text across: name, segment__name."
+                    },
+                    {
+                        "in": "query",
+                        "name": "segment",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `segment`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "segment__grading_scheme",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `segment__grading_scheme`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "segment__subject_component",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `segment__subject_component`."
+                    }
+                ],
+                "tags": [
+                    "Grading Activities"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedGradingActivityList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "grading_activities_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Create Grading Activities",
+                "tags": [
+                    "Grading Activities"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GradingActivityRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GradingActivityRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GradingActivityRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GradingActivity"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/grading-activities/{id}/": {
+            "get": {
+                "operationId": "grading_activities_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Get Grading Activities",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Grading Activity.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Grading Activities"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GradingActivity"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "grading_activities_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Update Grading Activities",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Grading Activity.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Grading Activities"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GradingActivityRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GradingActivityRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GradingActivityRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GradingActivity"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "grading_activities_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Partial update Grading Activities",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Grading Activity.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Grading Activities"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedGradingActivityRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedGradingActivityRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedGradingActivityRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GradingActivity"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "grading_activities_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Delete Grading Activities",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Grading Activity.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Grading Activities"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
         "/api/grading-scales/": {
             "get": {
                 "operationId": "grading_scales_list",
@@ -5929,6 +6672,595 @@
                             }
                         },
                         "description": "Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
+                    }
+                }
+            }
+        },
+        "/api/grading-schemes/": {
+            "get": {
+                "operationId": "grading_schemes_list",
+                "description": "Esquema ponderado de evaluación por asignación de curso y periodo académico. Los componentes son catálogo por asignatura (admin); los docentes configuran segmentos. La nota sugerida calculada es autocompletado; la nota oficial permanece en Grade. Text search available through query param `search`. Supported fields: course_assignment__subject__name, course_assignment__group__name, course_assignment__teacher__full_name, academic_period__name. Available exact-match filters via query params: course_assignment, course_assignment__group, academic_period, is_active. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "summary": "List Grading Schemes",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "academic_period",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `academic_period`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "course_assignment",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `course_assignment`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "course_assignment__group",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `course_assignment__group`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "is_active",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `is_active`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Search text across: course_assignment__subject__name, course_assignment__group__name, course_assignment__teacher__full_name, academic_period__name."
+                    }
+                ],
+                "tags": [
+                    "Grading Schemes"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedGradingSchemeList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "grading_schemes_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Create Grading Schemes",
+                "tags": [
+                    "Grading Schemes"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GradingSchemeRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GradingSchemeRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GradingSchemeRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GradingScheme"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/grading-schemes/{id}/": {
+            "get": {
+                "operationId": "grading_schemes_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Get Grading Schemes",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Grading Scheme.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Grading Schemes"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GradingScheme"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "grading_schemes_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Update Grading Schemes",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Grading Scheme.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Grading Schemes"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GradingSchemeRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GradingSchemeRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GradingSchemeRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GradingScheme"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "grading_schemes_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Partial update Grading Schemes",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Grading Scheme.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Grading Schemes"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedGradingSchemeRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedGradingSchemeRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedGradingSchemeRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GradingScheme"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "grading_schemes_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Delete Grading Schemes",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Grading Scheme.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Grading Schemes"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/grading-schemes/{id}/apply-suggestion/": {
+            "post": {
+                "operationId": "grading_schemes_apply_suggestion_create",
+                "description": "Calcula la nota sugerida desde las actividades y la escribe en ``Grade.numerical_grade``, asignando también ``performance_level`` según la escala de la institución. No modifica ``definitive_grade``. Crea el registro ``Grade`` si no existe.",
+                "summary": "Apply suggested grade to Grade.numerical_grade",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Grading Scheme.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Grading Schemes"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApplySuggestionRequestRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApplySuggestionRequestRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApplySuggestionRequestRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApplySuggestionResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Error payload with an ``error`` message."
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Resource not found."
+                    }
+                }
+            }
+        },
+        "/api/grading-schemes/{id}/breakdown/": {
+            "get": {
+                "operationId": "grading_schemes_breakdown_retrieve",
+                "description": "Desglose ponderado y nota sugerida para un estudiante en el esquema indicado. Requiere que los pesos de componentes y segmentos sumen 100%.",
+                "summary": "Grade breakdown and suggested grade for a student",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Grading Scheme.",
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "student",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "UUID del estudiante.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Grading Schemes"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GradeBreakdown"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Error payload with an ``error`` message."
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Resource not found."
+                    }
+                }
+            }
+        },
+        "/api/grading-schemes/{id}/validate-weights/": {
+            "get": {
+                "operationId": "grading_schemes_validate_weights_retrieve",
+                "description": "Verifica que la suma de ``weight_percent`` de componentes del esquema sea 100% y que cada componente tenga segmentos que también sumen 100%.",
+                "summary": "Validate component and segment weights sum to 100%",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Grading Scheme.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Grading Schemes"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidateWeights"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/grading-schemes/bulk-load/": {
+            "post": {
+                "operationId": "grading_schemes_bulk_load_create",
+                "description": "Carga masiva de estructura de evaluación por fila (componente → segmento → actividad). Requiere ``CourseAssignment`` existente. Referencia: ``docs/bulk_load_grading_structure.csv``. Columnas: DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, ENFASIS (opcional), AREA_NOMBRE (opcional), DOC_DOCENTE (opcional), PERIODO_NUM, COMPONENTE_NOMBRE, COMPONENTE_PESO, COMPONENTE_ORDEN (opcional), SEGMENTO_NOMBRE, SEGMENTO_PESO, SEGMENTO_ORDEN (opcional), ACTIVIDAD_NOMBRE, ACTIVIDAD_FECHA, NOTA_MAXIMA (opcional), ACTIVIDAD_DESCRIPCION (opcional), ACTIVIDAD_ORDEN (opcional).",
+                "summary": "Bulk load grading structure from CSV",
+                "tags": [
+                    "Grading Schemes"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BulkLoadGradingStructureStats"
+                                }
+                            }
+                        },
+                        "description": "Estadísticas: schemes_created, components_created/updated, segments_created/updated, activities_created/updated, rows_processed, rows_skipped, errors[]."
                     },
                     "400": {
                         "content": {
@@ -7999,6 +9331,404 @@
                 }
             }
         },
+        "/api/student-activity-scores/": {
+            "get": {
+                "operationId": "student_activity_scores_list",
+                "description": "Notas individuales de estudiantes por actividad. score null = pendiente. No actualiza Grade automáticamente. Text search available through query param `search`. Supported fields: student__full_name, student__document_number, activity__name. Available exact-match filters via query params: activity, student, student__document_number, activity__segment, activity__segment__grading_scheme. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "summary": "List Student Activity Scores",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "activity",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `activity`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "activity__segment",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `activity__segment`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "activity__segment__grading_scheme",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `activity__segment__grading_scheme`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Search text across: student__full_name, student__document_number, activity__name."
+                    },
+                    {
+                        "in": "query",
+                        "name": "student",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `student`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "student__document_number",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `student__document_number`."
+                    }
+                ],
+                "tags": [
+                    "Student Activity Scores"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedStudentActivityScoreList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "student_activity_scores_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Create Student Activity Scores",
+                "tags": [
+                    "Student Activity Scores"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StudentActivityScoreRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StudentActivityScoreRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StudentActivityScoreRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StudentActivityScore"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/student-activity-scores/{id}/": {
+            "get": {
+                "operationId": "student_activity_scores_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Get Student Activity Scores",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Student Activity Score.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Student Activity Scores"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StudentActivityScore"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "student_activity_scores_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Update Student Activity Scores",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Student Activity Score.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Student Activity Scores"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StudentActivityScoreRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StudentActivityScoreRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StudentActivityScoreRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StudentActivityScore"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "student_activity_scores_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Partial update Student Activity Scores",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Student Activity Score.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Student Activity Scores"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedStudentActivityScoreRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedStudentActivityScoreRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedStudentActivityScoreRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StudentActivityScore"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "student_activity_scores_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Delete Student Activity Scores",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Student Activity Score.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Student Activity Scores"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/student-activity-scores/bulk-load/": {
+            "post": {
+                "operationId": "student_activity_scores_bulk_load_create",
+                "description": "Carga masiva de notas por estudiante y actividad. Requiere estructura de calificación cargada. No modifica registros ``Grade``. Referencia: ``docs/bulk_load_student_activity_scores.csv``. Columnas: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, ENFASIS (opcional), AREA_NOMBRE (opcional), DOC_DOCENTE (opcional), PERIODO_NUM, COMPONENTE_NOMBRE, SEGMENTO_NOMBRE, ACTIVIDAD_NOMBRE, ACTIVIDAD_FECHA (opcional), NOTA, OBSERVACIONES (opcional).",
+                "summary": "Bulk load student activity scores from CSV",
+                "tags": [
+                    "Student Activity Scores"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkLoadCsvUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BulkLoadStudentActivityScoresStats"
+                                }
+                            }
+                        },
+                        "description": "Estadísticas: created, updated, rows_processed, rows_skipped, errors[]."
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Validation failure or {\"error\": \"...\"}."
+                    }
+                }
+            }
+        },
         "/api/student-guardians/": {
             "get": {
                 "operationId": "student_guardians_list",
@@ -8959,6 +10689,321 @@
                             }
                         },
                         "description": "Validation failure or {\"error\": \"...\"}."
+                    }
+                }
+            }
+        },
+        "/api/subject-components/": {
+            "get": {
+                "operationId": "subject_components_list",
+                "description": "Catálogo de dimensiones de evaluación por asignatura (ej. cognitivo, actitudinal). Solo administradores pueden crear o modificar; los pesos deben sumar 100% por asignatura. Text search available through query param `search`. Supported fields: name, subject__name. Available exact-match filters via query params: subject. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "summary": "List Subject Components",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Search text across: name, subject__name."
+                    },
+                    {
+                        "in": "query",
+                        "name": "subject",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `subject`."
+                    }
+                ],
+                "tags": [
+                    "Subject Components"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedSubjectComponentList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "subject_components_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Create Subject Components",
+                "tags": [
+                    "Subject Components"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubjectComponentRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubjectComponentRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubjectComponentRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SubjectComponent"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/subject-components/{id}/": {
+            "get": {
+                "operationId": "subject_components_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Get Subject Components",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Subject Component.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Subject Components"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SubjectComponent"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "subject_components_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Update Subject Components",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Subject Component.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Subject Components"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubjectComponentRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubjectComponentRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubjectComponentRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SubjectComponent"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "subject_components_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Partial update Subject Components",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Subject Component.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Subject Components"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSubjectComponentRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSubjectComponentRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSubjectComponentRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SubjectComponent"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "subject_components_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
+                "summary": "Delete Subject Components",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Subject Component.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Subject Components"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
                     }
                 }
             }
@@ -10709,6 +12754,60 @@
                     "year"
                 ]
             },
+            "ApplySuggestionRequestRequest": {
+                "type": "object",
+                "properties": {
+                    "student": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "UUID del estudiante."
+                    }
+                },
+                "required": [
+                    "student"
+                ]
+            },
+            "ApplySuggestionResponse": {
+                "type": "object",
+                "properties": {
+                    "grade_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "numerical_grade": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$"
+                    },
+                    "performance_level": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "performance_level_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "definitive_grade": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    },
+                    "created": {
+                        "type": "boolean",
+                        "description": "True si se creó un nuevo registro Grade."
+                    }
+                },
+                "required": [
+                    "created",
+                    "definitive_grade",
+                    "grade_id",
+                    "numerical_grade",
+                    "performance_level",
+                    "performance_level_name"
+                ]
+            },
             "Attendance": {
                 "type": "object",
                 "properties": {
@@ -10815,6 +12914,90 @@
                     "file"
                 ]
             },
+            "BulkLoadGradingStructureStats": {
+                "type": "object",
+                "properties": {
+                    "rows_processed": {
+                        "type": "integer"
+                    },
+                    "rows_skipped": {
+                        "type": "integer"
+                    },
+                    "schemes_created": {
+                        "type": "integer"
+                    },
+                    "components_created": {
+                        "type": "integer"
+                    },
+                    "components_updated": {
+                        "type": "integer"
+                    },
+                    "segments_created": {
+                        "type": "integer"
+                    },
+                    "segments_updated": {
+                        "type": "integer"
+                    },
+                    "activities_created": {
+                        "type": "integer"
+                    },
+                    "activities_updated": {
+                        "type": "integer"
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        },
+                        "description": "Lista de {row, error}."
+                    }
+                },
+                "required": [
+                    "activities_created",
+                    "activities_updated",
+                    "components_created",
+                    "components_updated",
+                    "errors",
+                    "rows_processed",
+                    "rows_skipped",
+                    "schemes_created",
+                    "segments_created",
+                    "segments_updated"
+                ]
+            },
+            "BulkLoadStudentActivityScoresStats": {
+                "type": "object",
+                "properties": {
+                    "rows_processed": {
+                        "type": "integer"
+                    },
+                    "rows_skipped": {
+                        "type": "integer"
+                    },
+                    "created": {
+                        "type": "integer"
+                    },
+                    "updated": {
+                        "type": "integer"
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        },
+                        "description": "Lista de {row, error}."
+                    }
+                },
+                "required": [
+                    "created",
+                    "errors",
+                    "rows_processed",
+                    "rows_skipped",
+                    "updated"
+                ]
+            },
             "BulkLoadStudentsCsvRequest": {
                 "type": "object",
                 "description": "Request serializer for student bulk load (OpenAPI: multipart field ``file``).",
@@ -10906,6 +13089,102 @@
                 ],
                 "type": "string",
                 "description": "* `invalid_transfer` - invalid_transfer\n* `student_not_found` - student_not_found\n* `group_not_found` - group_not_found\n* `no_active_enrollment` - no_active_enrollment\n* `same_group` - same_group\n* `institution_mismatch` - institution_mismatch"
+            },
+            "ComponentSegment": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "grading_scheme": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "subject_component": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "subject_component_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "weight_percent": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$"
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "grading_scheme",
+                    "id",
+                    "name",
+                    "subject_component",
+                    "subject_component_name",
+                    "updated_at",
+                    "weight_percent"
+                ]
+            },
+            "ComponentSegmentRequest": {
+                "type": "object",
+                "properties": {
+                    "grading_scheme": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "subject_component": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "weight_percent": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$"
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "grading_scheme",
+                    "name",
+                    "subject_component",
+                    "weight_percent"
+                ]
             },
             "CourseAssignment": {
                 "type": "object",
@@ -11488,6 +13767,150 @@
                     "updated_at"
                 ]
             },
+            "GradeBreakdown": {
+                "type": "object",
+                "properties": {
+                    "student_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "student_name": {
+                        "type": "string"
+                    },
+                    "grading_scheme_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "suggested_grade": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    },
+                    "components": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GradeBreakdownComponent"
+                        }
+                    }
+                },
+                "required": [
+                    "components",
+                    "grading_scheme_id",
+                    "student_id",
+                    "student_name",
+                    "suggested_grade"
+                ]
+            },
+            "GradeBreakdownActivity": {
+                "type": "object",
+                "properties": {
+                    "activity_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "activity_date": {
+                        "type": "string"
+                    },
+                    "max_score": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$"
+                    },
+                    "score": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "activity_date",
+                    "activity_id",
+                    "max_score",
+                    "name",
+                    "notes",
+                    "score"
+                ]
+            },
+            "GradeBreakdownComponent": {
+                "type": "object",
+                "properties": {
+                    "component_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "weight_percent": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$"
+                    },
+                    "component_score": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    },
+                    "segments": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GradeBreakdownSegment"
+                        }
+                    }
+                },
+                "required": [
+                    "component_id",
+                    "component_score",
+                    "name",
+                    "segments",
+                    "weight_percent"
+                ]
+            },
+            "GradeBreakdownSegment": {
+                "type": "object",
+                "properties": {
+                    "segment_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "weight_percent": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$"
+                    },
+                    "segment_average": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    },
+                    "activities": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GradeBreakdownActivity"
+                        }
+                    }
+                },
+                "required": [
+                    "activities",
+                    "name",
+                    "segment_average",
+                    "segment_id",
+                    "weight_percent"
+                ]
+            },
             "GradeDirector": {
                 "type": "object",
                 "properties": {
@@ -11672,6 +14095,105 @@
                     "student"
                 ]
             },
+            "GradingActivity": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "segment": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "segment_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "component_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "activity_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "max_score": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$"
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "activity_date",
+                    "component_name",
+                    "created_at",
+                    "id",
+                    "name",
+                    "segment",
+                    "segment_name",
+                    "updated_at"
+                ]
+            },
+            "GradingActivityRequest": {
+                "type": "object",
+                "properties": {
+                    "segment": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "activity_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "max_score": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$"
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "activity_date",
+                    "name",
+                    "segment"
+                ]
+            },
             "GradingScale": {
                 "type": "object",
                 "properties": {
@@ -11771,6 +14293,99 @@
                     "max_score",
                     "min_score",
                     "name"
+                ]
+            },
+            "GradingScheme": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "course_assignment": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "course_assignment_subject_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "course_assignment_group_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "course_assignment_teacher_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "academic_period": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "academic_period_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "academic_period_number": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "subject_component_weights_valid": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "segment_weights_valid": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "academic_period",
+                    "academic_period_name",
+                    "academic_period_number",
+                    "course_assignment",
+                    "course_assignment_group_name",
+                    "course_assignment_subject_name",
+                    "course_assignment_teacher_name",
+                    "created_at",
+                    "id",
+                    "segment_weights_valid",
+                    "subject_component_weights_valid",
+                    "updated_at"
+                ]
+            },
+            "GradingSchemeRequest": {
+                "type": "object",
+                "properties": {
+                    "course_assignment": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "academic_period": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "academic_period",
+                    "course_assignment"
                 ]
             },
             "Group": {
@@ -12248,6 +14863,37 @@
                     }
                 }
             },
+            "PaginatedComponentSegmentList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ComponentSegment"
+                        }
+                    }
+                }
+            },
             "PaginatedCourseAssignmentList": {
                 "type": "object",
                 "required": [
@@ -12434,6 +15080,37 @@
                     }
                 }
             },
+            "PaginatedGradingActivityList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GradingActivity"
+                        }
+                    }
+                }
+            },
             "PaginatedGradingScaleList": {
                 "type": "object",
                 "required": [
@@ -12461,6 +15138,37 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/GradingScale"
+                        }
+                    }
+                }
+            },
+            "PaginatedGradingSchemeList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GradingScheme"
                         }
                     }
                 }
@@ -12620,6 +15328,37 @@
                     }
                 }
             },
+            "PaginatedStudentActivityScoreList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StudentActivityScore"
+                        }
+                    }
+                }
+            },
             "PaginatedStudentGuardianList": {
                 "type": "object",
                 "required": [
@@ -12678,6 +15417,37 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/Student"
+                        }
+                    }
+                }
+            },
+            "PaginatedSubjectComponentList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SubjectComponent"
                         }
                     }
                 }
@@ -13090,6 +15860,37 @@
                     }
                 }
             },
+            "PatchedComponentSegmentRequest": {
+                "type": "object",
+                "properties": {
+                    "grading_scheme": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "subject_component": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "weight_percent": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$"
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0
+                    }
+                }
+            },
             "PatchedCourseAssignmentRequest": {
                 "type": "object",
                 "properties": {
@@ -13226,6 +16027,37 @@
                     }
                 }
             },
+            "PatchedGradingActivityRequest": {
+                "type": "object",
+                "properties": {
+                    "segment": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "activity_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "max_score": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$"
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0
+                    }
+                }
+            },
             "PatchedGradingScaleRequest": {
                 "type": "object",
                 "properties": {
@@ -13256,6 +16088,22 @@
                     "description": {
                         "type": "string",
                         "maxLength": 255
+                    }
+                }
+            },
+            "PatchedGradingSchemeRequest": {
+                "type": "object",
+                "properties": {
+                    "course_assignment": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "academic_period": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "is_active": {
+                        "type": "boolean"
                     }
                 }
             },
@@ -13388,6 +16236,28 @@
                     }
                 }
             },
+            "PatchedStudentActivityScoreRequest": {
+                "type": "object",
+                "properties": {
+                    "activity": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "student": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "score": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string"
+                    }
+                }
+            },
             "PatchedStudentGuardianRequest": {
                 "type": "object",
                 "properties": {
@@ -13479,6 +16349,33 @@
                     "phone": {
                         "type": "string",
                         "maxLength": 30
+                    }
+                }
+            },
+            "PatchedSubjectComponentRequest": {
+                "type": "object",
+                "properties": {
+                    "subject": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "weight_percent": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$"
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0
                     }
                 }
             },
@@ -14059,6 +16956,109 @@
                     "updated_at"
                 ]
             },
+            "StudentActivityScore": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "activity": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "activity_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "activity_date": {
+                        "type": "string",
+                        "format": "date",
+                        "readOnly": true
+                    },
+                    "max_score": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$",
+                        "readOnly": true
+                    },
+                    "student": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "student_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "student_document_number": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "score": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    },
+                    "score_pending": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "activity",
+                    "activity_date",
+                    "activity_name",
+                    "created_at",
+                    "id",
+                    "max_score",
+                    "score_pending",
+                    "student",
+                    "student_document_number",
+                    "student_name",
+                    "updated_at"
+                ]
+            },
+            "StudentActivityScoreRequest": {
+                "type": "object",
+                "properties": {
+                    "activity": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "student": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "score": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "activity",
+                    "student"
+                ]
+            },
             "StudentGuardian": {
                 "type": "object",
                 "properties": {
@@ -14413,6 +17413,92 @@
                     "updated_at"
                 ]
             },
+            "SubjectComponent": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "subject": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "subject_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "weight_percent": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$"
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "id",
+                    "name",
+                    "subject",
+                    "subject_name",
+                    "updated_at",
+                    "weight_percent"
+                ]
+            },
+            "SubjectComponentRequest": {
+                "type": "object",
+                "properties": {
+                    "subject": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "weight_percent": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$"
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "name",
+                    "subject",
+                    "weight_percent"
+                ]
+            },
             "SubjectRequest": {
                 "type": "object",
                 "properties": {
@@ -14678,6 +17764,21 @@
                 },
                 "required": [
                     "user"
+                ]
+            },
+            "ValidateWeights": {
+                "type": "object",
+                "properties": {
+                    "valid": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message",
+                    "valid"
                 ]
             }
         },

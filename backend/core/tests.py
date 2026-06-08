@@ -1,3 +1,4 @@
+import io
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -6,6 +7,15 @@ from django.utils import timezone
 from django.urls import reverse
 from rest_framework.test import APIClient
 
+from .bulk_load_grading import (
+    bulk_load_grading_structure,
+    bulk_load_student_activity_scores,
+)
+from .grading_suggestion_service import (
+    build_grade_breakdown,
+    compute_suggested_grade,
+    validate_scheme_weights,
+)
 from .models import (
     AcademicArea,
     AcademicIndicator,
@@ -15,17 +25,23 @@ from .models import (
     AcademicYear,
     Attendance,
     Campus,
+    ComponentSegment,
     CourseAssignment,
     Enrollment,
     Grade,
     GradeDirector,
     GradeLevel,
+    GradingActivity,
+    GradingScale,
+    GradingScheme,
     Group,
     Institution,
     PerformanceSummary,
     SchoolRecord,
     Student,
+    StudentActivityScore,
     Subject,
+    SubjectComponent,
     Teacher,
     UserProfile,
 )
@@ -982,3 +998,482 @@ class StudentTransferApiTests(TransactionTestCase):
         )
         self.assertEqual(r.status_code, 400)
         self.assertEqual(r.data["code"], "no_active_enrollment")
+
+
+class ActivityGradingModuleTests(TestCase):
+    """Activity-based grading structure, calculation and API."""
+
+    def setUp(self):
+        self.client = APIClient()
+        User = get_user_model()
+        self.teacher_user = User.objects.create_user(username="gradteacher", password="x")
+        self.other_teacher_user = User.objects.create_user(
+            username="gradother", password="x"
+        )
+        self.inst = Institution.objects.create(name="IE Grading", dane_code="123456789012")
+        self.campus = Campus.objects.create(institution=self.inst, name="Sede Grading")
+        self.ay = AcademicYear.objects.create(institution=self.inst, year=2026)
+        self.gl = GradeLevel.objects.create(
+            institution=self.inst, name="SEXTO", level_order=6
+        )
+        self.group = Group.objects.create(
+            grade_level=self.gl,
+            academic_year=self.ay,
+            campus=self.campus,
+            name="601",
+        )
+        self.period = AcademicPeriod.objects.create(
+            academic_year=self.ay, number=1, name="P1"
+        )
+        self.area = AcademicArea.objects.create(
+            institution=self.inst, name="Matemáticas"
+        )
+        self.teacher = Teacher.objects.create(
+            document_number="GT1",
+            first_name="Ana",
+            first_last_name="Docente",
+            full_name="Ana Docente",
+        )
+        self.other_teacher = Teacher.objects.create(
+            document_number="GT2",
+            first_name="Otro",
+            first_last_name="Docente",
+            full_name="Otro Docente",
+        )
+        self.subject = Subject.objects.create(
+            academic_area=self.area,
+            institution=self.inst,
+            name="Matemáticas",
+        )
+        self.ca = CourseAssignment.objects.create(
+            subject=self.subject,
+            teacher=self.teacher,
+            group=self.group,
+            academic_year=self.ay,
+        )
+        self.other_group = Group.objects.create(
+            grade_level=self.gl,
+            academic_year=self.ay,
+            campus=self.campus,
+            name="602",
+        )
+        self.other_ca = CourseAssignment.objects.create(
+            subject=self.subject,
+            teacher=self.other_teacher,
+            group=self.other_group,
+            academic_year=self.ay,
+        )
+        self.student = Student.objects.create(
+            document_number="GS1",
+            first_name="Juan",
+            first_last_name="Pérez",
+            full_name="Juan Pérez",
+        )
+        Enrollment.objects.create(
+            student=self.student,
+            group=self.group,
+            academic_year=self.ay,
+            status="active",
+        )
+        UserProfile.objects.filter(user=self.teacher_user).update(
+            role="TEACHER",
+            teacher_id=self.teacher.id,
+            institution_id=self.inst.id,
+        )
+        UserProfile.objects.filter(user=self.other_teacher_user).update(
+            role="TEACHER",
+            teacher_id=self.other_teacher.id,
+            institution_id=self.inst.id,
+        )
+        self.teacher_user = User.objects.select_related("profile").get(
+            pk=self.teacher_user.pk
+        )
+        self.other_teacher_user = User.objects.select_related("profile").get(
+            pk=self.other_teacher_user.pk
+        )
+        self.client.force_authenticate(user=self.teacher_user)
+
+    def _build_valid_scheme(self):
+        scheme = GradingScheme.objects.create(
+            course_assignment=self.ca,
+            academic_period=self.period,
+        )
+        cognitive = SubjectComponent.objects.create(
+            subject=self.subject,
+            name="Cognitivo",
+            weight_percent=Decimal("60.00"),
+            sort_order=1,
+        )
+        attitudinal = SubjectComponent.objects.create(
+            subject=self.subject,
+            name="Actitudinal",
+            weight_percent=Decimal("40.00"),
+            sort_order=2,
+        )
+        evals = ComponentSegment.objects.create(
+            grading_scheme=scheme,
+            subject_component=cognitive,
+            name="Evaluaciones",
+            weight_percent=Decimal("40.00"),
+            sort_order=1,
+        )
+        workshops = ComponentSegment.objects.create(
+            grading_scheme=scheme,
+            subject_component=cognitive,
+            name="Talleres",
+            weight_percent=Decimal("60.00"),
+            sort_order=2,
+        )
+        attitude_seg = ComponentSegment.objects.create(
+            grading_scheme=scheme,
+            subject_component=attitudinal,
+            name="Participación",
+            weight_percent=Decimal("100.00"),
+            sort_order=1,
+        )
+        quiz1 = GradingActivity.objects.create(
+            segment=evals,
+            name="Quiz 1",
+            activity_date=timezone.now().date(),
+            sort_order=1,
+        )
+        partial = GradingActivity.objects.create(
+            segment=evals,
+            name="Parcial",
+            activity_date=timezone.now().date(),
+            sort_order=2,
+        )
+        workshop = GradingActivity.objects.create(
+            segment=workshops,
+            name="Taller álgebra",
+            activity_date=timezone.now().date(),
+            sort_order=1,
+        )
+        attitude_act = GradingActivity.objects.create(
+            segment=attitude_seg,
+            name="Asistencia activa",
+            activity_date=timezone.now().date(),
+            sort_order=1,
+        )
+        return scheme, quiz1, partial, workshop, attitude_act
+
+    def _create_default_grading_scales(self):
+        specs = (
+            ("SP", "Superior", Decimal("4.60"), Decimal("5.00")),
+            ("AL", "Alto", Decimal("4.00"), Decimal("4.59")),
+            ("BS", "Básico", Decimal("3.00"), Decimal("3.99")),
+            ("BJ", "Bajo", Decimal("1.00"), Decimal("2.99")),
+        )
+        return [
+            GradingScale.objects.create(
+                institution=self.inst,
+                code=code,
+                name=name,
+                min_score=lo,
+                max_score=hi,
+            )
+            for code, name, lo, hi in specs
+        ]
+
+    def test_validate_scheme_weights_rejects_invalid_component_sum(self):
+        SubjectComponent.objects.create(
+            subject=self.subject,
+            name="Solo",
+            weight_percent=Decimal("60.00"),
+        )
+        scheme = GradingScheme.objects.create(
+            course_assignment=self.ca,
+            academic_period=self.period,
+        )
+        with self.assertRaises(Exception):
+            validate_scheme_weights(scheme)
+
+    def test_validate_scheme_weights_rejects_invalid_segment_sum(self):
+        component = SubjectComponent.objects.create(
+            subject=self.subject,
+            name="Cognitivo",
+            weight_percent=Decimal("100.00"),
+        )
+        scheme = GradingScheme.objects.create(
+            course_assignment=self.ca,
+            academic_period=self.period,
+        )
+        ComponentSegment.objects.create(
+            grading_scheme=scheme,
+            subject_component=component,
+            name="Evaluaciones",
+            weight_percent=Decimal("30.00"),
+        )
+        with self.assertRaises(Exception):
+            validate_scheme_weights(scheme)
+
+    def test_compute_suggested_grade_weighted_average(self):
+        scheme, quiz1, partial, workshop, attitude_act = self._build_valid_scheme()
+        StudentActivityScore.objects.create(
+            activity=quiz1, student=self.student, score=Decimal("4.50")
+        )
+        StudentActivityScore.objects.create(
+            activity=partial, student=self.student, score=Decimal("4.00")
+        )
+        StudentActivityScore.objects.create(
+            activity=workshop, student=self.student, score=Decimal("5.00")
+        )
+        StudentActivityScore.objects.create(
+            activity=attitude_act, student=self.student, score=Decimal("4.00")
+        )
+        # Cognitivo: evals avg 4.25 (40%) + workshops 5.0 (60%) = 4.70
+        # Actitudinal: 4.00
+        # Total: 4.70*0.60 + 4.00*0.40 = 4.42
+        suggested = compute_suggested_grade(self.student, scheme)
+        self.assertEqual(suggested, Decimal("4.42"))
+
+    def test_compute_suggested_grade_excludes_segments_without_scores(self):
+        scheme, quiz1, partial, workshop, _ = self._build_valid_scheme()
+        SubjectComponent.objects.filter(subject=self.subject).exclude(
+            name="Cognitivo"
+        ).delete()
+        SubjectComponent.objects.filter(subject=self.subject).update(
+            weight_percent=Decimal("100.00")
+        )
+        StudentActivityScore.objects.create(
+            activity=quiz1, student=self.student, score=Decimal("4.00")
+        )
+        StudentActivityScore.objects.create(
+            activity=partial, student=self.student, score=Decimal("4.00")
+        )
+        # Only evals segment has scores; workshops excluded → segment avg 4.00
+        suggested = compute_suggested_grade(self.student, scheme)
+        self.assertEqual(suggested, Decimal("4.00"))
+
+    def test_activity_score_does_not_modify_grade(self):
+        scheme, quiz1, _, _, _ = self._build_valid_scheme()
+        grade = Grade.objects.create(
+            student=self.student,
+            course_assignment=self.ca,
+            academic_period=self.period,
+            numerical_grade=Decimal("3.00"),
+            definitive_grade=Decimal("3.50"),
+        )
+        StudentActivityScore.objects.create(
+            activity=quiz1, student=self.student, score=Decimal("5.00")
+        )
+        grade.refresh_from_db()
+        self.assertEqual(grade.numerical_grade, Decimal("3.00"))
+        self.assertEqual(grade.definitive_grade, Decimal("3.50"))
+
+    def test_breakdown_api_returns_suggested_grade(self):
+        scheme, quiz1, partial, workshop, attitude_act = self._build_valid_scheme()
+        for activity, score in (
+            (quiz1, "4.50"),
+            (partial, "4.00"),
+            (workshop, "5.00"),
+            (attitude_act, "4.00"),
+        ):
+            StudentActivityScore.objects.create(
+                activity=activity,
+                student=self.student,
+                score=Decimal(score),
+            )
+        url = reverse("gradingscheme-breakdown", kwargs={"pk": scheme.id})
+        r = self.client.get(url, {"student": str(self.student.id)})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(Decimal(str(r.data["suggested_grade"])), Decimal("4.42"))
+        self.assertEqual(len(r.data["components"]), 2)
+
+    def test_suggested_grade_endpoint(self):
+        scheme, quiz1, _, _, _ = self._build_valid_scheme()
+        SubjectComponent.objects.filter(subject=self.subject).exclude(
+            name="Cognitivo"
+        ).delete()
+        SubjectComponent.objects.filter(subject=self.subject).update(
+            weight_percent=Decimal("100.00")
+        )
+        ComponentSegment.objects.filter(grading_scheme=scheme).exclude(
+            name="Evaluaciones"
+        ).delete()
+        ComponentSegment.objects.filter(
+            grading_scheme=scheme, name="Evaluaciones"
+        ).update(weight_percent=Decimal("100.00"))
+        StudentActivityScore.objects.create(
+            activity=quiz1, student=self.student, score=Decimal("4.50")
+        )
+        url = reverse("grade-suggested")
+        r = self.client.get(
+            url,
+            {
+                "student": str(self.student.id),
+                "course_assignment": str(self.ca.id),
+                "academic_period": str(self.period.id),
+            },
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(Decimal(str(r.data["suggested_grade"])), Decimal("4.50"))
+
+    def test_apply_suggestion_updates_numerical_not_definitive(self):
+        self._create_default_grading_scales()
+        scheme, quiz1, _, _, _ = self._build_valid_scheme()
+        SubjectComponent.objects.filter(subject=self.subject).exclude(
+            name="Cognitivo"
+        ).delete()
+        SubjectComponent.objects.filter(subject=self.subject).update(
+            weight_percent=Decimal("100.00")
+        )
+        ComponentSegment.objects.filter(grading_scheme=scheme).exclude(
+            name="Evaluaciones"
+        ).delete()
+        ComponentSegment.objects.filter(
+            grading_scheme=scheme, name="Evaluaciones"
+        ).update(weight_percent=Decimal("100.00"))
+        StudentActivityScore.objects.create(
+            activity=quiz1, student=self.student, score=Decimal("4.80")
+        )
+        grade = Grade.objects.create(
+            student=self.student,
+            course_assignment=self.ca,
+            academic_period=self.period,
+            numerical_grade=Decimal("3.00"),
+            definitive_grade=Decimal("3.50"),
+        )
+        url = reverse("gradingscheme-apply-suggestion", kwargs={"pk": scheme.id})
+        r = self.client.post(url, {"student": str(self.student.id)}, format="json")
+        self.assertEqual(r.status_code, 200)
+        grade.refresh_from_db()
+        self.assertEqual(grade.numerical_grade, Decimal("4.80"))
+        self.assertEqual(grade.definitive_grade, Decimal("3.50"))
+        self.assertIsNotNone(grade.performance_level_id)
+        self.assertEqual(grade.performance_level.code, "SP")
+        self.assertEqual(r.data["performance_level_name"], "Superior")
+
+    def test_teacher_cannot_see_other_teacher_scheme(self):
+        other_scheme = GradingScheme.objects.create(
+            course_assignment=self.other_ca,
+            academic_period=self.period,
+        )
+        url = reverse("gradingscheme-detail", kwargs={"pk": other_scheme.id})
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 404)
+
+    def test_validate_weights_endpoint_rejects_invalid_scheme(self):
+        SubjectComponent.objects.create(
+            subject=self.subject,
+            name="Parcial",
+            weight_percent=Decimal("70.00"),
+        )
+        scheme = GradingScheme.objects.create(
+            course_assignment=self.ca,
+            academic_period=self.period,
+        )
+        url = reverse("gradingscheme-validate-weights", kwargs={"pk": scheme.id})
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(r.data["valid"])
+        self.assertIn("100%", r.data["message"])
+
+    def test_student_activity_score_rejects_out_of_range(self):
+        scheme, quiz1, _, _, _ = self._build_valid_scheme()
+        url = reverse("studentactivityscore-list")
+        r = self.client.post(
+            url,
+            {
+                "activity": str(quiz1.id),
+                "student": str(self.student.id),
+                "score": "6.00",
+            },
+            format="json",
+        )
+        self.assertEqual(r.status_code, 400)
+
+    def _csv_bytes(self, content: str) -> io.BytesIO:
+        return io.BytesIO(content.encode("utf-8-sig"))
+
+    def test_bulk_load_grading_structure_creates_hierarchy(self):
+        csv = self._csv_bytes(
+            "DANE_COD,ANO,SEDE,GRADO,GRUPO,ASIGNATURA_NOMBRE,PERIODO_NUM,"
+            "COMPONENTE_NOMBRE,COMPONENTE_PESO,SEGMENTO_NOMBRE,SEGMENTO_PESO,"
+            "ACTIVIDAD_NOMBRE,ACTIVIDAD_FECHA\n"
+            f"{self.inst.dane_code},{self.ay.year},{self.campus.name},SEXTO,601,"
+            f"Matemáticas,1,Cognitivo,100,Evaluaciones,100,Quiz 1,2026-03-01\n"
+        )
+        stats = bulk_load_grading_structure(csv)
+        self.assertEqual(stats["rows_processed"], 1)
+        self.assertEqual(stats["schemes_created"], 1)
+        self.assertEqual(stats["components_created"], 1)
+        self.assertEqual(stats["segments_created"], 1)
+        self.assertEqual(stats["activities_created"], 1)
+        self.assertTrue(
+            GradingScheme.objects.filter(
+                course_assignment=self.ca, academic_period=self.period
+            ).exists()
+        )
+
+    def test_bulk_load_student_activity_scores_creates_and_updates(self):
+        scheme, quiz1, _, _, _ = self._build_valid_scheme()
+        csv_create = self._csv_bytes(
+            "DOC_ESTUDIANTE,DANE_COD,ANO,SEDE,GRADO,GRUPO,ASIGNATURA_NOMBRE,PERIODO_NUM,"
+            "COMPONENTE_NOMBRE,SEGMENTO_NOMBRE,ACTIVIDAD_NOMBRE,ACTIVIDAD_FECHA,NOTA\n"
+            f"{self.student.document_number},{self.inst.dane_code},{self.ay.year},"
+            f"{self.campus.name},SEXTO,601,Matemáticas,1,Cognitivo,Evaluaciones,"
+            f"Quiz 1,{quiz1.activity_date},4.50\n"
+        )
+        stats = bulk_load_student_activity_scores(csv_create)
+        self.assertEqual(stats["rows_processed"], 1)
+        self.assertEqual(stats["created"], 1)
+        score = StudentActivityScore.objects.get(activity=quiz1, student=self.student)
+        self.assertEqual(score.score, Decimal("4.50"))
+
+        csv_update = self._csv_bytes(
+            "DOC_ESTUDIANTE,DANE_COD,ANO,SEDE,GRADO,GRUPO,ASIGNATURA_NOMBRE,PERIODO_NUM,"
+            "COMPONENTE_NOMBRE,SEGMENTO_NOMBRE,ACTIVIDAD_NOMBRE,ACTIVIDAD_FECHA,NOTA\n"
+            f"{self.student.document_number},{self.inst.dane_code},{self.ay.year},"
+            f"{self.campus.name},SEXTO,601,Matemáticas,1,Cognitivo,Evaluaciones,"
+            f"Quiz 1,{quiz1.activity_date},4.80\n"
+        )
+        stats2 = bulk_load_student_activity_scores(csv_update)
+        self.assertEqual(stats2["updated"], 1)
+        score.refresh_from_db()
+        self.assertEqual(score.score, Decimal("4.80"))
+
+    def test_bulk_load_student_activity_scores_does_not_modify_grade(self):
+        scheme, quiz1, _, _, _ = self._build_valid_scheme()
+        Grade.objects.create(
+            student=self.student,
+            course_assignment=self.ca,
+            academic_period=self.period,
+            numerical_grade=Decimal("3.00"),
+            definitive_grade=Decimal("3.50"),
+        )
+        csv = self._csv_bytes(
+            "DOC_ESTUDIANTE,DANE_COD,ANO,SEDE,GRADO,GRUPO,ASIGNATURA_NOMBRE,PERIODO_NUM,"
+            "COMPONENTE_NOMBRE,SEGMENTO_NOMBRE,ACTIVIDAD_NOMBRE,ACTIVIDAD_FECHA,NOTA\n"
+            f"{self.student.document_number},{self.inst.dane_code},{self.ay.year},"
+            f"{self.campus.name},SEXTO,601,Matemáticas,1,Cognitivo,Evaluaciones,"
+            f"Quiz 1,{quiz1.activity_date},5.00\n"
+        )
+        bulk_load_student_activity_scores(csv)
+        grade = Grade.objects.get(
+            student=self.student,
+            course_assignment=self.ca,
+            academic_period=self.period,
+        )
+        self.assertEqual(grade.numerical_grade, Decimal("3.00"))
+        self.assertEqual(grade.definitive_grade, Decimal("3.50"))
+
+    def test_bulk_load_student_activity_scores_api(self):
+        scheme, quiz1, _, _, _ = self._build_valid_scheme()
+        csv_body = (
+            "DOC_ESTUDIANTE,DANE_COD,ANO,SEDE,GRADO,GRUPO,ASIGNATURA_NOMBRE,PERIODO_NUM,"
+            "COMPONENTE_NOMBRE,SEGMENTO_NOMBRE,ACTIVIDAD_NOMBRE,ACTIVIDAD_FECHA,NOTA\n"
+            f"{self.student.document_number},{self.inst.dane_code},{self.ay.year},"
+            f"{self.campus.name},SEXTO,601,Matemáticas,1,Cognitivo,Evaluaciones,"
+            f"Quiz 1,{quiz1.activity_date},4.20\n"
+        )
+        url = reverse("studentactivityscore-bulk-load")
+        upload = io.BytesIO(csv_body.encode("utf-8-sig"))
+        upload.name = "scores.csv"
+        r = self.client.post(
+            url,
+            {"file": upload},
+            format="multipart",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["created"], 1)

@@ -53,7 +53,7 @@ import type { Institution } from '@/types/schemas'
 const drawerWidth = 280
 
 /** Rutas con pantallas hijas: el ítem del menú sigue «activo» en subrutas. */
-const NAV_PREFIX_MATCH_PATHS = new Set(['/students', '/groups'])
+const NAV_PREFIX_MATCH_PATHS = new Set(['/students', '/groups', '/activity-grading'])
 
 export function AdminLayout() {
   const { t } = useTranslation()

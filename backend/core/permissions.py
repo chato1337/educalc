@@ -67,6 +67,22 @@ class IsAdminOrCoordinator(permissions.BasePermission):
         return IsCoordinator().has_permission(request, view)
 
 
+class IsAdminUserOrReadOnlyStaff(permissions.BasePermission):
+    """Allow read to staff; write only to ADMIN."""
+
+    message = "Solo los administradores pueden modificar este recurso."
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        profile = getattr(request.user, "profile", None)
+        if not profile:
+            return False
+        if request.method in permissions.SAFE_METHODS:
+            return profile.role in ("ADMIN", "COORDINATOR", "TEACHER")
+        return profile.role == "ADMIN"
+
+
 class RoleScopeMixin:
     """
     Mixin for ViewSets to filter queryset by user role scope.

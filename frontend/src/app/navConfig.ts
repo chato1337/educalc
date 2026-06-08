@@ -33,6 +33,9 @@ import {
   roleMayAccess,
   STAFF_ROLES,
 } from '@/app/roleMatrix'
+import {
+  activityGradingNavItems,
+} from '@/features/operations/activityGrading/activityGradingNav'
 
 export type NavItem = {
   labelKey: string
@@ -215,6 +218,15 @@ export const navSections: NavSection[] = [
         rolesAllowed: STAFF_ROLES,
       },
     ],
+  },
+  {
+    titleKey: 'nav.activityGradingSection',
+    items: activityGradingNavItems.map((item) => ({
+      labelKey: item.labelKey,
+      path: item.path,
+      icon: item.icon,
+      rolesAllowed: STAFF_ROLES,
+    })),
   },
   {
     titleKey: 'nav.coexistenceAttendanceSection',

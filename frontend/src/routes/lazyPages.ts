@@ -137,6 +137,30 @@ export const CourseAssignmentsPage = lazy(() =>
   })),
 )
 
+export const GradingSchemesPage = lazy(() =>
+  import('@/features/operations/GradingSchemesPage').then((m) => ({
+    default: m.GradingSchemesPage,
+  })),
+)
+
+export const GradingSchemeDetailPage = lazy(() =>
+  import('@/features/operations/GradingSchemeDetailPage').then((m) => ({
+    default: m.GradingSchemeDetailPage,
+  })),
+)
+
+export const StudentActivityScoresPage = lazy(() =>
+  import('@/features/operations/activityGrading/StudentActivityScoresPage').then(
+    (m) => ({ default: m.StudentActivityScoresPage }),
+  ),
+)
+
+export const SuggestedGradesPage = lazy(() =>
+  import('@/features/operations/activityGrading/SuggestedGradesPage').then(
+    (m) => ({ default: m.SuggestedGradesPage }),
+  ),
+)
+
 export const GradingScalesPage = lazy(() =>
   import('@/features/operations/GradingScalesPage').then((m) => ({
     default: m.GradingScalesPage,

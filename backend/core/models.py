@@ -5,10 +5,14 @@ All models use UUID primary keys and standard timestamps.
 Reference: docs/analisis-entidades-reporte-academico.md
 """
 import uuid
+from decimal import Decimal
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+
+WEIGHT_SUM_TARGET = Decimal("100")
+WEIGHT_SUM_TOLERANCE = Decimal("0.01")
 
 
 class TimeStampedModel(models.Model):
@@ -291,6 +295,12 @@ class Subject(TimeStampedModel):
         if self.emphasis:
             return f"{self.name}: {self.emphasis}"
         return self.name
+
+    def component_weights_valid(self) -> bool:
+        weights = self.grading_components.values_list("weight_percent", flat=True)
+        if not weights:
+            return False
+        return _weights_sum_to_target(weights)
 
 
 class AcademicPeriod(TimeStampedModel):
@@ -731,3 +741,215 @@ class UserProfile(TimeStampedModel):
 
     def __str__(self):
         return f"{self.user.username} ({self.role})"
+
+
+# --- Phase 6: Activity-based grading structure ---
+
+
+def _weights_sum_to_target(weights) -> bool:
+    total = sum(weights, Decimal("0"))
+    return abs(total - WEIGHT_SUM_TARGET) <= WEIGHT_SUM_TOLERANCE
+
+
+class GradingScheme(TimeStampedModel):
+    """Weighted grading structure for a course assignment in an academic period."""
+
+    course_assignment = models.ForeignKey(
+        CourseAssignment,
+        on_delete=models.CASCADE,
+        related_name="grading_schemes",
+    )
+    academic_period = models.ForeignKey(
+        AcademicPeriod,
+        on_delete=models.CASCADE,
+        related_name="grading_schemes",
+    )
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Grading Scheme"
+        verbose_name_plural = "Grading Schemes"
+        unique_together = [["course_assignment", "academic_period"]]
+        ordering = [
+            "course_assignment__academic_year__year",
+            "academic_period__number",
+            "course_assignment__subject__name",
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.course_assignment.subject.name} - "
+            f"{self.course_assignment.group.name} / {self.academic_period.name}"
+        )
+
+    def clean(self):
+        super().clean()
+        if (
+            self.course_assignment_id
+            and self.academic_period_id
+            and self.course_assignment.academic_year_id
+            != self.academic_period.academic_year_id
+        ):
+            raise ValidationError(
+                "La asignación de curso y el periodo deben pertenecer al mismo año lectivo."
+            )
+
+    def subject_component_weights_valid(self) -> bool:
+        return self.course_assignment.subject.component_weights_valid()
+
+    def segment_weights_valid(self) -> bool:
+        """True when every subject component with segments in this scheme sums to 100%."""
+        subject = self.course_assignment.subject
+        for component in subject.grading_components.all():
+            weights = self.segments.filter(
+                subject_component=component
+            ).values_list("weight_percent", flat=True)
+            if not weights:
+                continue
+            if not _weights_sum_to_target(weights):
+                return False
+        return True
+
+
+class SubjectComponent(TimeStampedModel):
+    """Evaluation dimension catalog per subject (cognitive, attitudinal, etc.)."""
+
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE,
+        related_name="grading_components",
+    )
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    weight_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        verbose_name = "Subject Component"
+        verbose_name_plural = "Subject Components"
+        ordering = ["sort_order", "name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.weight_percent}%)"
+
+    def clean(self):
+        super().clean()
+        if self.weight_percent < 0 or self.weight_percent > WEIGHT_SUM_TARGET:
+            raise ValidationError(
+                "El peso del componente debe estar entre 0 y 100."
+            )
+
+
+class ComponentSegment(TimeStampedModel):
+    """Teacher-defined subdivision within a subject component for a grading scheme."""
+
+    grading_scheme = models.ForeignKey(
+        GradingScheme,
+        on_delete=models.CASCADE,
+        related_name="segments",
+    )
+    subject_component = models.ForeignKey(
+        SubjectComponent,
+        on_delete=models.CASCADE,
+        related_name="segments",
+    )
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    weight_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        verbose_name = "Component Segment"
+        verbose_name_plural = "Component Segments"
+        ordering = ["sort_order", "name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.weight_percent}%)"
+
+    def clean(self):
+        super().clean()
+        if self.weight_percent < 0 or self.weight_percent > WEIGHT_SUM_TARGET:
+            raise ValidationError(
+                "El peso del segmento debe estar entre 0 y 100."
+            )
+        if (
+            self.grading_scheme_id
+            and self.subject_component_id
+            and self.grading_scheme.course_assignment.subject_id
+            != self.subject_component.subject_id
+        ):
+            raise ValidationError(
+                "El componente debe pertenecer a la misma asignatura del esquema."
+            )
+
+
+class GradingActivity(TimeStampedModel):
+    """Punctual activity definition within a component segment (shared by the group)."""
+
+    segment = models.ForeignKey(
+        ComponentSegment,
+        on_delete=models.CASCADE,
+        related_name="activities",
+    )
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    activity_date = models.DateField()
+    max_score = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal("5.00"))
+    sort_order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        verbose_name = "Grading Activity"
+        verbose_name_plural = "Grading Activities"
+        ordering = ["activity_date", "sort_order", "name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.activity_date})"
+
+
+class StudentActivityScore(TimeStampedModel):
+    """Student score for a grading activity."""
+
+    activity = models.ForeignKey(
+        GradingActivity,
+        on_delete=models.CASCADE,
+        related_name="student_scores",
+    )
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.CASCADE,
+        related_name="activity_scores",
+    )
+    score = models.DecimalField(
+        max_digits=4, decimal_places=2, null=True, blank=True
+    )
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "Student Activity Score"
+        verbose_name_plural = "Student Activity Scores"
+        unique_together = [["activity", "student"]]
+        ordering = ["student__full_name", "activity__activity_date"]
+
+    def __str__(self):
+        score_label = self.score if self.score is not None else "pendiente"
+        return f"{self.student.full_name} - {self.activity.name}: {score_label}"
+
+    def clean(self):
+        super().clean()
+        if self.score is not None and self.activity_id:
+            if self.score < 0 or self.score > self.activity.max_score:
+                raise ValidationError(
+                    f"La nota debe estar entre 0 y {self.activity.max_score}."
+                )
+        if self.student_id and self.activity_id:
+            scheme = self.activity.segment.grading_scheme
+            enrolled = Enrollment.objects.filter(
+                student_id=self.student_id,
+                group_id=scheme.course_assignment.group_id,
+                academic_year_id=scheme.course_assignment.academic_year_id,
+                status="active",
+            ).exists()
+            if not enrolled:
+                raise ValidationError(
+                    "El estudiante no está matriculado activamente en el grupo del curso."
+                )

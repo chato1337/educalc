@@ -153,6 +153,26 @@ export const bulkLoadSections: BulkLoadSection[] = [
         requestSchema: 'BulkLoadCsvUploadRequest',
       },
       {
+        id: 'grading_structure',
+        labelKey: 'bulkLoadTargets.targets.gradingStructure',
+        apiPath: '/api/grading-schemes/bulk-load/',
+        sampleFile: 'bulk_load_grading_structure.csv',
+        hintKey: 'bulkLoadTargets.hints.gradingStructure',
+        openApiDescription:
+          'Columns: DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, COMPONENTE_NOMBRE, COMPONENTE_PESO, SEGMENTO_NOMBRE, SEGMENTO_PESO, ACTIVIDAD_NOMBRE, ACTIVIDAD_FECHA, NOTA_MAXIMA (optional). Requires CourseAssignment.',
+        requestSchema: 'BulkLoadCsvUploadRequest',
+      },
+      {
+        id: 'student_activity_scores',
+        labelKey: 'bulkLoadTargets.targets.studentActivityScores',
+        apiPath: '/api/student-activity-scores/bulk-load/',
+        sampleFile: 'bulk_load_student_activity_scores.csv',
+        hintKey: 'bulkLoadTargets.hints.studentActivityScores',
+        openApiDescription:
+          'Columns: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, COMPONENTE_NOMBRE, SEGMENTO_NOMBRE, ACTIVIDAD_NOMBRE, ACTIVIDAD_FECHA (optional), NOTA, OBSERVACIONES (optional). Requires grading structure loaded first. Does not modify Grade records.',
+        requestSchema: 'BulkLoadCsvUploadRequest',
+      },
+      {
         id: 'academic_indicators_catalog',
         labelKey: 'bulkLoadTargets.targets.academicIndicatorsCatalog',
         apiPath: '/api/academic-indicators/bulk-load/',

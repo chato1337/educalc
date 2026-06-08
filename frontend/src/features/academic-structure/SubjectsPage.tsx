@@ -43,6 +43,12 @@ import {
 } from '@/hooks/useMuiDataGridLocaleText'
 import { useInstitutionsReference } from '@/features/academic-structure/academicQueries'
 import { PageHeader } from '@/components/PageHeader'
+import {
+  SubjectComponentsDialog,
+  SubjectComponentsAction,
+} from '@/features/academic-structure/SubjectComponentsDialog'
+import { roleMayAccess, ADMIN_ONLY, resolvedAppRole } from '@/app/roleMatrix'
+import { useAuthStore } from '@/stores/authStore'
 import { useUiStore } from '@/stores/uiStore'
 import type { AcademicArea, Institution, Subject } from '@/types/schemas'
 
@@ -73,12 +79,18 @@ const defaults: FormValues = {
 export function SubjectsPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const user = useAuthStore((s) => s.user)
+  const userRole = resolvedAppRole(user?.role)
+  const isAdmin = roleMayAccess(userRole, ADMIN_ONLY)
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Subject | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Subject | null>(null)
+  const [componentsSubject, setComponentsSubject] = useState<Subject | null>(
+    null,
+  )
   const [formError, setFormError] = useState<string | null>(null)
 
   const { data: institutions = [] } = useInstitutionsReference()
@@ -235,6 +247,15 @@ export function SubjectsPage() {
         align: 'right',
         headerAlign: 'right',
         getActions: (params: GridRenderCellParams<Subject>) => [
+          ...(isAdmin
+            ? [
+                <SubjectComponentsAction
+                  key="components"
+                  subject={params.row}
+                  onOpen={() => setComponentsSubject(params.row)}
+                />,
+              ]
+            : []),
           <IconButton
             key="edit"
             size="small"
@@ -255,7 +276,7 @@ export function SubjectsPage() {
         ],
       },
     ],
-    [openEdit, t],
+    [isAdmin, openEdit, t],
   )
 
   function closeDialog() {
@@ -449,6 +470,12 @@ export function SubjectsPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <SubjectComponentsDialog
+        subject={componentsSubject}
+        open={!!componentsSubject}
+        onClose={() => setComponentsSubject(null)}
+      />
     </Box>
   )
 }

@@ -15,7 +15,12 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.shortcuts import get_object_or_404
+
 from .filters import CourseAssignmentFilter
+from .grading_serializers import scheme_weights_error
+from .grading_suggestion_service import build_grade_breakdown
 from .student_transfer_service import StudentTransferError, transfer_student
 from .bulk_load import bulk_load_students
 from .bulk_load_extended import (
@@ -49,6 +54,7 @@ from .models import (
     Enrollment,
     Grade,
     GradeDirector,
+    GradingScheme,
     GradingScale,
     GradeLevel,
     Group,
@@ -62,6 +68,8 @@ from .models import (
     Teacher,
     UserProfile,
 )
+from .grading_openapi import grade_suggested_schema
+from .openapi_utils import bulk_csv_load_schema, openapi_error_response
 from .pagination import StandardLimitOffsetPagination
 from .permissions import IsAdminUser
 from .serializers import (
@@ -117,31 +125,6 @@ def _bulk_csv_response(request, loader_fn):
             {"error": str(e)},
             status=status.HTTP_400_BAD_REQUEST,
         )
-
-
-def bulk_csv_load_schema(*, summary: str, description: str, tags: list, request_serializer):
-    """
-    OpenAPI for POST ``bulk-load`` actions (multipart CSV).
-
-    ``methods=['POST']`` is required so drf-spectacular registers the operation on custom actions.
-    """
-    return extend_schema(
-        summary=summary,
-        description=description,
-        tags=tags,
-        methods=["POST"],
-        request={"multipart/form-data": request_serializer},
-        responses={
-            200: OpenApiResponse(
-                response=OpenApiTypes.OBJECT,
-                description="Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[].",
-            ),
-            400: OpenApiResponse(
-                response=OpenApiTypes.OBJECT,
-                description='Validation failure or {"error": "..."}.',
-            ),
-        },
-    )
 
 
 def _openapi_limit_offset_parameters():
@@ -1215,6 +1198,58 @@ class GradeViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_grades)
+
+    @grade_suggested_schema()
+    @action(detail=False, methods=["get"], url_path="suggested")
+    def suggested(self, request):
+        student_id = request.query_params.get("student")
+        course_assignment_id = request.query_params.get("course_assignment")
+        academic_period_id = request.query_params.get("academic_period")
+        missing = [
+            name
+            for name, value in (
+                ("student", student_id),
+                ("course_assignment", course_assignment_id),
+                ("academic_period", academic_period_id),
+            )
+            if not value
+        ]
+        if missing:
+            return Response(
+                {
+                    "error": (
+                        "Los parámetros student, course_assignment y "
+                        "academic_period son obligatorios."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        scheme = GradingScheme.objects.filter(
+            course_assignment_id=course_assignment_id,
+            academic_period_id=academic_period_id,
+            is_active=True,
+        ).first()
+        if not scheme:
+            return Response(
+                {"error": "No existe un esquema de calificación activo para este curso y periodo."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        student = get_object_or_404(Student, pk=student_id)
+        weight_error = scheme_weights_error(scheme)
+        if weight_error:
+            return Response(
+                {"error": weight_error},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            data = build_grade_breakdown(student, scheme)
+        except DjangoValidationError as exc:
+            messages = exc.messages if hasattr(exc, "messages") else [str(exc)]
+            return Response(
+                {"error": messages[0] if messages else "Error de validación."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(data)
 
 
 @schema_viewset(
