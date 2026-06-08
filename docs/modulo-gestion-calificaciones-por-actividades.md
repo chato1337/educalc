@@ -514,7 +514,7 @@ El módulo vive bajo el prefijo **`/activity-grading`**, con una sección propia
 
 - Enlace desde `GradesPage` hacia el esquema de actividades del mismo curso/periodo.
 - Mostrar `suggested_grade` en ficha del estudiante o en edición de `Grade`.
-- **Planeación de actividades:** calendario, estado planificado/realizado y calificación diferida hasta la fecha de la actividad.
+- **Planeación de actividades:** implementado en frontend — ver [modulo-planeacion-actividades.md](./modulo-planeacion-actividades.md) (calendario, estados derivados, planeador con plantillas; backend sin endpoints dedicados aún).
 - Toast/notificaciones globales reutilizables (hoy Snackbar local en diálogo de componentes).
 - Tests E2E o de componente para flujos críticos (pesos, apply-suggestion con nivel, permisos ADMIN vs docente).
 

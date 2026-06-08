@@ -191,6 +191,24 @@ export const PerformanceSummariesPage = lazy(() =>
   })),
 )
 
+export const ActivityPlanningOverviewPage = lazy(() =>
+  import('@/features/operations/activityPlanning/ActivityPlanningOverviewPage').then(
+    (m) => ({ default: m.ActivityPlanningOverviewPage }),
+  ),
+)
+
+export const ActivityPlanningCalendarPage = lazy(() =>
+  import('@/features/operations/activityPlanning/ActivityPlanningCalendarPage').then(
+    (m) => ({ default: m.ActivityPlanningCalendarPage }),
+  ),
+)
+
+export const ActivityPlanningWorkspacePage = lazy(() =>
+  import('@/features/operations/activityPlanning/ActivityPlanningWorkspacePage').then(
+    (m) => ({ default: m.ActivityPlanningWorkspacePage }),
+  ),
+)
+
 export const AttendancesPage = lazy(() =>
   import('@/features/operations/AttendancesPage').then((m) => ({
     default: m.AttendancesPage,

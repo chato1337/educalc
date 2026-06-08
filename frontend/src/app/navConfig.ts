@@ -36,6 +36,9 @@ import {
 import {
   activityGradingNavItems,
 } from '@/features/operations/activityGrading/activityGradingNav'
+import {
+  activityPlanningNavItems,
+} from '@/features/operations/activityPlanning/activityPlanningNav'
 
 export type NavItem = {
   labelKey: string
@@ -218,6 +221,15 @@ export const navSections: NavSection[] = [
         rolesAllowed: STAFF_ROLES,
       },
     ],
+  },
+  {
+    titleKey: 'nav.activityPlanningSection',
+    items: activityPlanningNavItems.map((item) => ({
+      labelKey: item.labelKey,
+      path: item.path,
+      icon: item.icon,
+      rolesAllowed: STAFF_ROLES,
+    })),
   },
   {
     titleKey: 'nav.activityGradingSection',

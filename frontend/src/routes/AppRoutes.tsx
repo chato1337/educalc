@@ -6,6 +6,7 @@ import { RoutePageFallback } from '@/components/RoutePageFallback'
 import { GenericListPage } from '@/features/admin/GenericListPage'
 import { resourceListConfigs } from '@/features/admin/resourceConfig'
 import { ActivityGradingLayout } from '@/layouts/ActivityGradingLayout'
+import { ActivityPlanningLayout } from '@/layouts/ActivityPlanningLayout'
 import { AdminLayout } from '@/layouts/AdminLayout'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import {
@@ -15,6 +16,9 @@ import {
   AcademicIndicatorsReportsPage,
   AcademicPeriodsPage,
   AcademicYearsPage,
+  ActivityPlanningCalendarPage,
+  ActivityPlanningOverviewPage,
+  ActivityPlanningWorkspacePage,
   AttendancesPage,
   BulkLoadHubPage,
   CampusesPage,
@@ -107,6 +111,15 @@ export function AppRoutes() {
             element={<CourseAssignmentsPage />}
           />
           <Route path="grading-scales" element={<GradingScalesPage />} />
+          <Route path="activity-planning" element={<ActivityPlanningLayout />}>
+            <Route index element={<ActivityPlanningOverviewPage />} />
+            <Route path="calendar" element={<ActivityPlanningCalendarPage />} />
+            <Route path="workspace" element={<ActivityPlanningWorkspacePage />} />
+            <Route
+              path="workspace/:schemeId"
+              element={<ActivityPlanningWorkspacePage />}
+            />
+          </Route>
           <Route path="activity-grading" element={<ActivityGradingLayout />}>
             <Route index element={<Navigate to="schemes" replace />} />
             <Route path="schemes" element={<GradingSchemesPage />} />

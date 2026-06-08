@@ -48,6 +48,8 @@ export const queryKeys = {
     ['grading-schemes', schemeId, 'validate-weights'] as const,
   studentActivityScores: (params: Record<string, string | undefined>) =>
     ['student-activity-scores', params] as const,
+  activityPlanningBundle: (schemeId: string) =>
+    ['activity-planning', schemeId, 'bundle'] as const,
   gradingScales: (institutionId?: string | null, search?: string) =>
     ['grading-scales', { institutionId, search: search ?? '' }] as const,
   academicIndicatorCatalogs: (params: Record<string, string | undefined>) =>

@@ -265,6 +265,15 @@ export async function fetchStudentActivityScoresForActivity(
   )
 }
 
+export async function fetchStudentActivityScoresForScheme(
+  schemeId: string,
+): Promise<StudentActivityScore[]> {
+  return fetchAllPages<StudentActivityScore>(
+    '/api/student-activity-scores/',
+    { activity__segment__grading_scheme: schemeId },
+  )
+}
+
 export async function createStudentActivityScore(
   body: StudentActivityScoreRequest,
 ): Promise<StudentActivityScore> {
