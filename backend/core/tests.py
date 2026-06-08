@@ -2,21 +2,28 @@ from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, TransactionTestCase
+from django.utils import timezone
 from django.urls import reverse
 from rest_framework.test import APIClient
 
 from .models import (
     AcademicArea,
+    AcademicIndicator,
+    AcademicIndicatorCatalog,
+    AcademicIndicatorsReport,
     AcademicPeriod,
     AcademicYear,
+    Attendance,
     Campus,
     CourseAssignment,
     Enrollment,
     Grade,
+    GradeDirector,
     GradeLevel,
     Group,
     Institution,
     PerformanceSummary,
+    SchoolRecord,
     Student,
     Subject,
     Teacher,
@@ -709,3 +716,269 @@ class GradingConsolidatedCsvExportApiTests(TestCase):
             {"academic_year": str(self.ay.id), "academic_period": str(p_wrong.id)},
         )
         self.assertEqual(r.status_code, 400)
+
+
+class StudentTransferApiTests(TransactionTestCase):
+    """TransactionTestCase so performance-summary on_commit hooks can run."""
+
+    reset_sequences = True
+
+    def setUp(self):
+        self.client = APIClient()
+        user = get_user_model().objects.create_user(username="transferuser", password="x")
+        self.client.force_authenticate(user=user)
+
+        self.inst = Institution.objects.create(name="IE Traslado", dane_code="DANE994001")
+        self.campus_a = Campus.objects.create(institution=self.inst, name="Sede Norte")
+        self.campus_b = Campus.objects.create(institution=self.inst, name="Sede Sur")
+        self.ay = AcademicYear.objects.create(institution=self.inst, year=2026)
+        self.gl_six = GradeLevel.objects.create(
+            institution=self.inst, name="SEXTO", level_order=6
+        )
+        self.gl_seven = GradeLevel.objects.create(
+            institution=self.inst, name="SEPTIMO", level_order=7
+        )
+        self.group_source = Group.objects.create(
+            grade_level=self.gl_six,
+            academic_year=self.ay,
+            campus=self.campus_a,
+            name="601",
+        )
+        self.group_target_same_grade = Group.objects.create(
+            grade_level=self.gl_six,
+            academic_year=self.ay,
+            campus=self.campus_b,
+            name="602",
+        )
+        self.group_target_other_grade = Group.objects.create(
+            grade_level=self.gl_seven,
+            academic_year=self.ay,
+            campus=self.campus_a,
+            name="701",
+        )
+        self.period = AcademicPeriod.objects.create(
+            academic_year=self.ay, number=1, name="P1"
+        )
+        self.area = AcademicArea.objects.create(institution=self.inst, name="Humanidades")
+        self.teacher = Teacher.objects.create(
+            document_number="TTR",
+            first_name="Profe",
+            first_last_name="Traslado",
+            full_name="Profe Traslado",
+        )
+        self.subject_math = Subject.objects.create(
+            academic_area=self.area,
+            institution=self.inst,
+            name="Matemáticas",
+        )
+        self.subject_lang = Subject.objects.create(
+            academic_area=self.area,
+            institution=self.inst,
+            name="Lengua",
+        )
+        self.subject_only_source = Subject.objects.create(
+            academic_area=self.area,
+            institution=self.inst,
+            name="Tecnología",
+        )
+        self.ca_source_math = CourseAssignment.objects.create(
+            subject=self.subject_math,
+            teacher=self.teacher,
+            group=self.group_source,
+            academic_year=self.ay,
+        )
+        self.ca_source_lang = CourseAssignment.objects.create(
+            subject=self.subject_lang,
+            teacher=self.teacher,
+            group=self.group_source,
+            academic_year=self.ay,
+        )
+        self.ca_source_tech = CourseAssignment.objects.create(
+            subject=self.subject_only_source,
+            teacher=self.teacher,
+            group=self.group_source,
+            academic_year=self.ay,
+        )
+        self.ca_target_math = CourseAssignment.objects.create(
+            subject=self.subject_math,
+            teacher=self.teacher,
+            group=self.group_target_same_grade,
+            academic_year=self.ay,
+        )
+        self.ca_target_lang = CourseAssignment.objects.create(
+            subject=self.subject_lang,
+            teacher=self.teacher,
+            group=self.group_target_same_grade,
+            academic_year=self.ay,
+        )
+        self.ca_target_grade_math = CourseAssignment.objects.create(
+            subject=self.subject_math,
+            teacher=self.teacher,
+            group=self.group_target_other_grade,
+            academic_year=self.ay,
+        )
+        self.student = Student.objects.create(
+            document_number="STTR1",
+            first_name="Carlos",
+            first_last_name="Movil",
+            full_name="Carlos Movil",
+        )
+        self.enrollment = Enrollment.objects.create(
+            student=self.student,
+            group=self.group_source,
+            academic_year=self.ay,
+            status="active",
+        )
+        GradeDirector.objects.create(
+            teacher=self.teacher,
+            group=self.group_target_same_grade,
+            academic_year=self.ay,
+        )
+        GradeDirector.objects.create(
+            teacher=self.teacher,
+            group=self.group_target_other_grade,
+            academic_year=self.ay,
+        )
+        self.grade_math = Grade.objects.create(
+            student=self.student,
+            course_assignment=self.ca_source_math,
+            academic_period=self.period,
+            numerical_grade=Decimal("4.50"),
+        )
+        self.grade_lang = Grade.objects.create(
+            student=self.student,
+            course_assignment=self.ca_source_lang,
+            academic_period=self.period,
+            numerical_grade=Decimal("3.80"),
+        )
+        self.grade_tech = Grade.objects.create(
+            student=self.student,
+            course_assignment=self.ca_source_tech,
+            academic_period=self.period,
+            numerical_grade=Decimal("4.00"),
+        )
+        self.attendance = Attendance.objects.create(
+            student=self.student,
+            course_assignment=self.ca_source_math,
+            academic_period=self.period,
+            unexcused_absences=2,
+        )
+        catalog = AcademicIndicatorCatalog.objects.create(
+            academic_area=self.area,
+            grade_level=self.gl_six,
+            achievement_below_basic="Logro bajo",
+            achievement_basic_or_above="Logro básico o superior",
+        )
+        self.indicator = AcademicIndicator.objects.create(
+            student=self.student,
+            course_assignment=self.ca_source_lang,
+            academic_period=self.period,
+            catalog=catalog,
+            outcome="basic_or_above",
+            description="Lee con fluidez",
+        )
+        SchoolRecord.objects.create(
+            student=self.student,
+            group=self.group_source,
+            academic_year=self.ay,
+            institution=self.inst,
+            campus=self.campus_a,
+            generated_at=timezone.now(),
+        )
+        AcademicIndicatorsReport.objects.create(
+            student=self.student,
+            group=self.group_source,
+            academic_period=self.period,
+            grade_director=self.teacher,
+            generated_at=timezone.now(),
+        )
+
+    def _transfer_url(self):
+        return reverse("student-transfer", kwargs={"pk": self.student.id})
+
+    def test_transfer_cross_campus_migrates_evaluation_data(self):
+        r = self.client.post(
+            self._transfer_url(),
+            {"target_group_id": str(self.group_target_same_grade.id)},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["grades_migrated"], 2)
+        self.assertEqual(r.data["grades_skipped"], 1)
+        self.assertEqual(r.data["attendances_migrated"], 1)
+        self.assertEqual(r.data["academic_indicators_migrated"], 1)
+        self.assertTrue(r.data["school_record_regenerated"])
+        self.assertEqual(r.data["academic_indicators_reports_regenerated"], 1)
+        self.assertTrue(any("Tecnología" in w for w in r.data["warnings"]))
+
+        self.enrollment.refresh_from_db()
+        self.assertEqual(self.enrollment.status, "withdrawn")
+
+        new_enrollment = Enrollment.objects.get(
+            student=self.student,
+            group=self.group_target_same_grade,
+            academic_year=self.ay,
+        )
+        self.assertEqual(new_enrollment.status, "active")
+
+        self.grade_math.refresh_from_db()
+        self.grade_lang.refresh_from_db()
+        self.grade_tech.refresh_from_db()
+        self.assertEqual(self.grade_math.course_assignment_id, self.ca_target_math.id)
+        self.assertEqual(self.grade_lang.course_assignment_id, self.ca_target_lang.id)
+        self.assertEqual(self.grade_tech.course_assignment_id, self.ca_source_tech.id)
+
+        self.attendance.refresh_from_db()
+        self.assertEqual(self.attendance.course_assignment_id, self.ca_target_math.id)
+
+        self.indicator.refresh_from_db()
+        self.assertEqual(self.indicator.course_assignment_id, self.ca_target_lang.id)
+
+        record = SchoolRecord.objects.get(student=self.student, academic_year=self.ay)
+        self.assertEqual(record.group_id, self.group_target_same_grade.id)
+        self.assertEqual(record.campus_id, self.campus_b.id)
+
+        report = AcademicIndicatorsReport.objects.get(
+            student=self.student, academic_period=self.period
+        )
+        self.assertEqual(report.group_id, self.group_target_same_grade.id)
+
+        ps = PerformanceSummary.objects.get(
+            student=self.student, group=self.group_target_same_grade
+        )
+        self.assertEqual(ps.period_average, Decimal("4.15"))
+
+    def test_transfer_different_grade_omits_missing_subjects(self):
+        r = self.client.post(
+            self._transfer_url(),
+            {"target_group_id": str(self.group_target_other_grade.id)},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["grades_migrated"], 1)
+        self.assertEqual(r.data["grades_skipped"], 2)
+
+        self.grade_math.refresh_from_db()
+        self.assertEqual(
+            self.grade_math.course_assignment_id, self.ca_target_grade_math.id
+        )
+
+    def test_transfer_rejects_same_group(self):
+        r = self.client.post(
+            self._transfer_url(),
+            {"target_group_id": str(self.group_source.id)},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.data["code"], "same_group")
+
+    def test_transfer_rejects_without_active_enrollment(self):
+        self.enrollment.status = "withdrawn"
+        self.enrollment.save(update_fields=["status"])
+        r = self.client.post(
+            self._transfer_url(),
+            {"target_group_id": str(self.group_target_same_grade.id)},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.data["code"], "no_active_enrollment")

@@ -3,6 +3,7 @@ from django.utils import timezone
 from typing import List, Optional
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
+    OpenApiExample,
     extend_schema,
     extend_schema_view,
     OpenApiParameter,
@@ -15,6 +16,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .filters import CourseAssignmentFilter
+from .student_transfer_service import StudentTransferError, transfer_student
 from .bulk_load import bulk_load_students
 from .bulk_load_extended import (
     bulk_load_academic_areas,
@@ -88,6 +90,9 @@ from .serializers import (
     AcademicIndicatorsReportSerializer as ReportSerializer,
     StudentGuardianSerializer,
     StudentSerializer,
+    StudentTransferErrorSerializer,
+    StudentTransferResponseSerializer,
+    StudentTransferSerializer,
     SubjectSerializer,
     TeacherSerializer,
     UserProfileSerializer,
@@ -445,6 +450,154 @@ class StudentViewSet(viewsets.ModelViewSet):
                 "grades_by_period": list(by_period.values()),
             }
         )
+
+    @extend_schema(
+        summary="Trasladar estudiante a otro grupo",
+        description=(
+            "Ejecuta un traslado atómico del estudiante dentro del **mismo año lectivo** "
+            "definido por el grupo destino. Soporta cambio de sede (``Group.campus``), "
+            "grado (``Group.grade_level``) o solo de grupo (p. ej. 601 → 602).\n\n"
+            "**Flujo:**\n"
+            "1. Localiza la matrícula activa (``Enrollment.status=active``) del estudiante "
+            "en el año del grupo destino.\n"
+            "2. Marca esa matrícula como ``withdrawn`` y crea o reactiva una matrícula "
+            "``active`` en el grupo destino.\n"
+            "3. Migra ``Grade``, ``Attendance`` y ``AcademicIndicator`` reasignando "
+            "``course_assignment`` por coincidencia de ``Subject`` entre grupo origen y destino. "
+            "Las asignaturas sin equivalente en el destino se **omiten** (conciliación manual); "
+            "el detalle aparece en ``warnings``.\n"
+            "4. Elimina ``PerformanceSummary`` del estudiante en el grupo origen y recalcula "
+            "promedios/rankings en origen y destino para los periodos afectados.\n"
+            "5. Regenera ``SchoolRecord`` (grupo, sede, institución, ``generated_at``) e "
+            "``AcademicIndicatorsReport`` por periodo afectado (requiere ``GradeDirector`` "
+            "en el destino).\n\n"
+            "**Restricciones:** misma institución; grupo destino distinto al origen; "
+            "requiere matrícula activa en el año del destino. "
+            "Operación transaccional: ante cualquier fallo no persisten cambios parciales."
+        ),
+        tags=["Students"],
+        parameters=[
+            OpenApiParameter(
+                name="id",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+                required=True,
+                description="UUID del estudiante (``Student``) a trasladar.",
+            ),
+        ],
+        request=StudentTransferSerializer,
+        responses={
+            200: StudentTransferResponseSerializer,
+            400: StudentTransferErrorSerializer,
+            404: OpenApiResponse(description="Estudiante no encontrado (``pk`` inválido)."),
+        },
+        examples=[
+            OpenApiExample(
+                "Traslado entre sedes (mismo grado)",
+                value={
+                    "target_group_id": "00000000-0000-4000-8000-000000000010",
+                    "transfer_date": "2026-06-07",
+                },
+                request_only=True,
+                summary="Cambio de campus manteniendo grado",
+            ),
+            OpenApiExample(
+                "Traslado sin fecha explícita",
+                value={
+                    "target_group_id": "00000000-0000-4000-8000-000000000011",
+                },
+                request_only=True,
+                summary="Solo grupo destino",
+            ),
+            OpenApiExample(
+                "Traslado exitoso",
+                value={
+                    "old_enrollment": {
+                        "id": "00000000-0000-4000-8000-000000000020",
+                        "student": "00000000-0000-4000-8000-000000000001",
+                        "group": "00000000-0000-4000-8000-000000000030",
+                        "status": "withdrawn",
+                    },
+                    "new_enrollment": {
+                        "id": "00000000-0000-4000-8000-000000000021",
+                        "student": "00000000-0000-4000-8000-000000000001",
+                        "group": "00000000-0000-4000-8000-000000000010",
+                        "status": "active",
+                    },
+                    "source_group_id": "00000000-0000-4000-8000-000000000030",
+                    "source_group_name": "601",
+                    "target_group_id": "00000000-0000-4000-8000-000000000010",
+                    "target_group_name": "602",
+                    "grades_migrated": 2,
+                    "grades_skipped": 1,
+                    "attendances_migrated": 1,
+                    "attendances_skipped": 0,
+                    "academic_indicators_migrated": 1,
+                    "academic_indicators_skipped": 0,
+                    "performance_pairs_synced": 2,
+                    "school_record_regenerated": True,
+                    "academic_indicators_reports_regenerated": 1,
+                    "warnings": [
+                        "La asignatura 'Tecnología' no existe en el grupo destino; "
+                        "sus registros fueron omitidos."
+                    ],
+                },
+                response_only=True,
+                summary="Respuesta con migración parcial",
+            ),
+            OpenApiExample(
+                "Sin matrícula activa",
+                value={
+                    "detail": (
+                        "No hay matrícula activa para el estudiante en el año lectivo "
+                        "del grupo destino."
+                    ),
+                    "code": "no_active_enrollment",
+                },
+                response_only=True,
+                status_codes=["400"],
+                summary="Error de negocio",
+            ),
+        ],
+    )
+    @action(detail=True, methods=["post"], url_path="transfer")
+    def transfer(self, request, pk=None):
+        student = self.get_object()
+        serializer = StudentTransferSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            result = transfer_student(
+                student_id=student.id,
+                target_group_id=serializer.validated_data["target_group_id"],
+                transfer_date=serializer.validated_data.get("transfer_date"),
+            )
+        except StudentTransferError as exc:
+            return Response(
+                {"detail": exc.message, "code": exc.code},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        payload = {
+            "old_enrollment": EnrollmentSerializer(result.old_enrollment).data,
+            "new_enrollment": EnrollmentSerializer(result.new_enrollment).data,
+            "source_group_id": result.source_group.id,
+            "source_group_name": result.source_group.name,
+            "target_group_id": result.target_group.id,
+            "target_group_name": result.target_group.name,
+            "grades_migrated": result.grades_migrated,
+            "grades_skipped": result.grades_skipped,
+            "attendances_migrated": result.attendances_migrated,
+            "attendances_skipped": result.attendances_skipped,
+            "academic_indicators_migrated": result.academic_indicators_migrated,
+            "academic_indicators_skipped": result.academic_indicators_skipped,
+            "performance_pairs_synced": result.performance_pairs_synced,
+            "school_record_regenerated": result.school_record_regenerated,
+            "academic_indicators_reports_regenerated": (
+                result.academic_indicators_reports_regenerated
+            ),
+            "warnings": result.warnings,
+        }
+        return Response(payload, status=status.HTTP_200_OK)
 
 
 @schema_viewset(

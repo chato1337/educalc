@@ -126,26 +126,6 @@ export interface paths {
         patch: operations["academic_indicator_catalogs_partial_update"];
         trace?: never;
     };
-    "/api/academic-indicator-catalogs/bulk-load/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Bulk load academic indicator catalogs from CSV
-         * @description UTF-8 CSV: modo plantillas (sin DOC_ESTUDIANTE) — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO; upsert en catálogo por (área, grado). Mismo procesador que POST /api/academic-indicators/bulk-load/; las filas con DOC_ESTUDIANTE siguen el modo legacy (indicadores por estudiante).
-         */
-        post: operations["academic_indicator_catalogs_bulk_load_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/academic-indicators/": {
         parameters: {
             query?: never;
@@ -544,7 +524,7 @@ export interface paths {
         };
         /**
          * List Course Assignments
-         * @description Teacher assigned to a subject in a group for an academic year Text search available through query param `search`. Supported fields: subject__name, subject__emphasis, teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: subject, subject__name, teacher, teacher__document_number, group, group__in, group__name, academic_year, academic_year__year. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Teacher assigned to a subject in a group for an academic year Text search available through query param `search`. Supported fields: subject__name, subject__emphasis, teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: subject, subject__name, teacher, teacher__document_number, teacher__in, group, group__in, group__name, academic_year, academic_year__year. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["course_assignments_list"];
         put?: never;
@@ -590,6 +570,26 @@ export interface paths {
          * @description Columns: DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, ENFASIS, AREA_NOMBRE (optional), DOC_DOCENTE.
          */
         post: operations["course_assignments_bulk_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/course-assignments/for-teacher/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List course assignments for one teacher (single query)
+         * @description Returns matching assignments in one response without pagination. Uses a single indexed lookup on `(teacher, academic_year)`. At most 2000 rows; `truncated` is true if more exist.
+         */
+        get: operations["course_assignments_for_teacher_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1217,8 +1217,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * CSV: consolidado calificados vs pendientes
-         * @description Descarga CSV (UTF-8 con BOM) con una fila por cupo esperado de calificación. Requiere rol ADMIN o COORDINATOR.
+         * CSV: consolidado de calificaciones pivoteado por estudiante
+         * @description Descarga CSV (UTF-8 con BOM) con **una única fila por estudiante** (matrícula activa) y **una columna por asignatura**. Cuando la exportación cubre más de un periodo, cada asignatura se despliega en varias columnas con el sufijo ``(P1)``, ``(P2)``, … por número de periodo. El valor de cada celda es la nota numérica (o la definitiva si no hay numérica) para esa terna (estudiante, asignatura, periodo); una celda vacía significa **PENDIENTE**. Al final se incluyen columnas de resumen ``asignaturas_calificadas``, ``asignaturas_pendientes`` y ``promedio_numerico`` (promedio simple sobre las notas existentes del estudiante). La consulta base usa un único ``SELECT`` con ``JOIN``/``LEFT JOIN`` (sin subconsultas correlacionadas por fila); el pivoteo se realiza en memoria tras el fetch. **COORDINATOR:** el conjunto queda restringido al ``UserProfile.institution`` del usuario. **ADMIN:** sin ``institution`` se exporta el año lectivo indicado (una institución por año); con ``institution`` se valida que coincida con la institución del año.
          */
         get: operations["reports_grading_consolidated_retrieve"];
         put?: never;
@@ -1409,6 +1409,35 @@ export interface paths {
         get: operations["students_grades_summary_retrieve"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/students/{id}/transfer/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trasladar estudiante a otro grupo
+         * @description Ejecuta un traslado atómico del estudiante dentro del **mismo año lectivo** definido por el grupo destino. Soporta cambio de sede (``Group.campus``), grado (``Group.grade_level``) o solo de grupo (p. ej. 601 → 602).
+         *
+         *     **Flujo:**
+         *     1. Localiza la matrícula activa (``Enrollment.status=active``) del estudiante en el año del grupo destino.
+         *     2. Marca esa matrícula como ``withdrawn`` y crea o reactiva una matrícula ``active`` en el grupo destino.
+         *     3. Migra ``Grade``, ``Attendance`` y ``AcademicIndicator`` reasignando ``course_assignment`` por coincidencia de ``Subject`` entre grupo origen y destino. Las asignaturas sin equivalente en el destino se **omiten** (conciliación manual); el detalle aparece en ``warnings``.
+         *     4. Elimina ``PerformanceSummary`` del estudiante en el grupo origen y recalcula promedios/rankings en origen y destino para los periodos afectados.
+         *     5. Regenera ``SchoolRecord`` (grupo, sede, institución, ``generated_at``) e ``AcademicIndicatorsReport`` por periodo afectado (requiere ``GradeDirector`` en el destino).
+         *
+         *     **Restricciones:** misma institución; grupo destino distinto al origen; requiere matrícula activa en el año del destino. Operación transaccional: ante cualquier fallo no persisten cambios parciales.
+         */
+        post: operations["students_transfer_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1858,6 +1887,16 @@ export interface components {
             name: string;
             code?: string;
         };
+        /**
+         * @description * `invalid_transfer` - invalid_transfer
+         *     * `student_not_found` - student_not_found
+         *     * `group_not_found` - group_not_found
+         *     * `no_active_enrollment` - no_active_enrollment
+         *     * `same_group` - same_group
+         *     * `institution_mismatch` - institution_mismatch
+         * @enum {string}
+         */
+        CodeEnum: "invalid_transfer" | "student_not_found" | "group_not_found" | "no_active_enrollment" | "same_group" | "institution_mismatch";
         CourseAssignment: {
             /** Format: uuid */
             readonly id: string;
@@ -3089,6 +3128,76 @@ export interface components {
             disability?: string;
             phone?: string;
         };
+        /** @description Respuesta de error de validación o regla de negocio en el traslado. */
+        StudentTransferError: {
+            /** @description Mensaje legible del error. */
+            detail: string;
+            /**
+             * @description Código de error: ``no_active_enrollment`` (sin matrícula activa en el año del destino), ``same_group`` (destino igual al origen), ``institution_mismatch`` (sedes de distinta institución).
+             *
+             *     * `invalid_transfer` - invalid_transfer
+             *     * `student_not_found` - student_not_found
+             *     * `group_not_found` - group_not_found
+             *     * `no_active_enrollment` - no_active_enrollment
+             *     * `same_group` - same_group
+             *     * `institution_mismatch` - institution_mismatch
+             */
+            code: components["schemas"]["CodeEnum"];
+        };
+        /** @description Cuerpo para ``POST /api/students/{id}/transfer/``. */
+        StudentTransferRequestRequest: {
+            /**
+             * Format: uuid
+             * @description UUID del grupo destino. Define sede (``Group.campus``), grado (``Group.grade_level``), nombre de grupo y año lectivo.
+             */
+            target_group_id: string;
+            /**
+             * Format: date
+             * @description Fecha de la nueva matrícula (``Enrollment.enrollment_date``). Opcional; si se omite no se modifica en reactivaciones.
+             */
+            transfer_date?: string | null;
+        };
+        /** @description Resultado del traslado: matrículas, contadores de migración y advertencias. */
+        StudentTransferResponse: {
+            /** @description Matrícula retirada (``status=withdrawn``) en el grupo origen. */
+            old_enrollment: components["schemas"]["Enrollment"];
+            /** @description Matrícula activa creada o reactivada en el grupo destino. */
+            new_enrollment: components["schemas"]["Enrollment"];
+            /**
+             * Format: uuid
+             * @description UUID del grupo desde el que se trasladó al estudiante.
+             */
+            source_group_id: string;
+            /** @description Nombre del grupo origen (p. ej. 601). */
+            source_group_name: string;
+            /**
+             * Format: uuid
+             * @description UUID del grupo destino.
+             */
+            target_group_id: string;
+            /** @description Nombre del grupo destino (p. ej. 602). */
+            target_group_name: string;
+            /** @description Cantidad de filas ``Grade`` reasignadas al ``CourseAssignment`` del destino. */
+            grades_migrated: number;
+            /** @description Notas omitidas: asignatura inexistente en el destino o conflicto ``(student, course_assignment, academic_period)``. */
+            grades_skipped: number;
+            /** @description Filas ``Attendance`` migradas por coincidencia de asignatura. */
+            attendances_migrated: number;
+            /** @description Asistencias omitidas por las mismas reglas que las notas. */
+            attendances_skipped: number;
+            /** @description Filas ``AcademicIndicator`` migradas por coincidencia de asignatura. */
+            academic_indicators_migrated: number;
+            /** @description Indicadores omitidos por asignatura ausente o conflicto. */
+            academic_indicators_skipped: number;
+            /** @description Pares (grupo, periodo) recalculados en ``PerformanceSummary`` (origen y destino). */
+            performance_pairs_synced: number;
+            /** @description ``true`` si se actualizó o creó ``SchoolRecord`` con el nuevo grupo, sede e institución. */
+            school_record_regenerated: boolean;
+            /** @description Informes ``AcademicIndicatorsReport`` actualizados para los periodos afectados (requiere director de grupo en el destino). */
+            academic_indicators_reports_regenerated: number;
+            /** @description Advertencias no bloqueantes: asignaturas omitidas, conflictos o ausencia de director de grupo en el destino. */
+            warnings: string[];
+        };
         Subject: {
             /** Format: uuid */
             readonly id: string;
@@ -3573,43 +3682,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AcademicIndicatorCatalog"];
-                };
-            };
-        };
-    };
-    academic_indicator_catalogs_bulk_load_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": components["schemas"]["BulkLoadCsvUploadRequest"];
-            };
-        };
-        responses: {
-            /** @description Loader statistics: created/updated counts, rows_processed, rows_skipped, errors[]. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation failure or {"error": "..."}. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
                 };
             };
         };
@@ -4752,6 +4824,8 @@ export interface operations {
                 teacher?: string;
                 /** @description Filter by exact value of `teacher__document_number`. */
                 teacher__document_number?: string;
+                /** @description Filter by exact value of `teacher__in`. */
+                teacher__in?: string;
             };
             header?: never;
             path?: never;
@@ -4927,6 +5001,40 @@ export interface operations {
                         [key: string]: unknown;
                     };
                 };
+            };
+        };
+    };
+    course_assignments_for_teacher_retrieve: {
+        parameters: {
+            query: {
+                /** @description Optional academic year id (UUID). */
+                academic_year?: string;
+                /** @description Teacher id (UUID). */
+                teacher: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `results`, `count`, and optional `truncated` (boolean). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Missing or invalid `teacher`. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -6920,35 +7028,26 @@ export interface operations {
                     "text/csv": string;
                 };
             };
+            /** @description Parámetros inválidos o combinación no permitida. */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
+                content?: never;
             };
+            /** @description Sin permiso (solo ADMIN/COORDINATOR). */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
+                content?: never;
             };
+            /** @description Año lectivo no encontrado. */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
+                content?: never;
             };
         };
     };
@@ -7441,6 +7540,49 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Student"];
                 };
+            };
+        };
+    };
+    students_transfer_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description UUID del estudiante (``Student``) a trasladar. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudentTransferRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["StudentTransferRequestRequest"];
+                "multipart/form-data": components["schemas"]["StudentTransferRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentTransferResponse"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentTransferError"];
+                };
+            };
+            /** @description Estudiante no encontrado (``pk`` inválido). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

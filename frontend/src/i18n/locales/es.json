@@ -779,6 +779,7 @@
     "backToList": "<- Volver al listado",
     "edit": "Editar",
     "gradesSummary": "Resumen de calificaciones",
+    "transfer": "Trasladar estudiante",
     "empty": "-",
     "fields": {
       "full_name": "Nombre completo",
@@ -800,6 +801,51 @@
       "phone": "Teléfono",
       "created_at": "Creado en",
       "updated_at": "Actualizado en"
+    }
+  },
+  "studentTransfer": {
+    "title": "Trasladar estudiante",
+    "resultTitle": "Traslado completado",
+    "close": "Cerrar",
+    "selectInstitution": "Selecciona una institución en la barra superior para cargar sedes, grados y grupos destino.",
+    "studentLabel": "Estudiante: {{name}}",
+    "noActiveEnrollment": "Este estudiante no tiene matrículas activas. Solo se puede trasladar desde una matrícula activa.",
+    "pickEnrollment": "Matrícula origen",
+    "enrollmentOption": "{{group}} — {{campus}} ({{year}})",
+    "sourceTitle": "Origen",
+    "sourceSummary": "Grupo {{group}} · {{campus}} · año {{year}}",
+    "destinationTitle": "Destino",
+    "campus": "Sede destino",
+    "anyCampus": "(cualquier sede)",
+    "gradeLevel": "Grado destino",
+    "anyGradeLevel": "(cualquier grado)",
+    "targetGroup": "Grupo destino",
+    "noTargetGroups": "No hay grupos disponibles con los filtros seleccionados (mismo año lectivo, distinto al origen).",
+    "transferDate": "Fecha de traslado",
+    "transferDateHint": "Opcional. Se registrará como fecha de la nueva matrícula.",
+    "disclaimer": "El traslado migra notas, asistencias e indicadores por coincidencia de asignatura. Las asignaturas sin equivalente en el destino se omiten y requieren conciliación manual.",
+    "confirmPrompt": "¿Confirmas trasladar a {{student}} del grupo {{source}} al grupo {{target}}? Esta acción no se puede deshacer.",
+    "submit": "Continuar",
+    "confirmAction": "Confirmar traslado",
+    "successSummary": "Traslado de {{source}} a {{target}} realizado correctamente.",
+    "warningsTitle": "Advertencias",
+    "stats": {
+      "grades": "Notas migradas / omitidas",
+      "attendances": "Asistencias migradas / omitidas",
+      "indicators": "Indicadores migrados / omitidos",
+      "performance": "Periodos recalculados (promedios)",
+      "schoolRecord": "Folio regenerado",
+      "indicatorReports": "Informes de indicadores regenerados",
+      "yes": "Sí",
+      "no": "No"
+    },
+    "errors": {
+      "invalid_transfer": "No se pudo completar el traslado.",
+      "student_not_found": "Estudiante no encontrado.",
+      "group_not_found": "Grupo destino no encontrado.",
+      "no_active_enrollment": "No hay matrícula activa en el año lectivo del grupo destino.",
+      "same_group": "El grupo destino es el mismo que el origen.",
+      "institution_mismatch": "La sede destino pertenece a otra institución."
     }
   },
   "studentGradesSummary": {
@@ -847,6 +893,7 @@
     "enrollmentDate": "Fecha matrícula",
     "deleteDialog": "Eliminar matrícula",
     "deletePrompt": "¿Eliminar la matrícula de {{student}} en {{group}}?",
+    "transfer": "Trasladar",
     "statusValues": {
       "active": "Activa",
       "withdrawn": "Retirada",

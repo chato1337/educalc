@@ -39,3 +39,8 @@ export type SchoolRecord = components['schemas']['SchoolRecord']
 export type AcademicIndicatorsReport =
   components['schemas']['AcademicIndicatorsReport']
 export type StatusEnum = components['schemas']['StatusEnum']
+export type StudentTransferRequest =
+  components['schemas']['StudentTransferRequestRequest']
+export type StudentTransferResponse =
+  components['schemas']['StudentTransferResponse']
+export type StudentTransferErrorCode = components['schemas']['CodeEnum']

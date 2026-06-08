@@ -2,6 +2,7 @@ import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import EditIcon from '@mui/icons-material/Edit'
 import SearchIcon from '@mui/icons-material/Search'
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz'
 import type { AutocompleteRenderInputParams } from '@mui/material/Autocomplete'
 import {
   Alert,
@@ -43,6 +44,7 @@ import {
 } from '@/hooks/useMuiDataGridLocaleText'
 import { PageHeader } from '@/components/PageHeader'
 import { useAcademicYearsQuery } from '@/features/academic-structure/academicQueries'
+import { StudentTransferDialog } from '@/features/students/StudentTransferDialog'
 import {
   useGroupsForFilters,
   useStudentsSearch,
@@ -83,6 +85,7 @@ export function EnrollmentsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Enrollment | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Enrollment | null>(null)
+  const [transferTarget, setTransferTarget] = useState<Enrollment | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [studentSearchInput, setStudentSearchInput] = useState('')
   const [appliedStudentSearch, setAppliedStudentSearch] = useState('')
@@ -246,27 +249,44 @@ export function EnrollmentsPage() {
         field: 'actions',
         type: 'actions',
         headerName: t('common.actions'),
-        width: 108,
+        width: 148,
         align: 'right',
         headerAlign: 'right',
-        getActions: (params: GridRenderCellParams<Enrollment>) => [
-          <IconButton
-            key="edit"
-            aria-label={t('enrollments.edit')}
-            size="small"
-            onClick={() => openEdit(params.row)}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>,
-          <IconButton
-            key="delete"
-            aria-label={t('enrollments.delete')}
-            size="small"
-            onClick={() => setDeleteTarget(params.row)}
-          >
-            <DeleteOutlineIcon fontSize="small" />
-          </IconButton>,
-        ],
+        getActions: (params: GridRenderCellParams<Enrollment>) => {
+          const actions = [
+            <IconButton
+              key="edit"
+              aria-label={t('enrollments.edit')}
+              size="small"
+              onClick={() => openEdit(params.row)}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>,
+          ]
+          if (params.row.status === 'active') {
+            actions.push(
+              <IconButton
+                key="transfer"
+                aria-label={t('enrollments.transfer')}
+                size="small"
+                onClick={() => setTransferTarget(params.row)}
+              >
+                <SwapHorizIcon fontSize="small" />
+              </IconButton>,
+            )
+          }
+          actions.push(
+            <IconButton
+              key="delete"
+              aria-label={t('enrollments.delete')}
+              size="small"
+              onClick={() => setDeleteTarget(params.row)}
+            >
+              <DeleteOutlineIcon fontSize="small" />
+            </IconButton>,
+          )
+          return actions
+        },
       },
     ],
     [openEdit, t],
@@ -578,6 +598,16 @@ export function EnrollmentsPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {transferTarget ? (
+        <StudentTransferDialog
+          open={!!transferTarget}
+          onClose={() => setTransferTarget(null)}
+          studentId={transferTarget.student}
+          studentName={transferTarget.student_name}
+          sourceEnrollment={transferTarget}
+        />
+      ) : null}
     </Box>
   )
 }

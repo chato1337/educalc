@@ -1,5 +1,7 @@
-import { Alert, Box, Paper, Typography } from '@mui/material'
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz'
+import { Alert, Box, Button, Paper, Typography } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 
@@ -7,6 +9,7 @@ import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
 import { PageHeader } from '@/components/PageHeader'
+import { StudentTransferDialog } from '@/features/students/StudentTransferDialog'
 import type { Student } from '@/types/schemas'
 
 const fields: (keyof Student)[] = [
@@ -34,6 +37,7 @@ const fields: (keyof Student)[] = [
 export function StudentDetailPage() {
   const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()
+  const [transferOpen, setTransferOpen] = useState(false)
 
   const { data, isLoading, error } = useQuery({
     queryKey: queryKeys.student(id ?? ''),
@@ -71,6 +75,18 @@ export function StudentDetailPage() {
         </Link>
       </Typography>
 
+      {data ? (
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<SwapHorizIcon />}
+          onClick={() => setTransferOpen(true)}
+          className="self-start"
+        >
+          {t('studentDetail.transfer')}
+        </Button>
+      ) : null}
+
       {error ? <Alert severity="error">{getErrorMessage(error)}</Alert> : null}
       {isLoading ? <Typography>{t('common.loading')}</Typography> : null}
 
@@ -91,6 +107,15 @@ export function StudentDetailPage() {
             </Box>
           ))}
         </Paper>
+      ) : null}
+
+      {id && data ? (
+        <StudentTransferDialog
+          open={transferOpen}
+          onClose={() => setTransferOpen(false)}
+          studentId={id}
+          studentName={data.full_name}
+        />
       ) : null}
     </Box>
   )

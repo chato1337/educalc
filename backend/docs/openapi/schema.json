@@ -7627,8 +7627,8 @@
         "/api/reports/grading-consolidated/": {
             "get": {
                 "operationId": "reports_grading_consolidated_retrieve",
-                "description": "Descarga CSV (UTF-8 con BOM) con una fila por cupo esperado de calificación: matrícula activa × asignación de curso en el mismo grupo y año × cada periodo del año. ``estado_calificacion`` es ``CALIFICADO`` si existe nota en ``core_grade`` para esa terna (estudiante, asignación, periodo); en caso contrario ``PENDIENTE``. Incluye institución, sede, grado, grupo, área, asignatura, docente, periodo e identificadores UUID para cruzar con otros extractos. La consulta usa un único ``SELECT`` con ``JOIN``/``LEFT JOIN`` (sin subconsultas correlacionadas por fila). **COORDINATOR:** el conjunto queda restringido al ``UserProfile.institution`` del usuario. **ADMIN:** sin ``institution`` se exporta el año lectivo indicado (una institución por año); con ``institution`` se valida que coincida con la institución del año.",
-                "summary": "CSV: consolidado calificados vs pendientes",
+                "description": "Descarga CSV (UTF-8 con BOM) con **una única fila por estudiante** (matrícula activa) y **una columna por asignatura**. Cuando la exportación cubre más de un periodo, cada asignatura se despliega en varias columnas con el sufijo ``(P1)``, ``(P2)``, … por número de periodo. El valor de cada celda es la nota numérica (o la definitiva si no hay numérica) para esa terna (estudiante, asignatura, periodo); una celda vacía significa **PENDIENTE**. Al final se incluyen columnas de resumen ``asignaturas_calificadas``, ``asignaturas_pendientes`` y ``promedio_numerico`` (promedio simple sobre las notas existentes del estudiante). La consulta base usa un único ``SELECT`` con ``JOIN``/``LEFT JOIN`` (sin subconsultas correlacionadas por fila); el pivoteo se realiza en memoria tras el fetch. **COORDINATOR:** el conjunto queda restringido al ``UserProfile.institution`` del usuario. **ADMIN:** sin ``institution`` se exporta el año lectivo indicado (una institución por año); con ``institution`` se valida que coincida con la institución del año.",
+                "summary": "CSV: consolidado de calificaciones pivoteado por estudiante",
                 "parameters": [
                     {
                         "in": "query",
@@ -8773,6 +8773,140 @@
                             }
                         },
                         "description": ""
+                    }
+                }
+            }
+        },
+        "/api/students/{id}/transfer/": {
+            "post": {
+                "operationId": "students_transfer_create",
+                "description": "Ejecuta un traslado atómico del estudiante dentro del **mismo año lectivo** definido por el grupo destino. Soporta cambio de sede (``Group.campus``), grado (``Group.grade_level``) o solo de grupo (p. ej. 601 → 602).\n\n**Flujo:**\n1. Localiza la matrícula activa (``Enrollment.status=active``) del estudiante en el año del grupo destino.\n2. Marca esa matrícula como ``withdrawn`` y crea o reactiva una matrícula ``active`` en el grupo destino.\n3. Migra ``Grade``, ``Attendance`` y ``AcademicIndicator`` reasignando ``course_assignment`` por coincidencia de ``Subject`` entre grupo origen y destino. Las asignaturas sin equivalente en el destino se **omiten** (conciliación manual); el detalle aparece en ``warnings``.\n4. Elimina ``PerformanceSummary`` del estudiante en el grupo origen y recalcula promedios/rankings en origen y destino para los periodos afectados.\n5. Regenera ``SchoolRecord`` (grupo, sede, institución, ``generated_at``) e ``AcademicIndicatorsReport`` por periodo afectado (requiere ``GradeDirector`` en el destino).\n\n**Restricciones:** misma institución; grupo destino distinto al origen; requiere matrícula activa en el año del destino. Operación transaccional: ante cualquier fallo no persisten cambios parciales.",
+                "summary": "Trasladar estudiante a otro grupo",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "UUID del estudiante (``Student``) a trasladar.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Students"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StudentTransferRequestRequest"
+                            },
+                            "examples": {
+                                "TrasladoEntreSedes(mismoGrado)": {
+                                    "value": {
+                                        "target_group_id": "00000000-0000-4000-8000-000000000010",
+                                        "transfer_date": "2026-06-07"
+                                    },
+                                    "summary": "Cambio de campus manteniendo grado"
+                                },
+                                "TrasladoSinFechaExplícita": {
+                                    "value": {
+                                        "target_group_id": "00000000-0000-4000-8000-000000000011"
+                                    },
+                                    "summary": "Solo grupo destino"
+                                }
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StudentTransferRequestRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StudentTransferRequestRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StudentTransferResponse"
+                                },
+                                "examples": {
+                                    "TrasladoExitoso": {
+                                        "value": {
+                                            "old_enrollment": {
+                                                "id": "00000000-0000-4000-8000-000000000020",
+                                                "student": "00000000-0000-4000-8000-000000000001",
+                                                "group": "00000000-0000-4000-8000-000000000030",
+                                                "status": "withdrawn"
+                                            },
+                                            "new_enrollment": {
+                                                "id": "00000000-0000-4000-8000-000000000021",
+                                                "student": "00000000-0000-4000-8000-000000000001",
+                                                "group": "00000000-0000-4000-8000-000000000010",
+                                                "status": "active"
+                                            },
+                                            "source_group_id": "00000000-0000-4000-8000-000000000030",
+                                            "source_group_name": "601",
+                                            "target_group_id": "00000000-0000-4000-8000-000000000010",
+                                            "target_group_name": "602",
+                                            "grades_migrated": 2,
+                                            "grades_skipped": 1,
+                                            "attendances_migrated": 1,
+                                            "attendances_skipped": 0,
+                                            "academic_indicators_migrated": 1,
+                                            "academic_indicators_skipped": 0,
+                                            "performance_pairs_synced": 2,
+                                            "school_record_regenerated": true,
+                                            "academic_indicators_reports_regenerated": 1,
+                                            "warnings": [
+                                                "La asignatura 'Tecnología' no existe en el grupo destino; sus registros fueron omitidos."
+                                            ]
+                                        },
+                                        "summary": "Respuesta con migración parcial"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StudentTransferError"
+                                },
+                                "examples": {
+                                    "SinMatrículaActiva": {
+                                        "value": {
+                                            "detail": "No hay matrícula activa para el estudiante en el año lectivo del grupo destino.",
+                                            "code": "no_active_enrollment"
+                                        },
+                                        "summary": "Error de negocio"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "description": "Estudiante no encontrado (``pk`` inválido)."
                     }
                 }
             }
@@ -10760,6 +10894,18 @@
                     "institution",
                     "name"
                 ]
+            },
+            "CodeEnum": {
+                "enum": [
+                    "invalid_transfer",
+                    "student_not_found",
+                    "group_not_found",
+                    "no_active_enrollment",
+                    "same_group",
+                    "institution_mismatch"
+                ],
+                "type": "string",
+                "description": "* `invalid_transfer` - invalid_transfer\n* `student_not_found` - student_not_found\n* `group_not_found` - group_not_found\n* `no_active_enrollment` - no_active_enrollment\n* `same_group` - same_group\n* `institution_mismatch` - institution_mismatch"
             },
             "CourseAssignment": {
                 "type": "object",
@@ -14062,6 +14208,149 @@
                     "first_last_name",
                     "first_name",
                     "full_name"
+                ]
+            },
+            "StudentTransferError": {
+                "type": "object",
+                "description": "Respuesta de error de validación o regla de negocio en el traslado.",
+                "properties": {
+                    "detail": {
+                        "type": "string",
+                        "description": "Mensaje legible del error."
+                    },
+                    "code": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/CodeEnum"
+                            }
+                        ],
+                        "description": "Código de error: ``no_active_enrollment`` (sin matrícula activa en el año del destino), ``same_group`` (destino igual al origen), ``institution_mismatch`` (sedes de distinta institución).\n\n* `invalid_transfer` - invalid_transfer\n* `student_not_found` - student_not_found\n* `group_not_found` - group_not_found\n* `no_active_enrollment` - no_active_enrollment\n* `same_group` - same_group\n* `institution_mismatch` - institution_mismatch"
+                    }
+                },
+                "required": [
+                    "code",
+                    "detail"
+                ]
+            },
+            "StudentTransferRequestRequest": {
+                "type": "object",
+                "description": "Cuerpo para ``POST /api/students/{id}/transfer/``.",
+                "properties": {
+                    "target_group_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "UUID del grupo destino. Define sede (``Group.campus``), grado (``Group.grade_level``), nombre de grupo y año lectivo."
+                    },
+                    "transfer_date": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "description": "Fecha de la nueva matrícula (``Enrollment.enrollment_date``). Opcional; si se omite no se modifica en reactivaciones."
+                    }
+                },
+                "required": [
+                    "target_group_id"
+                ]
+            },
+            "StudentTransferResponse": {
+                "type": "object",
+                "description": "Resultado del traslado: matrículas, contadores de migración y advertencias.",
+                "properties": {
+                    "old_enrollment": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Enrollment"
+                            }
+                        ],
+                        "description": "Matrícula retirada (``status=withdrawn``) en el grupo origen."
+                    },
+                    "new_enrollment": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Enrollment"
+                            }
+                        ],
+                        "description": "Matrícula activa creada o reactivada en el grupo destino."
+                    },
+                    "source_group_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "UUID del grupo desde el que se trasladó al estudiante."
+                    },
+                    "source_group_name": {
+                        "type": "string",
+                        "description": "Nombre del grupo origen (p. ej. 601)."
+                    },
+                    "target_group_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "UUID del grupo destino."
+                    },
+                    "target_group_name": {
+                        "type": "string",
+                        "description": "Nombre del grupo destino (p. ej. 602)."
+                    },
+                    "grades_migrated": {
+                        "type": "integer",
+                        "description": "Cantidad de filas ``Grade`` reasignadas al ``CourseAssignment`` del destino."
+                    },
+                    "grades_skipped": {
+                        "type": "integer",
+                        "description": "Notas omitidas: asignatura inexistente en el destino o conflicto ``(student, course_assignment, academic_period)``."
+                    },
+                    "attendances_migrated": {
+                        "type": "integer",
+                        "description": "Filas ``Attendance`` migradas por coincidencia de asignatura."
+                    },
+                    "attendances_skipped": {
+                        "type": "integer",
+                        "description": "Asistencias omitidas por las mismas reglas que las notas."
+                    },
+                    "academic_indicators_migrated": {
+                        "type": "integer",
+                        "description": "Filas ``AcademicIndicator`` migradas por coincidencia de asignatura."
+                    },
+                    "academic_indicators_skipped": {
+                        "type": "integer",
+                        "description": "Indicadores omitidos por asignatura ausente o conflicto."
+                    },
+                    "performance_pairs_synced": {
+                        "type": "integer",
+                        "description": "Pares (grupo, periodo) recalculados en ``PerformanceSummary`` (origen y destino)."
+                    },
+                    "school_record_regenerated": {
+                        "type": "boolean",
+                        "description": "``true`` si se actualizó o creó ``SchoolRecord`` con el nuevo grupo, sede e institución."
+                    },
+                    "academic_indicators_reports_regenerated": {
+                        "type": "integer",
+                        "description": "Informes ``AcademicIndicatorsReport`` actualizados para los periodos afectados (requiere director de grupo en el destino)."
+                    },
+                    "warnings": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Advertencias no bloqueantes: asignaturas omitidas, conflictos o ausencia de director de grupo en el destino."
+                    }
+                },
+                "required": [
+                    "academic_indicators_migrated",
+                    "academic_indicators_reports_regenerated",
+                    "academic_indicators_skipped",
+                    "attendances_migrated",
+                    "attendances_skipped",
+                    "grades_migrated",
+                    "grades_skipped",
+                    "new_enrollment",
+                    "old_enrollment",
+                    "performance_pairs_synced",
+                    "school_record_regenerated",
+                    "source_group_id",
+                    "source_group_name",
+                    "target_group_id",
+                    "target_group_name",
+                    "warnings"
                 ]
             },
             "Subject": {

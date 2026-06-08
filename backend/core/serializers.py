@@ -706,6 +706,118 @@ class AcademicIndicatorsReportSerializer(serializers.ModelSerializer):
         ]
 
 
+@extend_schema_serializer(component_name="StudentTransferRequest")
+class StudentTransferSerializer(serializers.Serializer):
+    """Cuerpo para ``POST /api/students/{id}/transfer/``."""
+
+    target_group_id = serializers.UUIDField(
+        help_text=(
+            "UUID del grupo destino. Define sede (``Group.campus``), grado "
+            "(``Group.grade_level``), nombre de grupo y año lectivo."
+        ),
+    )
+    transfer_date = serializers.DateField(
+        required=False,
+        allow_null=True,
+        help_text=(
+            "Fecha de la nueva matrícula (``Enrollment.enrollment_date``). "
+            "Opcional; si se omite no se modifica en reactivaciones."
+        ),
+    )
+
+
+@extend_schema_serializer(component_name="StudentTransferResponse")
+class StudentTransferResponseSerializer(serializers.Serializer):
+    """Resultado del traslado: matrículas, contadores de migración y advertencias."""
+
+    old_enrollment = EnrollmentSerializer(
+        help_text="Matrícula retirada (``status=withdrawn``) en el grupo origen.",
+    )
+    new_enrollment = EnrollmentSerializer(
+        help_text="Matrícula activa creada o reactivada en el grupo destino.",
+    )
+    source_group_id = serializers.UUIDField(
+        help_text="UUID del grupo desde el que se trasladó al estudiante.",
+    )
+    source_group_name = serializers.CharField(
+        help_text="Nombre del grupo origen (p. ej. 601).",
+    )
+    target_group_id = serializers.UUIDField(
+        help_text="UUID del grupo destino.",
+    )
+    target_group_name = serializers.CharField(
+        help_text="Nombre del grupo destino (p. ej. 602).",
+    )
+    grades_migrated = serializers.IntegerField(
+        help_text="Cantidad de filas ``Grade`` reasignadas al ``CourseAssignment`` del destino.",
+    )
+    grades_skipped = serializers.IntegerField(
+        help_text=(
+            "Notas omitidas: asignatura inexistente en el destino o conflicto "
+            "``(student, course_assignment, academic_period)``."
+        ),
+    )
+    attendances_migrated = serializers.IntegerField(
+        help_text="Filas ``Attendance`` migradas por coincidencia de asignatura.",
+    )
+    attendances_skipped = serializers.IntegerField(
+        help_text="Asistencias omitidas por las mismas reglas que las notas.",
+    )
+    academic_indicators_migrated = serializers.IntegerField(
+        help_text="Filas ``AcademicIndicator`` migradas por coincidencia de asignatura.",
+    )
+    academic_indicators_skipped = serializers.IntegerField(
+        help_text="Indicadores omitidos por asignatura ausente o conflicto.",
+    )
+    performance_pairs_synced = serializers.IntegerField(
+        help_text=(
+            "Pares (grupo, periodo) recalculados en ``PerformanceSummary`` "
+            "(origen y destino)."
+        ),
+    )
+    school_record_regenerated = serializers.BooleanField(
+        help_text=(
+            "``true`` si se actualizó o creó ``SchoolRecord`` con el nuevo grupo, "
+            "sede e institución."
+        ),
+    )
+    academic_indicators_reports_regenerated = serializers.IntegerField(
+        help_text=(
+            "Informes ``AcademicIndicatorsReport`` actualizados para los periodos "
+            "afectados (requiere director de grupo en el destino)."
+        ),
+    )
+    warnings = serializers.ListField(
+        child=serializers.CharField(),
+        help_text=(
+            "Advertencias no bloqueantes: asignaturas omitidas, conflictos o ausencia "
+            "de director de grupo en el destino."
+        ),
+    )
+
+
+@extend_schema_serializer(component_name="StudentTransferError")
+class StudentTransferErrorSerializer(serializers.Serializer):
+    """Respuesta de error de validación o regla de negocio en el traslado."""
+
+    detail = serializers.CharField(help_text="Mensaje legible del error.")
+    code = serializers.ChoiceField(
+        choices=[
+            "invalid_transfer",
+            "student_not_found",
+            "group_not_found",
+            "no_active_enrollment",
+            "same_group",
+            "institution_mismatch",
+        ],
+        help_text=(
+            "Código de error: ``no_active_enrollment`` (sin matrícula activa en el año del "
+            "destino), ``same_group`` (destino igual al origen), "
+            "``institution_mismatch`` (sedes de distinta institución)."
+        ),
+    )
+
+
 class UserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
     email = serializers.CharField(source="user.email", read_only=True)
