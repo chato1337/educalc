@@ -1,20 +1,14 @@
 import type { BulkLoadApiPath } from '@/api/bulkLoad'
 
-/** Targets: multipart campo `file`, UTF-8 CSV. Plantillas en `docs/bulk_load_*.csv`. */
+/** Tipos de carga masiva CSV disponibles en la plataforma. */
 export type BulkLoadTarget = {
   id: string
   labelKey: string
-  /** Path alineado con `paths` en openapi.d.ts */
   apiPath: BulkLoadApiPath
   sampleFile: string
-  /** Texto UI adicional (negocio). */
   hintKey?: string
-  /** Descripción de columnas según OpenAPI (schema.json). */
-  openApiDescription: string
-  /** operationId en `openapi.d.ts` / schema.json (si aplica). */
-  openApiOperationId?: string
-  /** Estudiantes usa `BulkLoadStudentsCsvRequest`; el resto `BulkLoadCsvUploadRequest`. */
-  requestSchema: 'BulkLoadCsvUploadRequest' | 'BulkLoadStudentsCsvRequest'
+  /** Descripción de columnas esperadas en el archivo CSV. */
+  columnsDescription: string
 }
 
 export type BulkLoadSection = {
@@ -31,36 +25,32 @@ export const bulkLoadSections: BulkLoadSection[] = [
         labelKey: 'bulkLoadTargets.targets.academicAreas',
         apiPath: '/api/academic-areas/bulk-load/',
         sampleFile: 'bulk_load_academic_areas.csv',
-        openApiDescription:
-          'Columns: DANE_COD, AREA_NOMBRE, AREA_COD, DESCRIPCION. See docs/plan-implementacion-carga-masiva-csv.md',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Columnas: DANE_COD, AREA_NOMBRE, AREA_COD, DESCRIPCION.',
       },
       {
         id: 'grading_scales',
         labelKey: 'bulkLoadTargets.targets.gradingScales',
         apiPath: '/api/grading-scales/bulk-load/',
         sampleFile: 'bulk_load_grading_scales.csv',
-        openApiDescription:
-          'Columns: DANE_COD, COD_NIVEL, NOMBRE_NIVEL, NOTA_MIN, NOTA_MAX, DESCRIPCION.',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Columnas: DANE_COD, COD_NIVEL, NOMBRE_NIVEL, NOTA_MIN, NOTA_MAX, DESCRIPCION.',
       },
       {
         id: 'academic_periods',
         labelKey: 'bulkLoadTargets.targets.academicPeriods',
         apiPath: '/api/academic-periods/bulk-load/',
         sampleFile: 'bulk_load_academic_periods.csv',
-        openApiDescription:
-          'Columns: DANE_COD, ANO, PERIODO_NUM, PERIODO_NOMBRE, FECHA_INI, FECHA_FIN.',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Columnas: DANE_COD, ANO, PERIODO_NUM, PERIODO_NOMBRE, FECHA_INI, FECHA_FIN.',
       },
       {
         id: 'subjects',
         labelKey: 'bulkLoadTargets.targets.subjects',
         apiPath: '/api/subjects/bulk-load/',
         sampleFile: 'bulk_load_subjects.csv',
-        openApiDescription:
-          'Columns: DANE_COD, AREA_NOMBRE, ASIGNATURA_NOMBRE, ENFASIS, HORAS.',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Columnas: DANE_COD, AREA_NOMBRE, ASIGNATURA_NOMBRE, ENFASIS, HORAS.',
       },
     ],
   },
@@ -73,18 +63,16 @@ export const bulkLoadSections: BulkLoadSection[] = [
         apiPath: '/api/students/bulk-load/',
         sampleFile: 'bulk_load_students.csv',
         hintKey: 'bulkLoadTargets.hints.students',
-        openApiDescription:
-          'Upload a CSV file to create/update students, enrollments, institutions, campuses, academic years, grade levels, and groups. CSV format: ANO, INSTITUCION, SEDE, GRADO_COD, GRADO, GRUPO, FECHAINI, ESTRATO, SISBEN IV, DOC, TIPODOC, APELLIDO1, APELLIDO2, NOMBRE1, NOMBRE2, GENERO, FECHA_NACIMIENTO, BARRIO, EPS, TIPO DE SANGRE, DISCAPACIDAD, TELEFONO. Use multipart/form-data with field \'file\'.',
-        requestSchema: 'BulkLoadStudentsCsvRequest',
+        columnsDescription:
+          'Columnas: ANO, INSTITUCION, SEDE, GRADO_COD, GRADO, GRUPO, FECHAINI, ESTRATO, SISBEN IV, DOC, TIPODOC, APELLIDO1, APELLIDO2, NOMBRE1, NOMBRE2, GENERO, FECHA_NACIMIENTO, BARRIO, EPS, TIPO DE SANGRE, DISCAPACIDAD, TELEFONO.',
       },
       {
         id: 'teachers',
         labelKey: 'bulkLoadTargets.targets.teachers',
         apiPath: '/api/teachers/bulk-load/',
         sampleFile: 'bulk_load_teachers.csv',
-        openApiDescription:
-          'Columns: DOC, TIPODOC, NOMBRE1, NOMBRE2, APELLIDO1, APELLIDO2, EMAIL, TELEFONO, ESPECIALIDAD.',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Columnas: DOC, TIPODOC, NOMBRE1, NOMBRE2, APELLIDO1, APELLIDO2, EMAIL, TELEFONO, ESPECIALIDAD.',
       },
       {
         id: 'teachers_users',
@@ -92,9 +80,8 @@ export const bulkLoadSections: BulkLoadSection[] = [
         apiPath: '/api/teachers/bulk-load-users/',
         sampleFile: 'bulk_load_teachers.csv',
         hintKey: 'bulkLoadTargets.hints.teachersUsers',
-        openApiDescription:
-          'Uses the same teachers CSV columns (DOC, NOMBRE1, APELLIDO1, EMAIL). Creates or updates login users for existing teachers. Username format: nombre.apellido (normalized to lowercase ASCII). Password format: document number (DOC).',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Mismas columnas que la carga de docentes (DOC, NOMBRE1, APELLIDO1, EMAIL). Crea o actualiza cuentas de acceso para docentes existentes.',
       },
       {
         id: 'parents',
@@ -102,26 +89,23 @@ export const bulkLoadSections: BulkLoadSection[] = [
         apiPath: '/api/parents/bulk-load/',
         sampleFile: 'bulk_load_parents.csv',
         hintKey: 'bulkLoadTargets.hints.parents',
-        openApiDescription:
-          'Columns: DOC, TIPODOC, NOMBRE1, NOMBRE2, APELLIDO1, APELLIDO2, EMAIL, TELEFONO, PARENTESCO. Empty EMAIL uses a synthetic address.',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Columnas: DOC, TIPODOC, NOMBRE1, NOMBRE2, APELLIDO1, APELLIDO2, EMAIL, TELEFONO, PARENTESCO.',
       },
       {
         id: 'student_guardians',
         labelKey: 'bulkLoadTargets.targets.studentGuardians',
         apiPath: '/api/student-guardians/bulk-load/',
         sampleFile: 'bulk_load_student_guardians.csv',
-        openApiDescription: 'Columns: DOC_ESTUDIANTE, DOC_ACUDIENTE, ES_PRIMARIO.',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription: 'Columnas: DOC_ESTUDIANTE, DOC_ACUDIENTE, ES_PRIMARIO.',
       },
       {
         id: 'grade_directors',
         labelKey: 'bulkLoadTargets.targets.gradeDirectors',
         apiPath: '/api/grade-directors/bulk-load/',
         sampleFile: 'bulk_load_grade_directors.csv',
-        openApiDescription:
-          'Columns: DANE_COD, ANO, SEDE, GRADO, GRUPO, DOC_DOCENTE.',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Columnas: DANE_COD, ANO, SEDE, GRADO, GRUPO, DOC_DOCENTE.',
       },
     ],
   },
@@ -133,9 +117,8 @@ export const bulkLoadSections: BulkLoadSection[] = [
         labelKey: 'bulkLoadTargets.targets.courseAssignments',
         apiPath: '/api/course-assignments/bulk-load/',
         sampleFile: 'bulk_load_course_assignments.csv',
-        openApiDescription:
-          'Columns: DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, ENFASIS, AREA_NOMBRE (optional), DOC_DOCENTE.',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Columnas: DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, ENFASIS, AREA_NOMBRE (opcional), DOC_DOCENTE.',
       },
     ],
   },
@@ -148,9 +131,8 @@ export const bulkLoadSections: BulkLoadSection[] = [
         apiPath: '/api/grades/bulk-load/',
         sampleFile: 'bulk_load_grades.csv',
         hintKey: 'bulkLoadTargets.hints.grades',
-        openApiDescription:
-          'Columns: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, ENFASIS, AREA_NOMBRE (optional), PERIODO_NUM, NOTA, COD_NIVEL (optional), NOTA_DEFINITIVA (optional). Requires existing CourseAssignment.',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Columnas: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, ENFASIS, AREA_NOMBRE (opcional), PERIODO_NUM, NOTA, COD_NIVEL (opcional), NOTA_DEFINITIVA (opcional).',
       },
       {
         id: 'grading_structure',
@@ -158,9 +140,8 @@ export const bulkLoadSections: BulkLoadSection[] = [
         apiPath: '/api/grading-schemes/bulk-load/',
         sampleFile: 'bulk_load_grading_structure.csv',
         hintKey: 'bulkLoadTargets.hints.gradingStructure',
-        openApiDescription:
-          'Columns: DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, COMPONENTE_NOMBRE, COMPONENTE_PESO, SEGMENTO_NOMBRE, SEGMENTO_PESO, ACTIVIDAD_NOMBRE, ACTIVIDAD_FECHA, NOTA_MAXIMA (optional). Requires CourseAssignment.',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Columnas: DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, COMPONENTE_NOMBRE, COMPONENTE_PESO, SEGMENTO_NOMBRE, SEGMENTO_PESO, ACTIVIDAD_NOMBRE, ACTIVIDAD_FECHA, NOTA_MAXIMA (opcional).',
       },
       {
         id: 'student_activity_scores',
@@ -168,9 +149,8 @@ export const bulkLoadSections: BulkLoadSection[] = [
         apiPath: '/api/student-activity-scores/bulk-load/',
         sampleFile: 'bulk_load_student_activity_scores.csv',
         hintKey: 'bulkLoadTargets.hints.studentActivityScores',
-        openApiDescription:
-          'Columns: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, COMPONENTE_NOMBRE, SEGMENTO_NOMBRE, ACTIVIDAD_NOMBRE, ACTIVIDAD_FECHA (optional), NOTA, OBSERVACIONES (optional). Requires grading structure loaded first. Does not modify Grade records.',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Columnas: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, COMPONENTE_NOMBRE, SEGMENTO_NOMBRE, ACTIVIDAD_NOMBRE, ACTIVIDAD_FECHA (opcional), NOTA, OBSERVACIONES (opcional).',
       },
       {
         id: 'academic_indicators_catalog',
@@ -178,10 +158,8 @@ export const bulkLoadSections: BulkLoadSection[] = [
         apiPath: '/api/academic-indicators/bulk-load/',
         sampleFile: 'bulk_load_academic_indicators.csv',
         hintKey: 'bulkLoadTargets.hints.academicIndicatorsCatalog',
-        openApiOperationId: 'academic_indicators_bulk_load_create',
-        openApiDescription:
-          'POST /api/academic-indicators/bulk-load/ (modo plantillas, coincide con description en schema.json): UTF-8 CSV sin DOC_ESTUDIANTE. Columnas: DANE_COD, AREA_ACADEMICA o AREA_NOMBRE, GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO. Upsert en catálogo por (área, grado). Respuesta 200: created, updated, rows_processed, rows_skipped, errors[].',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Modo plantillas (sin DOC_ESTUDIANTE). Columnas: DANE_COD, AREA_ACADEMICA o AREA_NOMBRE, GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO.',
       },
       {
         id: 'academic_indicators_students',
@@ -189,19 +167,16 @@ export const bulkLoadSections: BulkLoadSection[] = [
         apiPath: '/api/academic-indicators/bulk-load/',
         sampleFile: 'bulk_load_academic_indicators_legacy.csv',
         hintKey: 'bulkLoadTargets.hints.academicIndicatorsStudents',
-        openApiOperationId: 'academic_indicators_bulk_load_create',
-        openApiDescription:
-          'Mismo operationId (modo legacy): filas con DOC_ESTUDIANTE. DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION; NOTA y NIVEL_DESEMPENO_TEXTO opcionales. Cada fila añade un AcademicIndicator.',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Modo por estudiante. Columnas: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION; NOTA y NIVEL_DESEMPENO_TEXTO opcionales.',
       },
       {
         id: 'performance_summaries',
         labelKey: 'bulkLoadTargets.targets.performanceSummaries',
         apiPath: '/api/performance-summaries/bulk-load/',
         sampleFile: 'bulk_load_performance_summaries.csv',
-        openApiDescription:
-          'Columns: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, PERIODO_NUM, PROMEDIO_PERIODO, PUESTO, PROMEDIO_DEFINITIVO.',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Columnas: DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, PERIODO_NUM, PROMEDIO_PERIODO, PUESTO, PROMEDIO_DEFINITIVO.',
       },
     ],
   },
@@ -213,18 +188,16 @@ export const bulkLoadSections: BulkLoadSection[] = [
         labelKey: 'bulkLoadTargets.targets.attendance',
         apiPath: '/api/attendances/bulk-load/',
         sampleFile: 'bulk_load_attendance.csv',
-        openApiDescription:
-          'Same context columns as grades plus INASISTENCIAS_SIN_JUSTIFICAR, INASISTENCIAS_JUSTIFICADAS.',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Mismas columnas de contexto que calificaciones, más INASISTENCIAS_SIN_JUSTIFICAR e INASISTENCIAS_JUSTIFICADAS.',
       },
       {
         id: 'disciplinary',
         labelKey: 'bulkLoadTargets.targets.disciplinaryReports',
         apiPath: '/api/disciplinary-reports/bulk-load/',
         sampleFile: 'bulk_load_disciplinary_reports.csv',
-        openApiDescription:
-          'Columns: DOC_ESTUDIANTE, DANE_COD, ANO, PERIODO_NUM, TEXTO, DOC_DOCENTE_CREADOR (optional).',
-        requestSchema: 'BulkLoadCsvUploadRequest',
+        columnsDescription:
+          'Columnas: DOC_ESTUDIANTE, DANE_COD, ANO, PERIODO_NUM, TEXTO, DOC_DOCENTE_CREADOR (opcional).',
       },
     ],
   },

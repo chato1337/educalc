@@ -74,7 +74,7 @@ export function BulkLoadResultSummary({ data }: { data: BulkLoadStats }) {
       {statEntries.length > 0 ? (
         <Paper variant="outlined" className="p-3">
           <Typography variant="subtitle2" className="mb-2">
-            {t('bulkLoadResultSummary.apiSummary')}
+            {t('bulkLoadResultSummary.loadSummary')}
           </Typography>
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 m-0 text-sm">
             {statEntries.map(([key, value]) => (
@@ -123,7 +123,7 @@ export function BulkLoadResultSummary({ data }: { data: BulkLoadStats }) {
 
       <Paper variant="outlined" className="p-4 overflow-auto">
         <Typography variant="caption" color="text.secondary" className="block mb-2">
-          {t('bulkLoadResultSummary.fullJson')}
+          {t('bulkLoadResultSummary.fullDetail')}
         </Typography>
         <pre className="text-sm whitespace-pre-wrap break-words m-0">
           {JSON.stringify(data, null, 2)}

@@ -3,9 +3,9 @@ import {
   Alert,
   Box,
   Button,
-  Chip,
   FormControl,
   InputLabel,
+  Link,
   ListSubheader,
   MenuItem,
   Paper,
@@ -16,7 +16,7 @@ import {
 import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link as RouterLink } from 'react-router-dom'
 
 import { postBulkLoadCsv, type BulkLoadApiPath } from '@/api/bulkLoad'
 import { getErrorMessage } from '@/api/errors'
@@ -66,11 +66,11 @@ export function BulkLoadHubPage() {
         subtitle={t('bulkLoadHub.subtitle')}
       />
       <Typography variant="body2">
-        <Link to="/dashboard" className="text-blue-600 underline">
+        <Link component={RouterLink} to="/dashboard" underline="hover">
           {t('bulkLoadHub.backHome')}
         </Link>
         {' · '}
-        <Link to="/students" className="text-blue-600 underline">
+        <Link component={RouterLink} to="/students" underline="hover">
           {t('bulkLoadHub.students')}
         </Link>
       </Typography>
@@ -114,24 +114,14 @@ export function BulkLoadHubPage() {
       {target ? (
         <Paper variant="outlined" className="p-3">
           <Typography variant="body2" color="text.secondary" component="div" className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <strong>{t('bulkLoadHub.endpoint')}:</strong> <code>{target.apiPath}</code>
-              <Chip size="small" label={target.requestSchema} variant="outlined" />
-              {target.openApiOperationId ? (
-                <Chip
-                  size="small"
-                  label={t('bulkLoadHub.openApiOperationId', {
-                    id: target.openApiOperationId,
-                  })}
-                  variant="outlined"
-                />
-              ) : null}
+            <div>
+              <strong>{t('bulkLoadHub.columns')}:</strong> {target.columnsDescription}
             </div>
             <div>
-              <strong>{t('bulkLoadHub.openapiContract')}:</strong> {target.openApiDescription}
-            </div>
-            <div>
-              <strong>{t('bulkLoadHub.sampleInRepo')}:</strong> <code>docs/{target.sampleFile}</code>
+              <strong>{t('bulkLoadHub.sampleTemplate')}:</strong>{' '}
+              <Box component="span" sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+                {target.sampleFile}
+              </Box>
             </div>
             {target.hintKey ? <div>{t(target.hintKey)}</div> : null}
           </Typography>

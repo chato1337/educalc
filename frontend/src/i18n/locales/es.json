@@ -22,11 +22,38 @@
     "restoreSession": "Restaurando sesión",
     "defaultError": "No se pudo iniciar sesión",
     "title": "{{appName}} - Administración",
-    "subtitle": "Ingresa con tu usuario del backend (JWT).",
+    "subtitle": "Ingresa con tu usuario y contraseña de la plataforma.",
+    "welcomeTitle": "Bienvenido de nuevo a {{appName}}",
+    "welcomeSubtitle": "Gestiona la estructura académica, estudiantes, calificaciones e indicadores desde un solo panel.",
     "username": "Usuario",
     "password": "Contraseña",
-    "submit": "Entrar",
-    "submitting": "Entrando..."
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "submit": "Iniciar sesión",
+    "submitting": "Entrando...",
+    "slides": {
+      "navigation": "Características de la aplicación",
+      "academicStructure": {
+        "title": "Estructura académica",
+        "quote": "Organiza años lectivos, periodos, grados y grupos en minutos.",
+        "description": "Configura sedes, áreas, asignaturas y la malla curricular de tu institución."
+      },
+      "students": {
+        "title": "Gestión de estudiantes",
+        "quote": "Centraliza matrículas, acudientes y el historial de cada estudiante.",
+        "description": "Consulta fichas completas, inscripciones activas y vínculos familiares."
+      },
+      "bulkLoad": {
+        "title": "Carga masiva CSV",
+        "quote": "Importa cientos de registros con validación fila a fila.",
+        "description": "Importa estudiantes, calificaciones e indicadores con plantillas CSV estandarizadas."
+      },
+      "performance": {
+        "title": "Desempeño e indicadores",
+        "quote": "Visualiza calificaciones, asistencia y resúmenes de rendimiento.",
+        "description": "Genera rankings por grupo, boletines y reportes académicos integrados."
+      }
+    }
   },
   "adminLayout": {
     "defaultUser": "Usuario",
@@ -44,18 +71,18 @@
     "filterByInstitution": "Filtrar por institución"
   },
   "bulkLoadResultSummary": {
-    "apiSummary": "Resumen (respuesta API)",
+    "loadSummary": "Resumen de la importación",
     "rowErrors": "Errores por fila ({{count}})",
     "row": "Fila",
     "message": "Mensaje",
-    "showingLimitedErrors": "Mostrando 100 de {{count}} errores. El JSON completo está abajo.",
-    "fullJson": "JSON completo"
+    "showingLimitedErrors": "Mostrando 100 de {{count}} errores. El detalle completo está abajo.",
+    "fullDetail": "Detalle completo"
   },
   "groupRankings": {
     "invalidGroupId": "ID de grupo no válido.",
     "title": "Ranking de estudiantes (grupo)",
+    "subtitle": "Consulta el orden de desempeño de los estudiantes matriculados en este grupo.",
     "groupsList": "Listado de grupos",
-    "apiRoute": "Ruta API:",
     "loading": "Cargando..."
   },
   "students": {
@@ -150,11 +177,11 @@
   },
   "users": {
     "title": "Usuarios (perfiles)",
-    "subtitle": "Vincula el usuario Django (pk) con rol e institución. Requiere permisos de administración en API.",
+    "subtitle": "Administra cuentas de acceso, roles e institución de cada usuario.",
     "newProfile": "Nuevo perfil",
     "newProfileDialog": "Nuevo perfil de usuario",
     "editProfile": "Editar perfil de usuario",
-    "idRequired": "Indica el ID numérico del usuario Django (pk).",
+    "idRequired": "Indica el identificador numérico del usuario.",
     "role": "Rol",
     "all": "Todos",
     "institution": "Institución",
@@ -175,7 +202,7 @@
     "institutionId": "Institución (id)",
     "edit": "Editar",
     "delete": "Eliminar",
-    "djangoPk": "ID usuario Django (pk)",
+    "djangoPk": "ID de usuario",
     "djangoPkHelp": "Solo al crear. Es el pk de auth_user.",
     "noRole": "(sin rol)",
     "teacherOptional": "Docente (opcional)",
@@ -244,8 +271,7 @@
     "generateRecord": "Generar registro",
     "selectInstitution": "Selecciona una institución para listar y generar registros.",
     "queryOrCreate": "Consulta o generación por estudiante y año",
-    "useEndpoint": "Usa el endpoint",
-    "endpointHelp": ": obtiene el registro existente o lo genera si hay matrícula activa en ese año.",
+    "queryHelp": "Busca el libro final del estudiante para el año seleccionado. Si no existe y hay matrícula activa, se generará automáticamente.",
     "searchStudent": "Buscar estudiante",
     "student": "Estudiante",
     "academicYear": "Año lectivo",
@@ -298,7 +324,7 @@
     "periodDesc": "Periodo (Z-A)",
     "gradeAsc": "Nota (asc)",
     "gradeDesc": "Nota (desc)",
-    "globalSearchHint": "Parámetro `search` del API: documento o nombre del estudiante, asignatura, docente, nombre de grupo y periodo (coincidencia parcial). Los demás campos aplican filtros exactos en el servidor.",
+    "globalSearchHint": "Búsqueda global por documento o nombre del estudiante, asignatura, docente, grupo y periodo. Los demás filtros aplican coincidencia exacta.",
     "student": "Estudiante",
     "document": "Documento",
     "subject": "Asignatura",
@@ -324,7 +350,7 @@
     "deleteGrade": "Eliminar calificación",
     "deletePrompt": "¿Eliminar la nota de {{student}}?",
     "bulletinTitle": "Boletín de calificaciones (PDF)",
-    "bulletinSubtitle": "Un estudiante o todo un grupo en un solo PDF (varias hojas). Misma API `GET /api/academic-grades/bulletin/`. Sin periodos elegidos = todos los del año.",
+    "bulletinSubtitle": "Genera el boletín en PDF para un estudiante o para todo un grupo. Si no eliges periodos, se incluyen todos los del año lectivo.",
     "bulletinScopeStudent": "Un estudiante",
     "bulletinScopeGroup": "Todo el grupo",
     "bulletinGroup": "Grupo (p. ej. 101)",
@@ -531,8 +557,7 @@
     "generateReport": "Generar informe",
     "selectInstitution": "Selecciona una institución para años lectivos en el formulario.",
     "queryOrCreate": "Consulta o generación por estudiante y periodo",
-    "use": "Usa",
-    "endpointHelp": ": requiere matrícula y coordinador de grado del grupo del estudiante.",
+    "queryHelp": "Busca el informe del estudiante para el periodo seleccionado. Requiere matrícula activa y coordinador de grado asignado al grupo.",
     "searchStudent": "Buscar estudiante",
     "student": "Estudiante",
     "yearPeriods": "Año (periodos)",
@@ -777,7 +802,7 @@
   },
   "dashboard": {
     "title": "Inicio",
-    "subtitle": "Panel de administración enlazado a la API {{appName}} (OpenAPI en backend/docs/openapi/schema.json).",
+    "subtitle": "Resumen operativo de {{appName}}: estructura académica, personas, evaluación e informes en un solo lugar.",
     "kpis": {
       "title": "Indicadores",
       "subtitle": "Conteos por entidad según tu rol; los administradores pueden acotar por la institución seleccionada en la barra superior.",
@@ -870,7 +895,7 @@
       },
       "bulkLoad": {
         "title": "Carga masiva CSV",
-        "body": "Todos los POST */bulk-load/ del OpenAPI (multipart file)"
+        "body": "Importación masiva de estudiantes, calificaciones, asistencia y más"
       },
       "academicYears": {
         "title": "Años lectivos",
@@ -884,18 +909,16 @@
   },
   "bulkLoadHub": {
     "title": "Carga masiva CSV",
-    "subtitle": "Operaciones POST multipart del OpenAPI (`file`). Elige módulo y tipo; las columnas coinciden con la descripción de cada endpoint en el schema.",
+    "subtitle": "Importa datos desde archivos CSV. Elige el módulo, revisa las columnas requeridas y sube tu archivo.",
     "backHome": "<- Inicio",
     "students": "Estudiantes",
     "moduleAndType": "Módulo y tipo de carga",
-    "endpoint": "Endpoint",
-    "openapiContract": "Contrato OpenAPI (columnas)",
-    "sampleInRepo": "Ejemplo en repo",
+    "columns": "Columnas del CSV",
+    "sampleTemplate": "Plantilla de ejemplo",
     "uploading": "Subiendo...",
     "chooseCsv": "Elegir archivo CSV",
     "lastFile": "Último archivo: {{file}}",
-    "success": "Carga finalizada. Revisa el resumen, los errores por fila (si los hay) y el JSON completo.",
-    "openApiOperationId": "OpenAPI operationId: {{id}}"
+    "success": "Carga finalizada. Revisa el resumen y los errores por fila, si los hay."
   },
   "bulkLoadTargets": {
     "sections": {
@@ -929,12 +952,12 @@
     "hints": {
       "students": "Crea/actualiza estudiantes, matrículas e infraestructura (institución, sede, año, grado, grupo).",
       "teachersUsers": "Crea/actualiza usuarios de acceso para docentes existentes. Username: nombre.apellido (normalizado). Password inicial: DOC.",
-      "parents": "Si EMAIL está vacío, el backend asigna un correo sintético.",
-      "grades": "Requiere CourseAssignment y periodo ya cargados.",
-      "gradingStructure": "Requiere CourseAssignment. Crea esquema, componentes, segmentos y actividades por fila.",
-      "studentActivityScores": "Requiere estructura cargada. No modifica registros Grade.",
-      "academicIndicatorsCatalog": "Requiere áreas y grados ya cargados. Ejemplo extenso: docs/bulk_academic_indicator.csv. La API devuelve created y updated al sustituir plantillas.",
-      "academicIndicatorsStudents": "Requiere matrícula, grupos, asignaciones y periodos. Cada ejecución añade filas (no hace upsert por estudiante)."
+      "parents": "Si el correo está vacío, el sistema asigna uno automáticamente.",
+      "grades": "Requiere asignaciones docente-curso y periodos ya registrados.",
+      "gradingStructure": "Requiere asignaciones docente-curso. Crea esquema, componentes, segmentos y actividades por fila.",
+      "studentActivityScores": "Requiere la estructura de evaluación cargada. No modifica las calificaciones oficiales.",
+      "academicIndicatorsCatalog": "Requiere áreas y grados ya registrados. Las plantillas existentes se actualizan al volver a importar.",
+      "academicIndicatorsStudents": "Requiere matrícula, grupos, asignaciones y periodos. Cada importación añade nuevos registros por estudiante."
     }
   },
   "routePageFallback": {
@@ -1141,7 +1164,7 @@
     "deletePrompt": "¿Eliminar asistencia de {{student}}?"
   },
   "genericList": {
-    "selectInstitution": "Selecciona una institución en la barra superior para filtrar este listado (opcional según permisos del backend).",
+    "selectInstitution": "Selecciona una institución en la barra superior para filtrar este listado según tus permisos.",
     "searchAria": "Buscar en listado",
     "updating": "Actualizando..."
   },

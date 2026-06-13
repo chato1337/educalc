@@ -320,19 +320,7 @@ export function AcademicIndicatorsReportsPage() {
             {t('academicIndicators.queryOrCreate')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {t('academicIndicators.use')}{' '}
-            <Box
-              component="code"
-              sx={{
-                fontSize: 12,
-                bgcolor: 'action.hover',
-                px: 0.5,
-                borderRadius: 0.5,
-              }}
-            >
-              GET /api/academic-indicators-reports/&lt;student_id&gt;/&lt;period_id&gt;/
-            </Box>
-            {t('academicIndicators.endpointHelp')}
+            {t('academicIndicators.queryHelp')}
           </Typography>
         </Box>
         <Box className="flex flex-wrap gap-2 items-end">

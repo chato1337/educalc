@@ -353,19 +353,7 @@ export function SchoolRecordsPage() {
             {t('schoolRecords.queryOrCreate')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {t('schoolRecords.useEndpoint')}{' '}
-            <Box
-              component="code"
-              sx={{
-                fontSize: 12,
-                bgcolor: 'action.hover',
-                px: 0.5,
-                borderRadius: 0.5,
-              }}
-            >
-              GET /api/school-records/&lt;student_id&gt;/&lt;academic_year_id&gt;/
-            </Box>
-            {t('schoolRecords.endpointHelp')}
+            {t('schoolRecords.queryHelp')}
           </Typography>
         </Box>
         <Box className="flex flex-wrap gap-2 items-end">

@@ -29,24 +29,14 @@ export function GroupRankingsPage() {
 
   return (
     <Box className="p-4 md:p-6 max-w-4xl mx-auto w-full flex flex-col gap-4">
-      <PageHeader title={t('groupRankings.title')} />
+      <PageHeader
+        title={t('groupRankings.title')}
+        subtitle={t('groupRankings.subtitle')}
+      />
       <Typography variant="body2">
         <Link to="/groups" className="text-blue-600 underline">
           {`← ${t('groupRankings.groupsList')}`}
         </Link>
-        {' · '}
-        {t('groupRankings.apiRoute')}{' '}
-        <Box
-          component="code"
-          sx={{
-            fontSize: 12,
-            bgcolor: 'action.hover',
-            px: 0.5,
-            borderRadius: 0.5,
-          }}
-        >
-          GET /api/groups/{'{id}'}/students-rankings/
-        </Box>
       </Typography>
 
       {error ? <Alert severity="error">{getErrorMessage(error)}</Alert> : null}

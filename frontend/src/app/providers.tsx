@@ -1,8 +1,9 @@
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material'
+import { CssBaseline, ThemeProvider } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect, useMemo, type ReactNode } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 
+import { createAppTheme } from '@/app/theme'
 import { i18n } from '@/i18n'
 import { useUiStore } from '@/stores/uiStore'
 
@@ -22,14 +23,7 @@ export function AppProviders({ children }: Props) {
   const themeMode = useUiStore((s) => s.themeMode)
   const language = useUiStore((s) => s.language)
   const setThemeMode = useUiStore((s) => s.setThemeMode)
-  const theme = useMemo(
-    () =>
-      createTheme({
-        palette: { mode: themeMode },
-        shape: { borderRadius: 10 },
-      }),
-    [themeMode],
-  )
+  const theme = useMemo(() => createAppTheme(themeMode), [themeMode])
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) {
