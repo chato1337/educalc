@@ -1,4 +1,4 @@
-"""API ViewSets with OpenAPI documentation. All use IsAuthenticated; RBAC scope filtering can be applied per-view."""
+"""API ViewSets with OpenAPI documentation and role-based queryset scoping."""
 from django.utils import timezone
 from typing import List, Optional
 from drf_spectacular.types import OpenApiTypes
@@ -71,7 +71,34 @@ from .models import (
 from .grading_openapi import grade_suggested_schema
 from .openapi_utils import bulk_csv_load_schema, openapi_error_response
 from .pagination import StandardLimitOffsetPagination
-from .permissions import IsAdminUser
+from .permissions import IsAdminUser, IsBulkLoadStaff, IsCoordinator
+from .scope_mixins import (
+    AcademicIndicatorCatalogRoleScopeMixin,
+    AcademicIndicatorsReportRoleScopeMixin,
+    AcademicPeriodRoleScopeMixin,
+    AcademicYearRoleScopeMixin,
+    CampusRoleScopeMixin,
+    CourseAssignmentFkRoleScopeMixin,
+    CourseAssignmentRoleScopeMixin,
+    EnrollmentRoleScopeMixin,
+    GradeDirectorRoleScopeMixin,
+    GroupRoleScopeMixin,
+    InstitutionFkRoleScopeMixin,
+    InstitutionRoleScopeMixin,
+    ParentRoleScopeMixin,
+    PerformanceSummaryRoleScopeMixin,
+    SchoolRecordRoleScopeMixin,
+    StudentFkRoleScopeMixin,
+    StudentGuardianRoleScopeMixin,
+    StudentRoleScopeMixin,
+    SubjectRoleScopeMixin,
+    TeacherRoleScopeMixin,
+)
+from .scope_utils import (
+    get_user_profile,
+    teacher_can_access_course_assignment,
+    user_can_access_student,
+)
 from .serializers import (
     BulkLoadFileSerializer,
     BulkLoadStudentsSerializer,
@@ -237,7 +264,7 @@ def schema_viewset(
     search_fields=["name", "dane_code", "nit"],
     filter_fields=["dane_code", "nit", "name"],
 )
-class InstitutionViewSet(viewsets.ModelViewSet):
+class InstitutionViewSet(InstitutionRoleScopeMixin, viewsets.ModelViewSet):
     queryset = Institution.objects.all()
     serializer_class = InstitutionSerializer
     permission_classes = [IsAuthenticated]
@@ -250,7 +277,7 @@ class InstitutionViewSet(viewsets.ModelViewSet):
     search_fields=["name", "code", "institution__name", "institution__dane_code"],
     filter_fields=["institution", "institution__dane_code", "name", "code"],
 )
-class CampusViewSet(viewsets.ModelViewSet):
+class CampusViewSet(CampusRoleScopeMixin, viewsets.ModelViewSet):
     queryset = Campus.objects.select_related("institution").all()
     serializer_class = CampusSerializer
     permission_classes = [IsAuthenticated]
@@ -264,7 +291,7 @@ class CampusViewSet(viewsets.ModelViewSet):
     search_fields=["=year", "institution__name"],
     filter_fields=["institution", "institution__dane_code", "year", "is_active"],
 )
-class AcademicYearViewSet(viewsets.ModelViewSet):
+class AcademicYearViewSet(AcademicYearRoleScopeMixin, viewsets.ModelViewSet):
     queryset = AcademicYear.objects.select_related("institution").all()
     serializer_class = AcademicYearSerializer
     permission_classes = [IsAuthenticated]
@@ -278,7 +305,7 @@ class AcademicYearViewSet(viewsets.ModelViewSet):
     search_fields=["name"],
     filter_fields=["institution", "institution__dane_code", "name", "level_order"],
 )
-class GradeLevelViewSet(viewsets.ModelViewSet):
+class GradeLevelViewSet(InstitutionFkRoleScopeMixin, viewsets.ModelViewSet):
     queryset = GradeLevel.objects.select_related("institution").all()
     serializer_class = GradeLevelSerializer
     permission_classes = [IsAuthenticated]
@@ -292,7 +319,7 @@ class GradeLevelViewSet(viewsets.ModelViewSet):
     search_fields=["name", "code", "description"],
     filter_fields=["institution", "institution__dane_code", "name", "code"],
 )
-class AcademicAreaViewSet(viewsets.ModelViewSet):
+class AcademicAreaViewSet(InstitutionFkRoleScopeMixin, viewsets.ModelViewSet):
     queryset = AcademicArea.objects.select_related("institution").all()
     serializer_class = AcademicAreaSerializer
     permission_classes = [IsAuthenticated]
@@ -306,7 +333,13 @@ class AcademicAreaViewSet(viewsets.ModelViewSet):
         tags=["Academic Areas"],
         request_serializer=BulkLoadFileSerializer,
     )
-    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-load",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
+    )
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_academic_areas)
 
@@ -317,7 +350,7 @@ class AcademicAreaViewSet(viewsets.ModelViewSet):
     search_fields=["code", "name", "description"],
     filter_fields=["institution", "institution__dane_code", "code", "name"],
 )
-class GradingScaleViewSet(viewsets.ModelViewSet):
+class GradingScaleViewSet(InstitutionFkRoleScopeMixin, viewsets.ModelViewSet):
     queryset = GradingScale.objects.select_related("institution").all()
     serializer_class = GradingScaleSerializer
     permission_classes = [IsAuthenticated]
@@ -330,7 +363,13 @@ class GradingScaleViewSet(viewsets.ModelViewSet):
         tags=["Grading Scales"],
         request_serializer=BulkLoadFileSerializer,
     )
-    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-load",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
+    )
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_grading_scales)
 
@@ -348,7 +387,7 @@ class GradingScaleViewSet(viewsets.ModelViewSet):
     ],
     filter_fields=["document_type", "document_number", "gender", "sisben", "stratum"],
 )
-class StudentViewSet(viewsets.ModelViewSet):
+class StudentViewSet(StudentRoleScopeMixin, viewsets.ModelViewSet):
     filterset_fields = ["document_type", "document_number", "gender", "sisben", "stratum"]
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
@@ -372,7 +411,13 @@ class StudentViewSet(viewsets.ModelViewSet):
         tags=["Students"],
         request_serializer=BulkLoadStudentsSerializer,
     )
-    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-load",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
+    )
     def bulk_load(self, request):
         serializer = BulkLoadStudentsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -543,7 +588,12 @@ class StudentViewSet(viewsets.ModelViewSet):
             ),
         ],
     )
-    @action(detail=True, methods=["post"], url_path="transfer")
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="transfer",
+        permission_classes=[IsAuthenticated, IsCoordinator],
+    )
     def transfer(self, request, pk=None):
         student = self.get_object()
         serializer = StudentTransferSerializer(data=request.data)
@@ -597,7 +647,7 @@ class StudentViewSet(viewsets.ModelViewSet):
     ],
     filter_fields=["document_type", "document_number", "email", "specialty"],
 )
-class TeacherViewSet(viewsets.ModelViewSet):
+class TeacherViewSet(TeacherRoleScopeMixin, viewsets.ModelViewSet):
     filterset_fields = ["document_type", "document_number", "email", "specialty"]
     queryset = Teacher.objects.all()
     serializer_class = TeacherSerializer
@@ -618,7 +668,13 @@ class TeacherViewSet(viewsets.ModelViewSet):
         tags=["Teachers"],
         request_serializer=BulkLoadFileSerializer,
     )
-    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-load",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
+    )
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_teachers)
 
@@ -635,6 +691,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
         methods=["post"],
         url_path="bulk-load-users",
         parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
     )
     def bulk_load_users(self, request):
         return _bulk_csv_response(request, bulk_load_teacher_users)
@@ -654,7 +711,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
     ],
     filter_fields=["document_type", "document_number", "email", "kinship"],
 )
-class ParentViewSet(viewsets.ModelViewSet):
+class ParentViewSet(ParentRoleScopeMixin, viewsets.ModelViewSet):
     filterset_fields = ["document_type", "document_number", "email", "kinship"]
     queryset = Parent.objects.all()
     serializer_class = ParentSerializer
@@ -676,7 +733,13 @@ class ParentViewSet(viewsets.ModelViewSet):
         tags=["Parents"],
         request_serializer=BulkLoadFileSerializer,
     )
-    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-load",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
+    )
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_parents)
 
@@ -696,7 +759,7 @@ class ParentViewSet(viewsets.ModelViewSet):
         "name",
     ],
 )
-class GroupViewSet(viewsets.ModelViewSet):
+class GroupViewSet(GroupRoleScopeMixin, viewsets.ModelViewSet):
     queryset = Group.objects.select_related(
         "grade_level", "academic_year", "campus"
     ).all()
@@ -793,7 +856,7 @@ class GroupViewSet(viewsets.ModelViewSet):
         "emphasis",
     ],
 )
-class SubjectViewSet(viewsets.ModelViewSet):
+class SubjectViewSet(SubjectRoleScopeMixin, viewsets.ModelViewSet):
     queryset = Subject.objects.select_related("academic_area", "institution").all()
     serializer_class = SubjectSerializer
     permission_classes = [IsAuthenticated]
@@ -813,7 +876,13 @@ class SubjectViewSet(viewsets.ModelViewSet):
         tags=["Subjects"],
         request_serializer=BulkLoadFileSerializer,
     )
-    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-load",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
+    )
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_subjects)
 
@@ -824,7 +893,7 @@ class SubjectViewSet(viewsets.ModelViewSet):
     search_fields=["name", "=number", "=academic_year__year"],
     filter_fields=["academic_year", "academic_year__year", "number", "name"],
 )
-class AcademicPeriodViewSet(viewsets.ModelViewSet):
+class AcademicPeriodViewSet(AcademicPeriodRoleScopeMixin, viewsets.ModelViewSet):
     queryset = AcademicPeriod.objects.select_related("academic_year").all()
     serializer_class = AcademicPeriodSerializer
     permission_classes = [IsAuthenticated]
@@ -837,7 +906,13 @@ class AcademicPeriodViewSet(viewsets.ModelViewSet):
         tags=["Academic Periods"],
         request_serializer=BulkLoadFileSerializer,
     )
-    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-load",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
+    )
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_academic_periods)
 
@@ -867,7 +942,7 @@ class AcademicPeriodViewSet(viewsets.ModelViewSet):
         "academic_year__year",
     ],
 )
-class CourseAssignmentViewSet(viewsets.ModelViewSet):
+class CourseAssignmentViewSet(CourseAssignmentRoleScopeMixin, viewsets.ModelViewSet):
     queryset = CourseAssignment.objects.select_related(
         "subject",
         "subject__academic_area",
@@ -896,7 +971,13 @@ class CourseAssignmentViewSet(viewsets.ModelViewSet):
         tags=["Course Assignments"],
         request_serializer=BulkLoadFileSerializer,
     )
-    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-load",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
+    )
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_course_assignments)
 
@@ -940,6 +1021,13 @@ class CourseAssignmentViewSet(viewsets.ModelViewSet):
                 {"detail": "Query parameter 'teacher' is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        profile = get_user_profile(request.user)
+        if profile and profile.role == "TEACHER":
+            if not profile.teacher_id or str(profile.teacher_id) != str(teacher_id):
+                return Response(
+                    {"detail": "You may only query your own teacher assignments."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         qs = self.get_queryset().filter(teacher_id=teacher_id)
         academic_year_id = request.query_params.get("academic_year")
         if academic_year_id:
@@ -978,7 +1066,7 @@ class CourseAssignmentViewSet(viewsets.ModelViewSet):
         "academic_year__year",
     ],
 )
-class GradeDirectorViewSet(viewsets.ModelViewSet):
+class GradeDirectorViewSet(GradeDirectorRoleScopeMixin, viewsets.ModelViewSet):
     queryset = GradeDirector.objects.select_related(
         "teacher", "group", "academic_year"
     ).all()
@@ -1006,7 +1094,13 @@ class GradeDirectorViewSet(viewsets.ModelViewSet):
         tags=["Grade Directors"],
         request_serializer=BulkLoadFileSerializer,
     )
-    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-load",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
+    )
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_grade_directors)
 
@@ -1032,7 +1126,7 @@ class GradeDirectorViewSet(viewsets.ModelViewSet):
         "status",
     ],
 )
-class EnrollmentViewSet(viewsets.ModelViewSet):
+class EnrollmentViewSet(EnrollmentRoleScopeMixin, viewsets.ModelViewSet):
     queryset = Enrollment.objects.select_related(
         "student", "group", "group__campus", "academic_year"
     ).all()
@@ -1075,7 +1169,7 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
         "is_primary",
     ],
 )
-class StudentGuardianViewSet(viewsets.ModelViewSet):
+class StudentGuardianViewSet(StudentGuardianRoleScopeMixin, viewsets.ModelViewSet):
     queryset = StudentGuardian.objects.select_related("student", "parent").all()
     serializer_class = StudentGuardianSerializer
     permission_classes = [IsAuthenticated]
@@ -1100,7 +1194,13 @@ class StudentGuardianViewSet(viewsets.ModelViewSet):
         tags=["Student Guardians"],
         request_serializer=BulkLoadFileSerializer,
     )
-    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-load",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
+    )
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_student_guardians)
 
@@ -1153,7 +1253,7 @@ class StudentGuardianViewSet(viewsets.ModelViewSet):
     partial_update=extend_schema(summary="Partial update Grades", tags=["Grades"]),
     destroy=extend_schema(summary="Delete Grades", tags=["Grades"]),
 )
-class GradeViewSet(viewsets.ModelViewSet):
+class GradeViewSet(CourseAssignmentFkRoleScopeMixin, viewsets.ModelViewSet):
     queryset = Grade.objects.select_related(
         "student",
         "course_assignment",
@@ -1195,7 +1295,13 @@ class GradeViewSet(viewsets.ModelViewSet):
         tags=["Grades"],
         request_serializer=BulkLoadFileSerializer,
     )
-    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-load",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
+    )
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_grades)
 
@@ -1224,6 +1330,15 @@ class GradeViewSet(viewsets.ModelViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        profile = get_user_profile(request.user)
+        if profile and profile.role == "TEACHER" and profile.teacher_id:
+            if not teacher_can_access_course_assignment(
+                profile.teacher, course_assignment_id
+            ) or not user_can_access_student(request, student_id):
+                return Response(
+                    {"error": "Recurso no accesible para su rol."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
         scheme = GradingScheme.objects.filter(
             course_assignment_id=course_assignment_id,
             academic_period_id=academic_period_id,
@@ -1272,7 +1387,7 @@ class GradeViewSet(viewsets.ModelViewSet):
         "academic_period__number",
     ],
 )
-class AttendanceViewSet(viewsets.ModelViewSet):
+class AttendanceViewSet(CourseAssignmentFkRoleScopeMixin, viewsets.ModelViewSet):
     queryset = Attendance.objects.select_related(
         "student",
         "course_assignment",
@@ -1306,7 +1421,13 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         tags=["Attendance"],
         request_serializer=BulkLoadFileSerializer,
     )
-    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-load",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
+    )
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_attendance)
 
@@ -1327,7 +1448,9 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         "grade_level__institution",
     ],
 )
-class AcademicIndicatorCatalogViewSet(viewsets.ModelViewSet):
+class AcademicIndicatorCatalogViewSet(
+    AcademicIndicatorCatalogRoleScopeMixin, viewsets.ModelViewSet
+):
     queryset = AcademicIndicatorCatalog.objects.select_related(
         "academic_area",
         "grade_level",
@@ -1374,7 +1497,7 @@ class AcademicIndicatorCatalogViewSet(viewsets.ModelViewSet):
         "outcome",
     ],
 )
-class AcademicIndicatorViewSet(viewsets.ModelViewSet):
+class AcademicIndicatorViewSet(CourseAssignmentFkRoleScopeMixin, viewsets.ModelViewSet):
     queryset = AcademicIndicator.objects.select_related(
         "student",
         "course_assignment",
@@ -1422,7 +1545,13 @@ class AcademicIndicatorViewSet(viewsets.ModelViewSet):
         tags=["Academic Indicators"],
         request_serializer=BulkLoadFileSerializer,
     )
-    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-load",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
+    )
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_academic_indicators)
 
@@ -1446,7 +1575,7 @@ class AcademicIndicatorViewSet(viewsets.ModelViewSet):
         "academic_period__number",
     ],
 )
-class PerformanceSummaryViewSet(viewsets.ModelViewSet):
+class PerformanceSummaryViewSet(PerformanceSummaryRoleScopeMixin, viewsets.ModelViewSet):
     queryset = PerformanceSummary.objects.select_related(
         "student", "group", "academic_period"
     ).all()
@@ -1474,7 +1603,13 @@ class PerformanceSummaryViewSet(viewsets.ModelViewSet):
         tags=["Performance Summaries"],
         request_serializer=BulkLoadFileSerializer,
     )
-    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-load",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
+    )
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_performance_summaries)
 
@@ -1498,7 +1633,7 @@ class PerformanceSummaryViewSet(viewsets.ModelViewSet):
         "created_by__document_number",
     ],
 )
-class DisciplinaryReportViewSet(viewsets.ModelViewSet):
+class DisciplinaryReportViewSet(StudentFkRoleScopeMixin, viewsets.ModelViewSet):
     queryset = DisciplinaryReport.objects.select_related(
         "student", "academic_period", "created_by"
     ).all()
@@ -1526,7 +1661,13 @@ class DisciplinaryReportViewSet(viewsets.ModelViewSet):
         tags=["Disciplinary Reports"],
         request_serializer=BulkLoadFileSerializer,
     )
-    @action(detail=False, methods=["post"], url_path="bulk-load", parser_classes=[MultiPartParser])
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-load",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated, IsBulkLoadStaff],
+    )
     def bulk_load(self, request):
         return _bulk_csv_response(request, bulk_load_disciplinary_reports)
 
@@ -1559,7 +1700,7 @@ class DisciplinaryReportViewSet(viewsets.ModelViewSet):
     retrieve=extend_schema(summary="Get School Record", tags=["School Records"]),
     create=extend_schema(summary="Create/Generate School Record", tags=["School Records"]),
 )
-class SchoolRecordViewSet(viewsets.ModelViewSet):
+class SchoolRecordViewSet(SchoolRecordRoleScopeMixin, viewsets.ModelViewSet):
     """School Assessment Record document. GET list/detail, POST to generate."""
 
     queryset = SchoolRecord.objects.select_related(
@@ -1623,7 +1764,9 @@ class SchoolRecordViewSet(viewsets.ModelViewSet):
         tags=["Academic Indicators Reports"],
     ),
 )
-class AcademicIndicatorsReportViewSet(viewsets.ModelViewSet):
+class AcademicIndicatorsReportViewSet(
+    AcademicIndicatorsReportRoleScopeMixin, viewsets.ModelViewSet
+):
     """Academic Indicators document. GET list/detail, POST to generate."""
 
     queryset = AcademicIndicatorsReport.objects.select_related(

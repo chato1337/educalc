@@ -16,6 +16,7 @@ from .models import (
     SchoolRecord,
     Student,
 )
+from .scope_utils import user_can_access_student
 from .serializers import (
     AcademicIndicatorsReportSerializer,
     SchoolRecordSerializer,
@@ -39,6 +40,11 @@ class SchoolRecordByStudentYearView(APIView):
         responses={200: SchoolRecordSerializer},
     )
     def get(self, request, student_id, academic_year_id):
+        if not user_can_access_student(request, student_id):
+            return Response(
+                {"detail": "Student not found or not accessible for your role."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         student = get_object_or_404(Student, pk=student_id)
         academic_year = get_object_or_404(AcademicYear, pk=academic_year_id)
 
@@ -91,6 +97,11 @@ class AcademicIndicatorsReportByStudentPeriodView(APIView):
         responses={200: AcademicIndicatorsReportSerializer},
     )
     def get(self, request, student_id, period_id):
+        if not user_can_access_student(request, student_id):
+            return Response(
+                {"detail": "Student not found or not accessible for your role."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         student = get_object_or_404(Student, pk=student_id)
         academic_period = get_object_or_404(AcademicPeriod, pk=period_id)
         academic_year = academic_period.academic_year

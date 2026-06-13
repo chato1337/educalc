@@ -9,6 +9,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .bulletin_service import bulletin_pdf_for_group_request, bulletin_pdf_for_request
+from .scope_utils import (
+    user_can_access_academic_year,
+    user_can_access_group,
+    user_can_access_student,
+)
 
 
 class AcademicGradesBulletinPdfView(APIView):
@@ -97,6 +102,16 @@ class AcademicGradesBulletinPdfView(APIView):
         try:
             if has_student:
                 sid = UUID(str(student).strip())
+                if not user_can_access_student(request, sid):
+                    return Response(
+                        {"detail": "Student not found or not accessible for your role."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+                if not user_can_access_academic_year(request, yid):
+                    return Response(
+                        {"detail": "Academic year not found or not accessible for your role."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
                 return bulletin_pdf_for_request(
                     student_id=sid,
                     academic_year_id=yid,
@@ -104,6 +119,16 @@ class AcademicGradesBulletinPdfView(APIView):
                     grade_level_ids_raw=request.query_params.get("grade_level_ids"),
                 )
             gid = UUID(str(group).strip())
+            if not user_can_access_group(request, gid):
+                return Response(
+                    {"detail": "Group not found or not accessible for your role."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            if not user_can_access_academic_year(request, yid):
+                return Response(
+                    {"detail": "Academic year not found or not accessible for your role."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
             return bulletin_pdf_for_group_request(
                 group_id=gid,
                 academic_year_id=yid,

@@ -8,11 +8,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import AcademicPeriod, AcademicYear, Campus, GradeLevel, Group, Institution
+from .permissions import IsCoordinator
 from .performance_summary_service import (
     collect_sync_pairs_for_grade_scope,
     collect_sync_pairs_for_institution_scope,
     sync_many_group_periods,
 )
+
+from .scope_utils import get_user_profile, institution_scope_for_recalc
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +72,7 @@ class PerformanceSummaryRecalculateByGradeView(APIView):
     que pertenecen a un mismo grado (``GradeLevel``) dentro de un año lectivo.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCoordinator]
 
     @extend_schema(
         summary="Recalcular desempeño por grado",
@@ -149,6 +152,14 @@ class PerformanceSummaryRecalculateByGradeView(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        profile = get_user_profile(request.user)
+        if profile and profile.role == "COORDINATOR":
+            if not institution_scope_for_recalc(request, academic_year.institution_id):
+                return Response(
+                    {"detail": "Institution not accessible for your role."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         if campus_id is not None:
             try:
@@ -275,7 +286,7 @@ class PerformanceSummaryRecalculateByInstitutionView(APIView):
     (opcionalmente filtrados por año lectivo, sede y periodo).
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCoordinator]
 
     @extend_schema(
         summary="Recalcular desempeño por institución",
@@ -337,6 +348,12 @@ class PerformanceSummaryRecalculateByInstitutionView(APIView):
             return Response(
                 {"detail": "institution not found."},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not institution_scope_for_recalc(request, institution.id):
+            return Response(
+                {"detail": "Institution not accessible for your role."},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         academic_year = None

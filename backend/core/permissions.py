@@ -67,6 +67,15 @@ class IsAdminOrCoordinator(permissions.BasePermission):
         return IsCoordinator().has_permission(request, view)
 
 
+class IsBulkLoadStaff(permissions.BasePermission):
+    """Allow bulk CSV import only for ADMIN or COORDINATOR."""
+
+    message = "Coordinator or Admin role required for bulk load."
+
+    def has_permission(self, request, view):
+        return IsCoordinator().has_permission(request, view)
+
+
 class IsAdminUserOrReadOnlyStaff(permissions.BasePermission):
     """Allow read to staff; write only to ADMIN."""
 

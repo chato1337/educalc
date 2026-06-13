@@ -205,9 +205,14 @@ class PerformanceSummaryRecalculateByGradeApiTests(TransactionTestCase):
     def setUp(self):
         self.client = APIClient()
         user = get_user_model().objects.create_user(username="apiuser", password="secret")
-        self.client.force_authenticate(user=user)
 
         self.inst = Institution.objects.create(name="IE API", dane_code="DANE990002")
+        UserProfile.objects.filter(user=user).update(
+            role="COORDINATOR",
+            institution_id=self.inst.id,
+        )
+        user = get_user_model().objects.select_related("profile").get(pk=user.pk)
+        self.client.force_authenticate(user=user)
         self.campus = Campus.objects.create(institution=self.inst, name="Sede API")
         self.ay = AcademicYear.objects.create(institution=self.inst, year=2027)
         self.gl = GradeLevel.objects.create(
@@ -312,9 +317,14 @@ class PerformanceSummaryRecalculateByInstitutionApiTests(TransactionTestCase):
     def setUp(self):
         self.client = APIClient()
         user = get_user_model().objects.create_user(username="instuser", password="x")
-        self.client.force_authenticate(user=user)
 
         self.inst = Institution.objects.create(name="IE Full", dane_code="DANE990010")
+        UserProfile.objects.filter(user=user).update(
+            role="COORDINATOR",
+            institution_id=self.inst.id,
+        )
+        user = get_user_model().objects.select_related("profile").get(pk=user.pk)
+        self.client.force_authenticate(user=user)
         self.other_inst = Institution.objects.create(name="Otra IE", dane_code="DANE990011")
         self.campus = Campus.objects.create(institution=self.inst, name="Sede Central")
         self.ay = AcademicYear.objects.create(institution=self.inst, year=2025)
@@ -419,6 +429,8 @@ class GroupsListApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         user = get_user_model().objects.create_user(username="grouplist", password="x")
+        UserProfile.objects.filter(user=user).update(role="ADMIN")
+        user = get_user_model().objects.select_related("profile").get(pk=user.pk)
         self.client.force_authenticate(user=user)
         self.inst = Institution.objects.create(name="IE Grupos", dane_code="DANE991000")
         self.campus = Campus.objects.create(institution=self.inst, name="Sede 1")
@@ -493,7 +505,6 @@ class CourseAssignmentForTeacherApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         user = get_user_model().objects.create_user(username="cafteacher", password="x")
-        self.client.force_authenticate(user=user)
         self.inst = Institution.objects.create(name="IE CA", dane_code="DANE992001")
         self.campus = Campus.objects.create(institution=self.inst, name="Sede 1")
         self.ay = AcademicYear.objects.create(institution=self.inst, year=2026)
@@ -554,6 +565,15 @@ class CourseAssignmentForTeacherApiTests(TestCase):
             group=self.group,
             academic_year=self.ay,
         )
+        UserProfile.objects.filter(user__username="cafteacher").update(
+            role="TEACHER",
+            teacher_id=self.teacher.id,
+            institution_id=self.inst.id,
+        )
+        user = get_user_model().objects.select_related("profile").get(
+            username="cafteacher"
+        )
+        self.client.force_authenticate(user=user)
 
     def test_for_teacher_requires_param(self):
         url = reverse("courseassignment-for-teacher")
@@ -580,6 +600,11 @@ class CourseAssignmentForTeacherApiTests(TestCase):
         ids = {row["id"] for row in r.data["results"]}
         self.assertEqual(ids, {str(self.ca.id)})
 
+    def test_for_teacher_rejects_other_teacher_id(self):
+        url = reverse("courseassignment-for-teacher")
+        r = self.client.get(url, {"teacher": str(self.other_teacher.id)})
+        self.assertEqual(r.status_code, 403)
+
     def test_list_teacher_in_filter(self):
         url = reverse("courseassignment-list")
         r = self.client.get(
@@ -593,7 +618,9 @@ class CourseAssignmentForTeacherApiTests(TestCase):
             },
         )
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.data["count"], 3)
+        self.assertEqual(r.data["count"], 2)
+        ids = {row["id"] for row in r.data["results"]}
+        self.assertEqual(ids, {str(self.ca.id), str(self.ca_other_year.id)})
 
 
 class GradingConsolidatedCsvExportApiTests(TestCase):
@@ -742,9 +769,14 @@ class StudentTransferApiTests(TransactionTestCase):
     def setUp(self):
         self.client = APIClient()
         user = get_user_model().objects.create_user(username="transferuser", password="x")
-        self.client.force_authenticate(user=user)
 
         self.inst = Institution.objects.create(name="IE Traslado", dane_code="DANE994001")
+        UserProfile.objects.filter(user=user).update(
+            role="COORDINATOR",
+            institution_id=self.inst.id,
+        )
+        user = get_user_model().objects.select_related("profile").get(pk=user.pk)
+        self.client.force_authenticate(user=user)
         self.campus_a = Campus.objects.create(institution=self.inst, name="Sede Norte")
         self.campus_b = Campus.objects.create(institution=self.inst, name="Sede Sur")
         self.ay = AcademicYear.objects.create(institution=self.inst, year=2026)
