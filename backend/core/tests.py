@@ -1385,6 +1385,59 @@ class ActivityGradingModuleTests(TestCase):
         r = self.client.get(url)
         self.assertEqual(r.status_code, 404)
 
+    def test_teacher_can_list_subject_components_for_assigned_subject(self):
+        SubjectComponent.objects.create(
+            subject=self.subject,
+            name="Cognitivo",
+            weight_percent=Decimal("60.00"),
+            sort_order=1,
+        )
+        SubjectComponent.objects.create(
+            subject=self.subject,
+            name="Actitudinal",
+            weight_percent=Decimal("40.00"),
+            sort_order=2,
+        )
+        other_area = AcademicArea.objects.create(
+            institution=self.inst, name="Otra área"
+        )
+        other_subject = Subject.objects.create(
+            academic_area=other_area,
+            institution=self.inst,
+            name="Historia",
+        )
+        SubjectComponent.objects.create(
+            subject=other_subject,
+            name="Cognitivo",
+            weight_percent=Decimal("100.00"),
+            sort_order=1,
+        )
+        url = reverse("subjectcomponent-list")
+        r = self.client.get(url, {"subject": str(self.subject.id)})
+        self.assertEqual(r.status_code, 200)
+        names = {row["name"] for row in r.data["results"]}
+        self.assertEqual(names, {"Cognitivo", "Actitudinal"})
+
+    def test_teacher_cannot_list_subject_components_for_unassigned_subject(self):
+        other_area = AcademicArea.objects.create(
+            institution=self.inst, name="Otra área"
+        )
+        other_subject = Subject.objects.create(
+            academic_area=other_area,
+            institution=self.inst,
+            name="Historia",
+        )
+        SubjectComponent.objects.create(
+            subject=other_subject,
+            name="Cognitivo",
+            weight_percent=Decimal("100.00"),
+            sort_order=1,
+        )
+        url = reverse("subjectcomponent-list")
+        r = self.client.get(url, {"subject": str(other_subject.id)})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["count"], 0)
+
     def test_validate_weights_endpoint_rejects_invalid_scheme(self):
         SubjectComponent.objects.create(
             subject=self.subject,

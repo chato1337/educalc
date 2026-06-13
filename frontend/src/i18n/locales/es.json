@@ -2,6 +2,21 @@
   "app": {
     "adminTitle": "{{appName}} - Administración"
   },
+  "richTextEditor": {
+    "bold": "Negrita",
+    "italic": "Cursiva",
+    "underline": "Subrayado",
+    "bulletList": "Lista con viñetas",
+    "orderedList": "Lista numerada",
+    "alignLeft": "Alinear a la izquierda",
+    "alignCenter": "Centrar",
+    "alignRight": "Alinear a la derecha",
+    "alignJustify": "Justificar",
+    "insertTable": "Insertar tabla",
+    "addRowAfter": "Agregar fila",
+    "addColumnAfter": "Agregar columna",
+    "deleteTable": "Eliminar tabla"
+  },
   "common": {
     "loading": "Cargando...",
     "search": "Buscar",
@@ -506,6 +521,8 @@
     "upcomingTitle": "Próximas y pendientes",
     "noUpcoming": "No hay actividades próximas ni pendientes de calificar.",
     "gradeNow": "Calificar",
+    "gradeStudents": "Calificar estudiantes",
+    "gradeActivityTitle": "Calificar: {{name}}",
     "prevMonth": "Mes anterior",
     "nextMonth": "Mes siguiente",
     "selectDayHint": "Selecciona un día del calendario para ver o editar actividades.",
@@ -513,6 +530,10 @@
     "noActivitiesDay": "No hay actividades en esta fecha.",
     "gradingProgress": "{{graded}} de {{total}} estudiantes calificados",
     "addActivityFromCalendar": "Agregar actividad en el planeador",
+    "addActivityOnDay": "Agregar actividad en este día",
+    "selectSegment": "Segmento",
+    "selectSegmentRequired": "Selecciona un segmento para la actividad.",
+    "noSegmentsForCreate": "No hay segmentos configurados. Agrega segmentos desde el planeador antes de crear actividades.",
     "quickAddSegments": "Plantillas de segmento",
     "addTemplate": "Agregar",
     "templateAdded": "Ya existe",

@@ -2,6 +2,7 @@ import AddIcon from '@mui/icons-material/Add'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import EditIcon from '@mui/icons-material/Edit'
+import GradeIcon from '@mui/icons-material/Grade'
 import {
   Alert,
   Box,
@@ -14,10 +15,10 @@ import {
 } from '@mui/material'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink } from 'react-router-dom'
 
 import { getErrorMessage } from '@/api/errors'
 import { PlanningActivityDialog } from '@/features/operations/activityPlanning/PlanningActivityDialog'
+import { PlanningActivityGradingDialog } from '@/features/operations/activityPlanning/PlanningActivityGradingDialog'
 import { PlanningActivityStatusChip } from '@/features/operations/activityPlanning/PlanningActivityStatusChip'
 import { PlanningSchemeSelector } from '@/features/operations/activityPlanning/PlanningSchemeSelector'
 import {
@@ -52,13 +53,29 @@ export function ActivityPlanningCalendarPage() {
   const [viewMonth, setViewMonth] = useState(() => new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [activityDialog, setActivityDialog] = useState<{
-    segmentId: string
-    segmentName: string
+    segmentId?: string
+    segmentName?: string
     editing?: GradingActivity | null
     defaultDate?: string
   } | null>(null)
+  const [gradingActivity, setGradingActivity] =
+    useState<EnrichedPlanningActivity | null>(null)
 
   const gridDays = useMemo(() => calendarGridDays(viewMonth), [viewMonth])
+  const segmentOptions = useMemo(() => {
+    if (!bundleQuery.data) return []
+    const componentById = new Map(
+      bundleQuery.data.components.map((component) => [component.id, component]),
+    )
+    return [...bundleQuery.data.segments]
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+      .map((segment) => ({
+        id: segment.id,
+        name: segment.name,
+        componentName:
+          componentById.get(segment.subject_component)?.name ?? undefined,
+      }))
+  }, [bundleQuery.data])
   const activitiesByDate = useMemo(() => {
     const map = new Map<string, EnrichedPlanningActivity[]>()
     for (const activity of bundleQuery.data?.enrichedActivities ?? []) {
@@ -68,6 +85,11 @@ export function ActivityPlanningCalendarPage() {
     }
     return map
   }, [bundleQuery.data?.enrichedActivities])
+
+  const openCreateDialog = (iso: string) => {
+    setSelectedDate(iso)
+    setActivityDialog({ defaultDate: iso })
+  }
 
   const selectedDayActivities = useMemo(() => {
     if (!selectedDate || !bundleQuery.data) return []
@@ -156,11 +178,37 @@ export function ActivityPlanningCalendarPage() {
                       cursor: 'pointer',
                       borderColor: isSelected ? 'primary.main' : undefined,
                       bgcolor: isToday ? 'action.hover' : undefined,
+                      '&:hover .calendar-day-add': {
+                        opacity: 1,
+                      },
                     }}
                   >
-                    <Typography variant="caption" fontWeight={isToday ? 700 : 400}>
-                      {day.getDate()}
-                    </Typography>
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                    >
+                      <Typography variant="caption" fontWeight={isToday ? 700 : 400}>
+                        {day.getDate()}
+                      </Typography>
+                      <IconButton
+                        className="calendar-day-add"
+                        size="small"
+                        aria-label={t('activityPlanning.addActivityOnDay')}
+                        disabled={segmentOptions.length === 0}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          openCreateDialog(iso)
+                        }}
+                        sx={{
+                          opacity: 0.5,
+                          p: 0.25,
+                          transition: 'opacity 0.15s',
+                        }}
+                      >
+                        <AddIcon sx={{ fontSize: '0.9rem' }} />
+                      </IconButton>
+                    </Stack>
                     <Stack spacing={0.25} sx={{ mt: 0.5 }}>
                       {dayActivities.slice(0, 2).map((activity) => (
                         <Chip
@@ -246,15 +294,14 @@ export function ActivityPlanningCalendarPage() {
                       >
                         <EditIcon fontSize="small" />
                       </IconButton>
-                      {activity.status !== 'planned' ? (
-                        <Button
-                          size="small"
-                          component={RouterLink}
-                          to={`/activity-grading/schemes/${schemeId}`}
-                        >
-                          {t('activityPlanning.gradeNow')}
-                        </Button>
-                      ) : null}
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<GradeIcon />}
+                        onClick={() => setGradingActivity(activity)}
+                      >
+                        {t('activityPlanning.gradeStudents')}
+                      </Button>
                     </Stack>
                   </Stack>
                 </Paper>
@@ -266,14 +313,24 @@ export function ActivityPlanningCalendarPage() {
                 sx={{ mt: 2 }}
                 startIcon={<AddIcon />}
                 variant="outlined"
-                component={RouterLink}
-                to={`/activity-planning/workspace/${schemeId}`}
+                disabled={segmentOptions.length === 0}
+                onClick={() => openCreateDialog(selectedDate)}
               >
-                {t('activityPlanning.addActivityFromCalendar')}
+                {t('gradingSchemes.addActivity')}
               </Button>
             ) : null}
           </Paper>
         </>
+      ) : null}
+
+      {gradingActivity && schemeId && bundleQuery.data ? (
+        <PlanningActivityGradingDialog
+          open
+          onClose={() => setGradingActivity(null)}
+          schemeId={schemeId}
+          activity={gradingActivity}
+          enrollments={bundleQuery.data.enrollments}
+        />
       ) : null}
 
       {activityDialog && schemeId ? (
@@ -283,8 +340,9 @@ export function ActivityPlanningCalendarPage() {
           schemeId={schemeId}
           segmentId={activityDialog.segmentId}
           segmentName={activityDialog.segmentName}
+          segments={activityDialog.editing ? undefined : segmentOptions}
           editing={activityDialog.editing}
-          defaultDate={selectedDate ?? undefined}
+          defaultDate={activityDialog.defaultDate}
         />
       ) : null}
     </Box>

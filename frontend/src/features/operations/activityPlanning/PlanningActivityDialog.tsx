@@ -5,16 +5,19 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  MenuItem,
   Stack,
   TextField,
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { useForm, type Resolver } from 'react-hook-form'
+import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
+import { RichTextEditor } from '@/components/RichTextEditor'
+import { normalizeRichText } from '@/components/richTextUtils'
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
 import { todayIsoDate } from '@/features/operations/activityPlanning/activityPlanningUtils'
@@ -30,16 +33,24 @@ const formSchema = z.object({
   activity_date: z.string().min(1),
   max_score: z.string().optional(),
   sort_order: z.coerce.number().int().min(0).max(32767).optional(),
+  segment: z.string().optional(),
 })
 
 type FormValues = z.infer<typeof formSchema>
+
+export type PlanningSegmentOption = {
+  id: string
+  name: string
+  componentName?: string
+}
 
 export type PlanningActivityDialogProps = {
   open: boolean
   onClose: () => void
   schemeId: string
-  segmentId: string
+  segmentId?: string
   segmentName?: string
+  segments?: PlanningSegmentOption[]
   editing?: GradingActivity | null
   defaultDate?: string
   nameSuggestion?: string
@@ -51,12 +62,16 @@ export function PlanningActivityDialog({
   schemeId,
   segmentId,
   segmentName,
+  segments,
   editing,
   defaultDate,
   nameSuggestion,
 }: PlanningActivityDialogProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const showSegmentPicker =
+    !editing && Boolean(segments?.length) && !segmentId
+  const hasSegments = Boolean(segmentId || segments?.length)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema) as Resolver<FormValues>,
@@ -66,6 +81,7 @@ export function PlanningActivityDialog({
       activity_date: todayIsoDate(),
       max_score: '5.00',
       sort_order: 0,
+      segment: '',
     },
   })
 
@@ -77,15 +93,20 @@ export function PlanningActivityDialog({
       activity_date: editing?.activity_date ?? defaultDate ?? todayIsoDate(),
       max_score: editing?.max_score ?? '5.00',
       sort_order: editing?.sort_order ?? 0,
+      segment: segmentId ?? segments?.[0]?.id ?? '',
     })
-  }, [open, editing, defaultDate, nameSuggestion, form])
+  }, [open, editing, defaultDate, nameSuggestion, segmentId, segments, form])
 
   const saveMutation = useMutation({
     mutationFn: async (values: FormValues) => {
+      const effectiveSegmentId = segmentId ?? values.segment
+      if (!effectiveSegmentId) {
+        throw new Error(t('activityPlanning.selectSegmentRequired'))
+      }
       const body = {
-        segment: segmentId,
+        segment: effectiveSegmentId,
         name: values.name,
-        description: values.description?.trim() || undefined,
+        description: normalizeRichText(values.description),
         activity_date: values.activity_date,
         max_score: values.max_score?.trim() || undefined,
         sort_order: values.sort_order ?? 0,
@@ -120,6 +141,30 @@ export function PlanningActivityDialog({
             {saveMutation.error ? (
               <Alert severity="error">{getErrorMessage(saveMutation.error)}</Alert>
             ) : null}
+            {!hasSegments ? (
+              <Alert severity="warning">
+                {t('activityPlanning.noSegmentsForCreate')}
+              </Alert>
+            ) : null}
+            {showSegmentPicker ? (
+              <TextField
+                select
+                label={t('activityPlanning.selectSegment')}
+                required
+                fullWidth
+                error={Boolean(form.formState.errors.segment)}
+                helperText={form.formState.errors.segment?.message}
+                {...form.register('segment', { required: true })}
+              >
+                {segments?.map((segment) => (
+                  <MenuItem key={segment.id} value={segment.id}>
+                    {segment.componentName
+                      ? `${segment.componentName} → ${segment.name}`
+                      : segment.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            ) : null}
             <TextField
               label={t('gradingSchemes.name')}
               required
@@ -128,12 +173,16 @@ export function PlanningActivityDialog({
               helperText={form.formState.errors.name?.message}
               {...form.register('name')}
             />
-            <TextField
-              label={t('gradingSchemes.description')}
-              fullWidth
-              multiline
-              minRows={2}
-              {...form.register('description')}
+            <Controller
+              name="description"
+              control={form.control}
+              render={({ field }) => (
+                <RichTextEditor
+                  label={t('gradingSchemes.description')}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                />
+              )}
             />
             <TextField
               label={t('gradingSchemes.activityDate')}
@@ -163,7 +212,7 @@ export function PlanningActivityDialog({
           <Button
             type="submit"
             variant="contained"
-            disabled={saveMutation.isPending}
+            disabled={saveMutation.isPending || !hasSegments}
           >
             {t('common.save')}
           </Button>

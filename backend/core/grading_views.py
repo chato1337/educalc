@@ -40,6 +40,7 @@ from .models import (
     SubjectComponent,
 )
 from .permissions import IsAdminUserOrReadOnlyStaff, IsTeacher, RoleScopeMixin
+from .scope_utils import teacher_subject_ids
 from .views import _bulk_csv_response, schema_viewset
 
 
@@ -91,10 +92,10 @@ class SubjectComponentRoleScopeMixin(RoleScopeMixin):
         return self.institution_filter(queryset, institution_id)
 
     def filter_queryset_for_teacher(self, queryset, request):
-        profile = getattr(request.user, "profile", None)
-        if profile and profile.institution_id:
-            return queryset.filter(subject__institution_id=profile.institution_id)
-        return queryset.none()
+        teacher = getattr(getattr(request.user, "profile", None), "teacher", None)
+        if not teacher:
+            return queryset.none()
+        return queryset.filter(subject_id__in=teacher_subject_ids(teacher))
 
 
 class ComponentSegmentRoleScopeMixin(GradingRoleScopeMixin):
