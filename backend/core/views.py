@@ -1434,7 +1434,7 @@ class AttendanceViewSet(CourseAssignmentFkRoleScopeMixin, viewsets.ModelViewSet)
 
 @schema_viewset(
     ["Academic Indicator Catalogs"],
-    "Achievement texts per academic area and grade level (Bajo vs Básico or above)",
+    "Achievement texts per academic area, grade level and period (Bajo vs Básico or above)",
     search_fields=[
         "academic_area__name",
         "grade_level__name",
@@ -1444,6 +1444,7 @@ class AttendanceViewSet(CourseAssignmentFkRoleScopeMixin, viewsets.ModelViewSet)
     filter_fields=[
         "academic_area",
         "grade_level",
+        "period_number",
         "academic_area__institution",
         "grade_level__institution",
     ],
@@ -1457,9 +1458,25 @@ class AcademicIndicatorCatalogViewSet(
     ).all()
     serializer_class = AcademicIndicatorCatalogSerializer
     permission_classes = [IsAuthenticated]
+    ordering = [
+        "academic_area__name",
+        "grade_level__level_order",
+        "grade_level__name",
+        "period_number",
+        "pk",
+    ]
+    ordering_fields = [
+        "academic_area__name",
+        "grade_level__name",
+        "grade_level__level_order",
+        "period_number",
+        "created_at",
+        "pk",
+    ]
     filterset_fields = [
         "academic_area",
         "grade_level",
+        "period_number",
         "academic_area__institution",
         "grade_level__institution",
     ]
@@ -1488,10 +1505,12 @@ class AcademicIndicatorCatalogViewSet(
         "student",
         "student__document_number",
         "course_assignment",
+        "course_assignment__subject__institution",
         "course_assignment__subject__academic_area",
         "course_assignment__teacher__document_number",
         "academic_period",
         "academic_period__number",
+        "academic_period__academic_year",
         "performance_level",
         "catalog",
         "outcome",
@@ -1515,10 +1534,12 @@ class AcademicIndicatorViewSet(CourseAssignmentFkRoleScopeMixin, viewsets.ModelV
         "student",
         "student__document_number",
         "course_assignment",
+        "course_assignment__subject__institution",
         "course_assignment__subject__academic_area",
         "course_assignment__teacher__document_number",
         "academic_period",
         "academic_period__number",
+        "academic_period__academic_year",
         "performance_level",
         "catalog",
         "outcome",
@@ -1538,7 +1559,8 @@ class AcademicIndicatorViewSet(CourseAssignmentFkRoleScopeMixin, viewsets.ModelV
         summary="Bulk load academic indicators from CSV",
         description=(
             "Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE), GRADO, "
-            "LOGRO_POSITIVO, LOGRO_NEGATIVO (sin DOC_ESTUDIANTE); upsert en catálogo área+grado. "
+            "LOGRO_POSITIVO, LOGRO_NEGATIVO, PERIODO_NUM opcional (1–4; omitir = plantilla genérica); "
+            "upsert en catálogo área+grado+periodo. "
             "(2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, "
             "ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION, NOTA (opcional), NIVEL_DESEMPENO_TEXTO (opcional)."
         ),

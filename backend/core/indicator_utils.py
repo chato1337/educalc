@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+from uuid import UUID
 
 if TYPE_CHECKING:
-    from .models import GradingScale
+    from .models import AcademicArea, AcademicIndicatorCatalog, GradeLevel, GradingScale
 
 
 def _grading_scales_matching_score(
@@ -109,3 +110,46 @@ def resolve_indicator_outcome(
     if code is None and numerical_grade is not None:
         code = performance_code_from_score(numerical_grade, scales)
     return outcome_from_performance_code(code)
+
+
+def _coerce_pk(value: Any) -> Any:
+    if isinstance(value, (str, int, UUID)):
+        return value
+    return value.pk
+
+
+def _catalog_filter_kwargs(
+    academic_area: AcademicArea | Any,
+    grade_level: GradeLevel | Any,
+) -> dict[str, Any]:
+    return {
+        "academic_area_id": _coerce_pk(academic_area),
+        "grade_level_id": _coerce_pk(grade_level),
+    }
+
+
+def resolve_indicator_catalog(
+    academic_area: AcademicArea | Any,
+    grade_level: GradeLevel | Any,
+    period_number: int | None,
+) -> AcademicIndicatorCatalog | None:
+    """
+    Resolve indicator catalog template for area, grade and period.
+
+    Prefers a period-specific row (``period_number`` 1–4). Falls back to the
+    generic template (``period_number`` NULL) for backward compatibility.
+    """
+    from .models import AcademicIndicatorCatalog
+
+    base = _catalog_filter_kwargs(academic_area, grade_level)
+    if period_number is not None:
+        specific = AcademicIndicatorCatalog.objects.filter(
+            **base,
+            period_number=period_number,
+        ).first()
+        if specific is not None:
+            return specific
+    return AcademicIndicatorCatalog.objects.filter(
+        **base,
+        period_number__isnull=True,
+    ).first()

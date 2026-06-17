@@ -159,7 +159,7 @@ export const bulkLoadSections: BulkLoadSection[] = [
         sampleFile: 'bulk_load_academic_indicators.csv',
         hintKey: 'bulkLoadTargets.hints.academicIndicatorsCatalog',
         columnsDescription:
-          'Modo plantillas (sin DOC_ESTUDIANTE). Columnas: DANE_COD, AREA_ACADEMICA o AREA_NOMBRE, GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO.',
+          'Modo plantillas (sin DOC_ESTUDIANTE). Columnas: DANE_COD, AREA_ACADEMICA o AREA_NOMBRE, GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO; PERIODO_NUM opcional (1–4, omitir = genérica).',
       },
       {
         id: 'academic_indicators_students',

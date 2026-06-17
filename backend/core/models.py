@@ -439,11 +439,15 @@ class StudentGuardian(TimeStampedModel):
 
 class AcademicIndicatorCatalog(TimeStampedModel):
     """
-    Catálogo de logros cualitativos por área académica y grado.
+    Catálogo de logros cualitativos por área académica, grado y periodo.
 
     ``achievement_below_basic`` aplica cuando el desempeño es Bajo (por debajo
     del umbral de Básico). ``achievement_basic_or_above`` cuando el desempeño
     es Básico, Alto o Superior, según las escalas de valoración de la institución.
+
+    ``period_number`` (1–4) identifica la plantilla de un periodo concreto.
+    ``NULL`` indica plantilla genérica que aplica a todos los periodos cuando
+    no existe una plantilla específica para el periodo solicitado.
     """
 
     academic_area = models.ForeignKey(
@@ -456,6 +460,11 @@ class AcademicIndicatorCatalog(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="indicator_catalogs",
     )
+    period_number = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text="Número de periodo (1–4). Vacío = plantilla genérica para todos.",
+    )
     achievement_below_basic = models.TextField()
     achievement_basic_or_above = models.TextField()
 
@@ -464,10 +473,22 @@ class AcademicIndicatorCatalog(TimeStampedModel):
             "academic_area__name",
             "grade_level__level_order",
             "grade_level__name",
+            "period_number",
         ]
         verbose_name = "Academic Indicator Catalog"
         verbose_name_plural = "Academic Indicator Catalogs"
-        unique_together = [["academic_area", "grade_level"]]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["academic_area", "grade_level", "period_number"],
+                condition=models.Q(period_number__isnull=False),
+                name="uniq_indicator_catalog_area_grade_period",
+            ),
+            models.UniqueConstraint(
+                fields=["academic_area", "grade_level"],
+                condition=models.Q(period_number__isnull=True),
+                name="uniq_indicator_catalog_area_grade_generic",
+            ),
+        ]
 
     def clean(self):
         super().clean()
@@ -479,9 +500,14 @@ class AcademicIndicatorCatalog(TimeStampedModel):
             raise ValidationError(
                 "El área académica y el grado deben pertenecer a la misma institución."
             )
+        if self.period_number is not None and not 1 <= self.period_number <= 4:
+            raise ValidationError(
+                {"period_number": "El número de periodo debe estar entre 1 y 4."}
+            )
 
     def __str__(self):
-        return f"{self.academic_area.name} / {self.grade_level.name}"
+        period = f" / P{self.period_number}" if self.period_number else ""
+        return f"{self.academic_area.name} / {self.grade_level.name}{period}"
 
 
 class Grade(TimeStampedModel):

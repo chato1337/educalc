@@ -54,6 +54,8 @@ export const queryKeys = {
     ['grading-scales', { institutionId, search: search ?? '' }] as const,
   academicIndicatorCatalogs: (params: Record<string, string | undefined>) =>
     ['academic-indicator-catalogs', params] as const,
+  academicIndicators: (params: Record<string, string | undefined>) =>
+    ['academic-indicators', params] as const,
   performanceSummaries: (params: Record<string, string | undefined>) =>
     ['performance-summaries', params] as const,
   attendances: (params: Record<string, string | undefined>) =>

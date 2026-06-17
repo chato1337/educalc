@@ -24,7 +24,7 @@ from .bulk_load_utils import (
     parse_int,
     row_col,
 )
-from .indicator_utils import resolve_indicator_outcome
+from .indicator_utils import resolve_indicator_catalog, resolve_indicator_outcome
 from .models import (
     AcademicArea,
     AcademicIndicator,
@@ -109,6 +109,47 @@ def _bulk_indicator_row_is_catalog_template(row, col) -> bool:
     return bool(pos or neg)
 
 
+def _upsert_indicator_catalog(
+    *,
+    academic_area,
+    grade_level,
+    period_number: int | None,
+    achievement_basic_or_above: str,
+    achievement_below_basic: str,
+) -> tuple[AcademicIndicatorCatalog, bool]:
+    """Create or update catalog row keyed by area, grade and optional period."""
+    defaults = {
+        "achievement_basic_or_above": achievement_basic_or_above,
+        "achievement_below_basic": achievement_below_basic,
+    }
+    if period_number is None:
+        existing = AcademicIndicatorCatalog.objects.filter(
+            academic_area=academic_area,
+            grade_level=grade_level,
+            period_number__isnull=True,
+        ).first()
+        if existing:
+            for key, value in defaults.items():
+                setattr(existing, key, value)
+            existing.save(update_fields=list(defaults.keys()))
+            return existing, False
+        return (
+            AcademicIndicatorCatalog.objects.create(
+                academic_area=academic_area,
+                grade_level=grade_level,
+                period_number=None,
+                **defaults,
+            ),
+            True,
+        )
+    return AcademicIndicatorCatalog.objects.update_or_create(
+        academic_area=academic_area,
+        grade_level=grade_level,
+        period_number=period_number,
+        defaults=defaults,
+    )
+
+
 def _bulk_load_indicator_catalog_row(row, col, row_num, stats) -> None:
     """Upsert AcademicIndicatorCatalog from DANE_COD, AREA_ACADEMICA, GRADO, logros."""
     dane = clean_str(col(row, ["DANE_COD", "dane_cod"]))
@@ -162,13 +203,22 @@ def _bulk_load_indicator_catalog_row(row, col, row_num, stats) -> None:
         )
         stats["rows_skipped"] += 1
         return
-    _, created = AcademicIndicatorCatalog.objects.update_or_create(
+    period_number = parse_int(col(row, ["PERIODO_NUM", "periodo_num"]))
+    if period_number is not None and not 1 <= period_number <= 4:
+        stats["errors"].append(
+            {
+                "row": row_num,
+                "error": "PERIODO_NUM debe estar entre 1 y 4 en filas de plantilla.",
+            }
+        )
+        stats["rows_skipped"] += 1
+        return
+    _, created = _upsert_indicator_catalog(
         academic_area=aa,
         grade_level=gl,
-        defaults={
-            "achievement_basic_or_above": pos,
-            "achievement_below_basic": neg,
-        },
+        period_number=period_number,
+        achievement_basic_or_above=pos,
+        achievement_below_basic=neg,
     )
     if created:
         stats["created"] += 1
@@ -1101,10 +1151,11 @@ def bulk_load_academic_indicators(csv_file):
             ca, _, _, _ = resolved
             ngrade = parse_decimal(col(row, ["NOTA", "nota"]))
             plevel = clean_str(col(row, ["NIVEL_DESEMPENO_TEXTO", "nivel_desempeno_texto"]))
-            catalog = AcademicIndicatorCatalog.objects.filter(
-                academic_area=ca.subject.academic_area,
-                grade_level=ca.group.grade_level,
-            ).first()
+            catalog = resolve_indicator_catalog(
+                ca.subject.academic_area,
+                ca.group.grade_level,
+                ap.number,
+            )
             scales = list(
                 GradingScale.objects.filter(
                     institution_id=ca.subject.institution_id

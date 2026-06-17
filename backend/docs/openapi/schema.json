@@ -104,6 +104,7 @@
             },
             "post": {
                 "operationId": "academic_areas_create",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Create Academic Areas",
                 "tags": [
                     "Academic Areas"
@@ -153,6 +154,7 @@
         "/api/academic-areas/{id}/": {
             "get": {
                 "operationId": "academic_areas_retrieve",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Get Academic Areas",
                 "parameters": [
                     {
@@ -192,6 +194,7 @@
             },
             "put": {
                 "operationId": "academic_areas_update",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Update Academic Areas",
                 "parameters": [
                     {
@@ -251,6 +254,7 @@
             },
             "patch": {
                 "operationId": "academic_areas_partial_update",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Partial update Academic Areas",
                 "parameters": [
                     {
@@ -309,6 +313,7 @@
             },
             "delete": {
                 "operationId": "academic_areas_destroy",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Delete Academic Areas",
                 "parameters": [
                     {
@@ -472,7 +477,7 @@
         "/api/academic-indicator-catalogs/": {
             "get": {
                 "operationId": "academic_indicator_catalogs_list",
-                "description": "Achievement texts per academic area and grade level (Bajo vs Básico or above) Text search available through query param `search`. Supported fields: academic_area__name, grade_level__name, achievement_below_basic, achievement_basic_or_above. Available exact-match filters via query params: academic_area, grade_level, academic_area__institution, grade_level__institution. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "description": "Achievement texts per academic area, grade level and period (Bajo vs Básico or above) Text search available through query param `search`. Supported fields: academic_area__name, grade_level__name, achievement_below_basic, achievement_basic_or_above. Available exact-match filters via query params: academic_area, grade_level, period_number, academic_area__institution, grade_level__institution. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Academic Indicator Catalogs",
                 "parameters": [
                     {
@@ -534,6 +539,14 @@
                     },
                     {
                         "in": "query",
+                        "name": "period_number",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `period_number`."
+                    },
+                    {
+                        "in": "query",
                         "name": "search",
                         "schema": {
                             "type": "string"
@@ -567,6 +580,7 @@
             },
             "post": {
                 "operationId": "academic_indicator_catalogs_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Create Academic Indicator Catalogs",
                 "tags": [
                     "Academic Indicator Catalogs"
@@ -616,6 +630,7 @@
         "/api/academic-indicator-catalogs/{id}/": {
             "get": {
                 "operationId": "academic_indicator_catalogs_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Get Academic Indicator Catalogs",
                 "parameters": [
                     {
@@ -655,6 +670,7 @@
             },
             "put": {
                 "operationId": "academic_indicator_catalogs_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Update Academic Indicator Catalogs",
                 "parameters": [
                     {
@@ -714,6 +730,7 @@
             },
             "patch": {
                 "operationId": "academic_indicator_catalogs_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Partial update Academic Indicator Catalogs",
                 "parameters": [
                     {
@@ -772,6 +789,7 @@
             },
             "delete": {
                 "operationId": "academic_indicator_catalogs_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Delete Academic Indicator Catalogs",
                 "parameters": [
                     {
@@ -949,6 +967,7 @@
             },
             "post": {
                 "operationId": "academic_indicators_create",
+                "description": "Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.",
                 "summary": "Create Academic Indicators",
                 "tags": [
                     "Academic Indicators"
@@ -1249,6 +1268,7 @@
         "/api/academic-indicators/{id}/": {
             "get": {
                 "operationId": "academic_indicators_retrieve",
+                "description": "Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.",
                 "summary": "Get Academic Indicators",
                 "parameters": [
                     {
@@ -1288,6 +1308,7 @@
             },
             "put": {
                 "operationId": "academic_indicators_update",
+                "description": "Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.",
                 "summary": "Update Academic Indicators",
                 "parameters": [
                     {
@@ -1347,6 +1368,7 @@
             },
             "patch": {
                 "operationId": "academic_indicators_partial_update",
+                "description": "Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.",
                 "summary": "Partial update Academic Indicators",
                 "parameters": [
                     {
@@ -1405,6 +1427,7 @@
             },
             "delete": {
                 "operationId": "academic_indicators_destroy",
+                "description": "Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.",
                 "summary": "Delete Academic Indicators",
                 "parameters": [
                     {
@@ -1586,6 +1609,7 @@
             },
             "post": {
                 "operationId": "academic_periods_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Create Academic Periods",
                 "tags": [
                     "Academic Periods"
@@ -1635,6 +1659,7 @@
         "/api/academic-periods/{id}/": {
             "get": {
                 "operationId": "academic_periods_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Get Academic Periods",
                 "parameters": [
                     {
@@ -1674,6 +1699,7 @@
             },
             "put": {
                 "operationId": "academic_periods_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Update Academic Periods",
                 "parameters": [
                     {
@@ -1733,6 +1759,7 @@
             },
             "patch": {
                 "operationId": "academic_periods_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Partial update Academic Periods",
                 "parameters": [
                     {
@@ -1791,6 +1818,7 @@
             },
             "delete": {
                 "operationId": "academic_periods_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Delete Academic Periods",
                 "parameters": [
                     {
@@ -1972,6 +2000,7 @@
             },
             "post": {
                 "operationId": "academic_years_create",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Create Academic Years",
                 "tags": [
                     "Academic Years"
@@ -2021,6 +2050,7 @@
         "/api/academic-years/{id}/": {
             "get": {
                 "operationId": "academic_years_retrieve",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Get Academic Years",
                 "parameters": [
                     {
@@ -2060,6 +2090,7 @@
             },
             "put": {
                 "operationId": "academic_years_update",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Update Academic Years",
                 "parameters": [
                     {
@@ -2119,6 +2150,7 @@
             },
             "patch": {
                 "operationId": "academic_years_partial_update",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Partial update Academic Years",
                 "parameters": [
                     {
@@ -2177,6 +2209,7 @@
             },
             "delete": {
                 "operationId": "academic_years_destroy",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Delete Academic Years",
                 "parameters": [
                     {
@@ -2330,6 +2363,7 @@
             },
             "post": {
                 "operationId": "attendances_create",
+                "description": "Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.",
                 "summary": "Create Attendance",
                 "tags": [
                     "Attendance"
@@ -2379,6 +2413,7 @@
         "/api/attendances/{id}/": {
             "get": {
                 "operationId": "attendances_retrieve",
+                "description": "Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.",
                 "summary": "Get Attendance",
                 "parameters": [
                     {
@@ -2418,6 +2453,7 @@
             },
             "put": {
                 "operationId": "attendances_update",
+                "description": "Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.",
                 "summary": "Update Attendance",
                 "parameters": [
                     {
@@ -2477,6 +2513,7 @@
             },
             "patch": {
                 "operationId": "attendances_partial_update",
+                "description": "Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.",
                 "summary": "Partial update Attendance",
                 "parameters": [
                     {
@@ -2535,6 +2572,7 @@
             },
             "delete": {
                 "operationId": "attendances_destroy",
+                "description": "Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.",
                 "summary": "Delete Attendance",
                 "parameters": [
                     {
@@ -2862,6 +2900,7 @@
             },
             "post": {
                 "operationId": "campuses_create",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Create Campuses",
                 "tags": [
                     "Campuses"
@@ -2911,6 +2950,7 @@
         "/api/campuses/{id}/": {
             "get": {
                 "operationId": "campuses_retrieve",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Get Campuses",
                 "parameters": [
                     {
@@ -2950,6 +2990,7 @@
             },
             "put": {
                 "operationId": "campuses_update",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Update Campuses",
                 "parameters": [
                     {
@@ -3009,6 +3050,7 @@
             },
             "patch": {
                 "operationId": "campuses_partial_update",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Partial update Campuses",
                 "parameters": [
                     {
@@ -3067,6 +3109,7 @@
             },
             "delete": {
                 "operationId": "campuses_destroy",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Delete Campuses",
                 "parameters": [
                     {
@@ -3575,6 +3618,7 @@
             },
             "post": {
                 "operationId": "course_assignments_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Create Course Assignments",
                 "tags": [
                     "Course Assignments"
@@ -3624,6 +3668,7 @@
         "/api/course-assignments/{id}/": {
             "get": {
                 "operationId": "course_assignments_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Get Course Assignments",
                 "parameters": [
                     {
@@ -3663,6 +3708,7 @@
             },
             "put": {
                 "operationId": "course_assignments_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Update Course Assignments",
                 "parameters": [
                     {
@@ -3722,6 +3768,7 @@
             },
             "patch": {
                 "operationId": "course_assignments_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Partial update Course Assignments",
                 "parameters": [
                     {
@@ -3780,6 +3827,7 @@
             },
             "delete": {
                 "operationId": "course_assignments_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Delete Course Assignments",
                 "parameters": [
                     {
@@ -4080,6 +4128,7 @@
             },
             "post": {
                 "operationId": "disciplinary_reports_create",
+                "description": "PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.",
                 "summary": "Create Disciplinary Reports",
                 "tags": [
                     "Disciplinary Reports"
@@ -4129,6 +4178,7 @@
         "/api/disciplinary-reports/{id}/": {
             "get": {
                 "operationId": "disciplinary_reports_retrieve",
+                "description": "PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.",
                 "summary": "Get Disciplinary Reports",
                 "parameters": [
                     {
@@ -4168,6 +4218,7 @@
             },
             "put": {
                 "operationId": "disciplinary_reports_update",
+                "description": "PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.",
                 "summary": "Update Disciplinary Reports",
                 "parameters": [
                     {
@@ -4227,6 +4278,7 @@
             },
             "patch": {
                 "operationId": "disciplinary_reports_partial_update",
+                "description": "PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.",
                 "summary": "Partial update Disciplinary Reports",
                 "parameters": [
                     {
@@ -4285,6 +4337,7 @@
             },
             "delete": {
                 "operationId": "disciplinary_reports_destroy",
+                "description": "PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.",
                 "summary": "Delete Disciplinary Reports",
                 "parameters": [
                     {
@@ -4490,6 +4543,7 @@
             },
             "post": {
                 "operationId": "enrollments_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Create Enrollments",
                 "tags": [
                     "Enrollments"
@@ -4539,6 +4593,7 @@
         "/api/enrollments/{id}/": {
             "get": {
                 "operationId": "enrollments_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Get Enrollments",
                 "parameters": [
                     {
@@ -4578,6 +4633,7 @@
             },
             "put": {
                 "operationId": "enrollments_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Update Enrollments",
                 "parameters": [
                     {
@@ -4637,6 +4693,7 @@
             },
             "patch": {
                 "operationId": "enrollments_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Partial update Enrollments",
                 "parameters": [
                     {
@@ -4695,6 +4752,7 @@
             },
             "delete": {
                 "operationId": "enrollments_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Delete Enrollments",
                 "parameters": [
                     {
@@ -4840,6 +4898,7 @@
             },
             "post": {
                 "operationId": "grade_directors_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Create Grade Directors",
                 "tags": [
                     "Grade Directors"
@@ -4889,6 +4948,7 @@
         "/api/grade-directors/{id}/": {
             "get": {
                 "operationId": "grade_directors_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Get Grade Directors",
                 "parameters": [
                     {
@@ -4928,6 +4988,7 @@
             },
             "put": {
                 "operationId": "grade_directors_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Update Grade Directors",
                 "parameters": [
                     {
@@ -4987,6 +5048,7 @@
             },
             "patch": {
                 "operationId": "grade_directors_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Partial update Grade Directors",
                 "parameters": [
                     {
@@ -5045,6 +5107,7 @@
             },
             "delete": {
                 "operationId": "grade_directors_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Delete Grade Directors",
                 "parameters": [
                     {
@@ -5226,6 +5289,7 @@
             },
             "post": {
                 "operationId": "grade_levels_create",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Create Grade Levels",
                 "tags": [
                     "Grade Levels"
@@ -5275,6 +5339,7 @@
         "/api/grade-levels/{id}/": {
             "get": {
                 "operationId": "grade_levels_retrieve",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Get Grade Levels",
                 "parameters": [
                     {
@@ -5314,6 +5379,7 @@
             },
             "put": {
                 "operationId": "grade_levels_update",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Update Grade Levels",
                 "parameters": [
                     {
@@ -5373,6 +5439,7 @@
             },
             "patch": {
                 "operationId": "grade_levels_partial_update",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Partial update Grade Levels",
                 "parameters": [
                     {
@@ -5431,6 +5498,7 @@
             },
             "delete": {
                 "operationId": "grade_levels_destroy",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Delete Grade Levels",
                 "parameters": [
                     {
@@ -5600,6 +5668,7 @@
             },
             "post": {
                 "operationId": "grades_create",
+                "description": "Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.",
                 "summary": "Create Grades",
                 "tags": [
                     "Grades"
@@ -5689,6 +5758,7 @@
             },
             "put": {
                 "operationId": "grades_update",
+                "description": "Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.",
                 "summary": "Update Grades",
                 "parameters": [
                     {
@@ -5748,6 +5818,7 @@
             },
             "patch": {
                 "operationId": "grades_partial_update",
+                "description": "Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.",
                 "summary": "Partial update Grades",
                 "parameters": [
                     {
@@ -5806,6 +5877,7 @@
             },
             "delete": {
                 "operationId": "grades_destroy",
+                "description": "Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.",
                 "summary": "Delete Grades",
                 "parameters": [
                     {
@@ -6399,6 +6471,7 @@
             },
             "post": {
                 "operationId": "grading_scales_create",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Create Grading Scales",
                 "tags": [
                     "Grading Scales"
@@ -6448,6 +6521,7 @@
         "/api/grading-scales/{id}/": {
             "get": {
                 "operationId": "grading_scales_retrieve",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Get Grading Scales",
                 "parameters": [
                     {
@@ -6487,6 +6561,7 @@
             },
             "put": {
                 "operationId": "grading_scales_update",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Update Grading Scales",
                 "parameters": [
                     {
@@ -6546,6 +6621,7 @@
             },
             "patch": {
                 "operationId": "grading_scales_partial_update",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Partial update Grading Scales",
                 "parameters": [
                     {
@@ -6604,6 +6680,7 @@
             },
             "delete": {
                 "operationId": "grading_scales_destroy",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Delete Grading Scales",
                 "parameters": [
                     {
@@ -7406,6 +7483,7 @@
             },
             "post": {
                 "operationId": "groups_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Create Groups",
                 "tags": [
                     "Groups"
@@ -7455,6 +7533,7 @@
         "/api/groups/{id}/": {
             "get": {
                 "operationId": "groups_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Get Groups",
                 "parameters": [
                     {
@@ -7494,6 +7573,7 @@
             },
             "put": {
                 "operationId": "groups_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Update Groups",
                 "parameters": [
                     {
@@ -7553,6 +7633,7 @@
             },
             "patch": {
                 "operationId": "groups_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Partial update Groups",
                 "parameters": [
                     {
@@ -7611,6 +7692,7 @@
             },
             "delete": {
                 "operationId": "groups_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Delete Groups",
                 "parameters": [
                     {
@@ -7781,6 +7863,7 @@
             },
             "post": {
                 "operationId": "institutions_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Create Institutions",
                 "tags": [
                     "Institutions"
@@ -7830,6 +7913,7 @@
         "/api/institutions/{id}/": {
             "get": {
                 "operationId": "institutions_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Get Institutions",
                 "parameters": [
                     {
@@ -7869,6 +7953,7 @@
             },
             "put": {
                 "operationId": "institutions_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Update Institutions",
                 "parameters": [
                     {
@@ -7928,6 +8013,7 @@
             },
             "patch": {
                 "operationId": "institutions_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Partial update Institutions",
                 "parameters": [
                     {
@@ -7986,6 +8072,7 @@
             },
             "delete": {
                 "operationId": "institutions_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Delete Institutions",
                 "parameters": [
                     {
@@ -8115,6 +8202,7 @@
             },
             "post": {
                 "operationId": "parents_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Create Parents",
                 "tags": [
                     "Parents"
@@ -8164,6 +8252,7 @@
         "/api/parents/{id}/": {
             "get": {
                 "operationId": "parents_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Get Parents",
                 "parameters": [
                     {
@@ -8203,6 +8292,7 @@
             },
             "put": {
                 "operationId": "parents_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Update Parents",
                 "parameters": [
                     {
@@ -8262,6 +8352,7 @@
             },
             "patch": {
                 "operationId": "parents_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Partial update Parents",
                 "parameters": [
                     {
@@ -8320,6 +8411,7 @@
             },
             "delete": {
                 "operationId": "parents_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Delete Parents",
                 "parameters": [
                     {
@@ -8517,6 +8609,7 @@
             },
             "post": {
                 "operationId": "performance_summaries_create",
+                "description": "PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.",
                 "summary": "Create Performance Summaries",
                 "tags": [
                     "Performance Summaries"
@@ -8566,6 +8659,7 @@
         "/api/performance-summaries/{id}/": {
             "get": {
                 "operationId": "performance_summaries_retrieve",
+                "description": "PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.",
                 "summary": "Get Performance Summaries",
                 "parameters": [
                     {
@@ -8605,6 +8699,7 @@
             },
             "put": {
                 "operationId": "performance_summaries_update",
+                "description": "PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.",
                 "summary": "Update Performance Summaries",
                 "parameters": [
                     {
@@ -8664,6 +8759,7 @@
             },
             "patch": {
                 "operationId": "performance_summaries_partial_update",
+                "description": "PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.",
                 "summary": "Partial update Performance Summaries",
                 "parameters": [
                     {
@@ -8722,6 +8818,7 @@
             },
             "delete": {
                 "operationId": "performance_summaries_destroy",
+                "description": "PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.",
                 "summary": "Delete Performance Summaries",
                 "parameters": [
                     {
@@ -9835,6 +9932,7 @@
             },
             "post": {
                 "operationId": "student_guardians_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Create Student Guardians",
                 "tags": [
                     "Student Guardians"
@@ -9884,6 +9982,7 @@
         "/api/student-guardians/{id}/": {
             "get": {
                 "operationId": "student_guardians_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Get Student Guardians",
                 "parameters": [
                     {
@@ -9923,6 +10022,7 @@
             },
             "put": {
                 "operationId": "student_guardians_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Update Student Guardians",
                 "parameters": [
                     {
@@ -9982,6 +10082,7 @@
             },
             "patch": {
                 "operationId": "student_guardians_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Partial update Student Guardians",
                 "parameters": [
                     {
@@ -10040,6 +10141,7 @@
             },
             "delete": {
                 "operationId": "student_guardians_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Delete Student Guardians",
                 "parameters": [
                     {
@@ -10229,6 +10331,7 @@
             },
             "post": {
                 "operationId": "students_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Create Students",
                 "tags": [
                     "Students"
@@ -10278,6 +10381,7 @@
         "/api/students/{id}/": {
             "get": {
                 "operationId": "students_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Get Students",
                 "parameters": [
                     {
@@ -10317,6 +10421,7 @@
             },
             "put": {
                 "operationId": "students_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Update Students",
                 "parameters": [
                     {
@@ -10376,6 +10481,7 @@
             },
             "patch": {
                 "operationId": "students_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Partial update Students",
                 "parameters": [
                     {
@@ -10434,6 +10540,7 @@
             },
             "delete": {
                 "operationId": "students_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Delete Students",
                 "parameters": [
                     {
@@ -11122,6 +11229,7 @@
             },
             "post": {
                 "operationId": "subjects_create",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Create Subjects",
                 "tags": [
                     "Subjects"
@@ -11171,6 +11279,7 @@
         "/api/subjects/{id}/": {
             "get": {
                 "operationId": "subjects_retrieve",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Get Subjects",
                 "parameters": [
                     {
@@ -11210,6 +11319,7 @@
             },
             "put": {
                 "operationId": "subjects_update",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Update Subjects",
                 "parameters": [
                     {
@@ -11269,6 +11379,7 @@
             },
             "patch": {
                 "operationId": "subjects_partial_update",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Partial update Subjects",
                 "parameters": [
                     {
@@ -11327,6 +11438,7 @@
             },
             "delete": {
                 "operationId": "subjects_destroy",
+                "description": "Models with direct ``institution_id`` FK.",
                 "summary": "Delete Subjects",
                 "parameters": [
                     {
@@ -11508,6 +11620,7 @@
             },
             "post": {
                 "operationId": "teachers_create",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Create Teachers",
                 "tags": [
                     "Teachers"
@@ -11557,6 +11670,7 @@
         "/api/teachers/{id}/": {
             "get": {
                 "operationId": "teachers_retrieve",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Get Teachers",
                 "parameters": [
                     {
@@ -11596,6 +11710,7 @@
             },
             "put": {
                 "operationId": "teachers_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Update Teachers",
                 "parameters": [
                     {
@@ -11655,6 +11770,7 @@
             },
             "patch": {
                 "operationId": "teachers_partial_update",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Partial update Teachers",
                 "parameters": [
                     {
@@ -11713,6 +11829,7 @@
             },
             "delete": {
                 "operationId": "teachers_destroy",
+                "description": "Mixin for ViewSets to filter queryset by user role scope.\n\n- ADMIN: no filter (all data)\n- COORDINATOR: filter by institution_id from profile\n- TEACHER: filter by course_assignments (override filter_queryset_for_teacher)\n- PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)\n\nSubclass and override filter_queryset_by_role() or the role-specific methods.",
                 "summary": "Delete Teachers",
                 "parameters": [
                     {
@@ -12337,7 +12454,6 @@
                     "catalog_label",
                     "course_assignment",
                     "created_at",
-                    "description",
                     "id",
                     "student",
                     "student_name",
@@ -12368,6 +12484,17 @@
                         "type": "string",
                         "readOnly": true
                     },
+                    "period_number": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "Número de periodo (1–4). Vacío = plantilla genérica para todos."
+                    },
+                    "period_label": {
+                        "type": "string",
+                        "readOnly": true
+                    },
                     "achievement_below_basic": {
                         "type": "string"
                     },
@@ -12394,6 +12521,7 @@
                     "grade_level",
                     "grade_level_name",
                     "id",
+                    "period_label",
                     "updated_at"
                 ]
             },
@@ -12407,6 +12535,13 @@
                     "grade_level": {
                         "type": "string",
                         "format": "uuid"
+                    },
+                    "period_number": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "Número de periodo (1–4). Vacío = plantilla genérica para todos."
                     },
                     "achievement_below_basic": {
                         "type": "string",
@@ -12455,8 +12590,7 @@
                         ]
                     },
                     "description": {
-                        "type": "string",
-                        "minLength": 1
+                        "type": "string"
                     },
                     "numerical_grade": {
                         "type": "string",
@@ -12472,7 +12606,6 @@
                 "required": [
                     "academic_period",
                     "course_assignment",
-                    "description",
                     "student"
                 ]
             },
@@ -15703,6 +15836,13 @@
                         "type": "string",
                         "format": "uuid"
                     },
+                    "period_number": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "Número de periodo (1–4). Vacío = plantilla genérica para todos."
+                    },
                     "achievement_below_basic": {
                         "type": "string",
                         "minLength": 1
@@ -15744,8 +15884,7 @@
                         ]
                     },
                     "description": {
-                        "type": "string",
-                        "minLength": 1
+                        "type": "string"
                     },
                     "numerical_grade": {
                         "type": "string",

@@ -12,8 +12,13 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
+  FormHelperText,
   IconButton,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   TextField,
 } from '@mui/material'
 import {
@@ -48,9 +53,12 @@ import { PageHeader } from '@/components/PageHeader'
 import { useUiStore } from '@/stores/uiStore'
 import type { AcademicArea, AcademicIndicatorCatalog, GradeLevel } from '@/types/schemas'
 
+const PERIOD_NUMBERS = [1, 2, 3, 4] as const
+
 const schema = z.object({
   academic_area: z.string().uuid(),
   grade_level: z.string().uuid(),
+  period_number: z.number().int().min(1).max(4).nullable(),
   achievement_below_basic: z.string().trim().min(1),
   achievement_basic_or_above: z.string().trim().min(1),
 })
@@ -60,6 +68,7 @@ type FormValues = z.infer<typeof schema>
 const defaults: FormValues = {
   academic_area: '',
   grade_level: '',
+  period_number: null,
   achievement_below_basic: '',
   achievement_basic_or_above: '',
 }
@@ -87,6 +96,7 @@ export function AcademicIndicatorCatalogsPage({
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const [searchInput, setSearchInput] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
+  const [periodFilter, setPeriodFilter] = useState<string>('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<AcademicIndicatorCatalog | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<AcademicIndicatorCatalog | null>(
@@ -106,9 +116,10 @@ export function AcademicIndicatorCatalogsPage({
             academic_area__institution: selectedInstitutionId,
             grade_level__institution: selectedInstitutionId,
             search: appliedSearch || undefined,
+            period_number: periodFilter || undefined,
           }
         : {},
-    [selectedInstitutionId, appliedSearch],
+    [selectedInstitutionId, appliedSearch, periodFilter],
   )
 
   const listQuery = useInfiniteList<AcademicIndicatorCatalog>({
@@ -194,6 +205,7 @@ export function AcademicIndicatorCatalogsPage({
       form.reset({
         academic_area: row.academic_area,
         grade_level: row.grade_level,
+        period_number: row.period_number ?? null,
         achievement_below_basic: row.achievement_below_basic,
         achievement_basic_or_above: row.achievement_basic_or_above,
       })
@@ -215,6 +227,12 @@ export function AcademicIndicatorCatalogsPage({
         field: 'grade_level_name',
         headerName: t('indicatorCatalogs.grade'),
         width: 120,
+        sortable: false,
+      },
+      {
+        field: 'period_label',
+        headerName: t('indicatorCatalogs.period'),
+        width: 100,
         sortable: false,
       },
       {
@@ -278,6 +296,7 @@ export function AcademicIndicatorCatalogsPage({
     const body: Record<string, unknown> = {
       academic_area: values.academic_area,
       grade_level: values.grade_level,
+      period_number: values.period_number,
       achievement_below_basic: values.achievement_below_basic,
       achievement_basic_or_above: values.achievement_basic_or_above,
     }
@@ -324,6 +343,21 @@ export function AcademicIndicatorCatalogsPage({
           >
             {t('common.apply')}
           </Button>
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel>{t('indicatorCatalogs.period')}</InputLabel>
+            <Select
+              label={t('indicatorCatalogs.period')}
+              value={periodFilter}
+              onChange={(e) => setPeriodFilter(e.target.value)}
+            >
+              <MenuItem value="">{t('indicatorCatalogs.allPeriods')}</MenuItem>
+              {PERIOD_NUMBERS.map((n) => (
+                <MenuItem key={n} value={String(n)}>
+                  P{n}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Paper>
         <Button
           variant="contained"
@@ -416,6 +450,37 @@ export function AcademicIndicatorCatalogsPage({
                 />
               )}
             />
+            <Controller
+              name="period_number"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <FormControl fullWidth error={!!fieldState.error}>
+                  <InputLabel>{t('indicatorCatalogs.period')}</InputLabel>
+                  <Select
+                    label={t('indicatorCatalogs.period')}
+                    value={field.value === null ? '' : String(field.value)}
+                    onChange={(e) => {
+                      const raw = e.target.value
+                      field.onChange(raw === '' ? null : Number(raw))
+                    }}
+                  >
+                    <MenuItem value="">
+                      {t('indicatorCatalogs.allPeriods')}
+                    </MenuItem>
+                    {PERIOD_NUMBERS.map((n) => (
+                      <MenuItem key={n} value={String(n)}>
+                        P{n}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {fieldState.error ? (
+                    <FormHelperText error>
+                      {fieldState.error.message}
+                    </FormHelperText>
+                  ) : null}
+                </FormControl>
+              )}
+            />
             <TextField
               label={t('indicatorCatalogs.belowBasic')}
               {...form.register('achievement_below_basic')}
@@ -455,7 +520,7 @@ export function AcademicIndicatorCatalogsPage({
         <DialogContent>
           {t('indicatorCatalogs.deletePrompt', {
             label: deleteTarget
-              ? `${deleteTarget.academic_area_name} / ${deleteTarget.grade_level_name}`
+              ? `${deleteTarget.academic_area_name} / ${deleteTarget.grade_level_name} / ${deleteTarget.period_label}`
               : '',
           })}
         </DialogContent>

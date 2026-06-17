@@ -17,7 +17,10 @@ export interface paths {
          */
         get: operations["academic_areas_list"];
         put?: never;
-        /** Create Academic Areas */
+        /**
+         * Create Academic Areas
+         * @description Models with direct ``institution_id`` FK.
+         */
         post: operations["academic_areas_create"];
         delete?: never;
         options?: never;
@@ -32,16 +35,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Academic Areas */
+        /**
+         * Get Academic Areas
+         * @description Models with direct ``institution_id`` FK.
+         */
         get: operations["academic_areas_retrieve"];
-        /** Update Academic Areas */
+        /**
+         * Update Academic Areas
+         * @description Models with direct ``institution_id`` FK.
+         */
         put: operations["academic_areas_update"];
         post?: never;
-        /** Delete Academic Areas */
+        /**
+         * Delete Academic Areas
+         * @description Models with direct ``institution_id`` FK.
+         */
         delete: operations["academic_areas_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Academic Areas */
+        /**
+         * Partial update Academic Areas
+         * @description Models with direct ``institution_id`` FK.
+         */
         patch: operations["academic_areas_partial_update"];
         trace?: never;
     };
@@ -94,11 +109,21 @@ export interface paths {
         };
         /**
          * List Academic Indicator Catalogs
-         * @description Achievement texts per academic area and grade level (Bajo vs Básico or above) Text search available through query param `search`. Supported fields: academic_area__name, grade_level__name, achievement_below_basic, achievement_basic_or_above. Available exact-match filters via query params: academic_area, grade_level, academic_area__institution, grade_level__institution. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Achievement texts per academic area, grade level and period (Bajo vs Básico or above) Text search available through query param `search`. Supported fields: academic_area__name, grade_level__name, achievement_below_basic, achievement_basic_or_above. Available exact-match filters via query params: academic_area, grade_level, period_number, academic_area__institution, grade_level__institution. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["academic_indicator_catalogs_list"];
         put?: never;
-        /** Create Academic Indicator Catalogs */
+        /**
+         * Create Academic Indicator Catalogs
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         post: operations["academic_indicator_catalogs_create"];
         delete?: never;
         options?: never;
@@ -113,16 +138,56 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Academic Indicator Catalogs */
+        /**
+         * Get Academic Indicator Catalogs
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         get: operations["academic_indicator_catalogs_retrieve"];
-        /** Update Academic Indicator Catalogs */
+        /**
+         * Update Academic Indicator Catalogs
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         put: operations["academic_indicator_catalogs_update"];
         post?: never;
-        /** Delete Academic Indicator Catalogs */
+        /**
+         * Delete Academic Indicator Catalogs
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         delete: operations["academic_indicator_catalogs_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Academic Indicator Catalogs */
+        /**
+         * Partial update Academic Indicator Catalogs
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         patch: operations["academic_indicator_catalogs_partial_update"];
         trace?: never;
     };
@@ -139,7 +204,10 @@ export interface paths {
          */
         get: operations["academic_indicators_list"];
         put?: never;
-        /** Create Academic Indicators */
+        /**
+         * Create Academic Indicators
+         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         */
         post: operations["academic_indicators_create"];
         delete?: never;
         options?: never;
@@ -218,16 +286,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Academic Indicators */
+        /**
+         * Get Academic Indicators
+         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         */
         get: operations["academic_indicators_retrieve"];
-        /** Update Academic Indicators */
+        /**
+         * Update Academic Indicators
+         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         */
         put: operations["academic_indicators_update"];
         post?: never;
-        /** Delete Academic Indicators */
+        /**
+         * Delete Academic Indicators
+         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         */
         delete: operations["academic_indicators_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Academic Indicators */
+        /**
+         * Partial update Academic Indicators
+         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         */
         patch: operations["academic_indicators_partial_update"];
         trace?: never;
     };
@@ -264,7 +344,17 @@ export interface paths {
          */
         get: operations["academic_periods_list"];
         put?: never;
-        /** Create Academic Periods */
+        /**
+         * Create Academic Periods
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         post: operations["academic_periods_create"];
         delete?: never;
         options?: never;
@@ -279,16 +369,56 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Academic Periods */
+        /**
+         * Get Academic Periods
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         get: operations["academic_periods_retrieve"];
-        /** Update Academic Periods */
+        /**
+         * Update Academic Periods
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         put: operations["academic_periods_update"];
         post?: never;
-        /** Delete Academic Periods */
+        /**
+         * Delete Academic Periods
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         delete: operations["academic_periods_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Academic Periods */
+        /**
+         * Partial update Academic Periods
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         patch: operations["academic_periods_partial_update"];
         trace?: never;
     };
@@ -325,7 +455,10 @@ export interface paths {
          */
         get: operations["academic_years_list"];
         put?: never;
-        /** Create Academic Years */
+        /**
+         * Create Academic Years
+         * @description Models with direct ``institution_id`` FK.
+         */
         post: operations["academic_years_create"];
         delete?: never;
         options?: never;
@@ -340,16 +473,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Academic Years */
+        /**
+         * Get Academic Years
+         * @description Models with direct ``institution_id`` FK.
+         */
         get: operations["academic_years_retrieve"];
-        /** Update Academic Years */
+        /**
+         * Update Academic Years
+         * @description Models with direct ``institution_id`` FK.
+         */
         put: operations["academic_years_update"];
         post?: never;
-        /** Delete Academic Years */
+        /**
+         * Delete Academic Years
+         * @description Models with direct ``institution_id`` FK.
+         */
         delete: operations["academic_years_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Academic Years */
+        /**
+         * Partial update Academic Years
+         * @description Models with direct ``institution_id`` FK.
+         */
         patch: operations["academic_years_partial_update"];
         trace?: never;
     };
@@ -366,7 +511,10 @@ export interface paths {
          */
         get: operations["attendances_list"];
         put?: never;
-        /** Create Attendance */
+        /**
+         * Create Attendance
+         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         */
         post: operations["attendances_create"];
         delete?: never;
         options?: never;
@@ -381,16 +529,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Attendance */
+        /**
+         * Get Attendance
+         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         */
         get: operations["attendances_retrieve"];
-        /** Update Attendance */
+        /**
+         * Update Attendance
+         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         */
         put: operations["attendances_update"];
         post?: never;
-        /** Delete Attendance */
+        /**
+         * Delete Attendance
+         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         */
         delete: operations["attendances_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Attendance */
+        /**
+         * Partial update Attendance
+         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         */
         patch: operations["attendances_partial_update"];
         trace?: never;
     };
@@ -487,7 +647,10 @@ export interface paths {
          */
         get: operations["campuses_list"];
         put?: never;
-        /** Create Campuses */
+        /**
+         * Create Campuses
+         * @description Models with direct ``institution_id`` FK.
+         */
         post: operations["campuses_create"];
         delete?: never;
         options?: never;
@@ -502,16 +665,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Campuses */
+        /**
+         * Get Campuses
+         * @description Models with direct ``institution_id`` FK.
+         */
         get: operations["campuses_retrieve"];
-        /** Update Campuses */
+        /**
+         * Update Campuses
+         * @description Models with direct ``institution_id`` FK.
+         */
         put: operations["campuses_update"];
         post?: never;
-        /** Delete Campuses */
+        /**
+         * Delete Campuses
+         * @description Models with direct ``institution_id`` FK.
+         */
         delete: operations["campuses_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Campuses */
+        /**
+         * Partial update Campuses
+         * @description Models with direct ``institution_id`` FK.
+         */
         patch: operations["campuses_partial_update"];
         trace?: never;
     };
@@ -619,7 +794,17 @@ export interface paths {
          */
         get: operations["course_assignments_list"];
         put?: never;
-        /** Create Course Assignments */
+        /**
+         * Create Course Assignments
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         post: operations["course_assignments_create"];
         delete?: never;
         options?: never;
@@ -634,16 +819,56 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Course Assignments */
+        /**
+         * Get Course Assignments
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         get: operations["course_assignments_retrieve"];
-        /** Update Course Assignments */
+        /**
+         * Update Course Assignments
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         put: operations["course_assignments_update"];
         post?: never;
-        /** Delete Course Assignments */
+        /**
+         * Delete Course Assignments
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         delete: operations["course_assignments_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Course Assignments */
+        /**
+         * Partial update Course Assignments
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         patch: operations["course_assignments_partial_update"];
         trace?: never;
     };
@@ -720,7 +945,10 @@ export interface paths {
          */
         get: operations["disciplinary_reports_list"];
         put?: never;
-        /** Create Disciplinary Reports */
+        /**
+         * Create Disciplinary Reports
+         * @description PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.
+         */
         post: operations["disciplinary_reports_create"];
         delete?: never;
         options?: never;
@@ -735,16 +963,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Disciplinary Reports */
+        /**
+         * Get Disciplinary Reports
+         * @description PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.
+         */
         get: operations["disciplinary_reports_retrieve"];
-        /** Update Disciplinary Reports */
+        /**
+         * Update Disciplinary Reports
+         * @description PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.
+         */
         put: operations["disciplinary_reports_update"];
         post?: never;
-        /** Delete Disciplinary Reports */
+        /**
+         * Delete Disciplinary Reports
+         * @description PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.
+         */
         delete: operations["disciplinary_reports_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Disciplinary Reports */
+        /**
+         * Partial update Disciplinary Reports
+         * @description PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.
+         */
         patch: operations["disciplinary_reports_partial_update"];
         trace?: never;
     };
@@ -781,7 +1021,17 @@ export interface paths {
          */
         get: operations["enrollments_list"];
         put?: never;
-        /** Create Enrollments */
+        /**
+         * Create Enrollments
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         post: operations["enrollments_create"];
         delete?: never;
         options?: never;
@@ -796,16 +1046,56 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Enrollments */
+        /**
+         * Get Enrollments
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         get: operations["enrollments_retrieve"];
-        /** Update Enrollments */
+        /**
+         * Update Enrollments
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         put: operations["enrollments_update"];
         post?: never;
-        /** Delete Enrollments */
+        /**
+         * Delete Enrollments
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         delete: operations["enrollments_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Enrollments */
+        /**
+         * Partial update Enrollments
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         patch: operations["enrollments_partial_update"];
         trace?: never;
     };
@@ -822,7 +1112,17 @@ export interface paths {
          */
         get: operations["grade_directors_list"];
         put?: never;
-        /** Create Grade Directors */
+        /**
+         * Create Grade Directors
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         post: operations["grade_directors_create"];
         delete?: never;
         options?: never;
@@ -837,16 +1137,56 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Grade Directors */
+        /**
+         * Get Grade Directors
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         get: operations["grade_directors_retrieve"];
-        /** Update Grade Directors */
+        /**
+         * Update Grade Directors
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         put: operations["grade_directors_update"];
         post?: never;
-        /** Delete Grade Directors */
+        /**
+         * Delete Grade Directors
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         delete: operations["grade_directors_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Grade Directors */
+        /**
+         * Partial update Grade Directors
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         patch: operations["grade_directors_partial_update"];
         trace?: never;
     };
@@ -883,7 +1223,10 @@ export interface paths {
          */
         get: operations["grade_levels_list"];
         put?: never;
-        /** Create Grade Levels */
+        /**
+         * Create Grade Levels
+         * @description Models with direct ``institution_id`` FK.
+         */
         post: operations["grade_levels_create"];
         delete?: never;
         options?: never;
@@ -898,16 +1241,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Grade Levels */
+        /**
+         * Get Grade Levels
+         * @description Models with direct ``institution_id`` FK.
+         */
         get: operations["grade_levels_retrieve"];
-        /** Update Grade Levels */
+        /**
+         * Update Grade Levels
+         * @description Models with direct ``institution_id`` FK.
+         */
         put: operations["grade_levels_update"];
         post?: never;
-        /** Delete Grade Levels */
+        /**
+         * Delete Grade Levels
+         * @description Models with direct ``institution_id`` FK.
+         */
         delete: operations["grade_levels_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Grade Levels */
+        /**
+         * Partial update Grade Levels
+         * @description Models with direct ``institution_id`` FK.
+         */
         patch: operations["grade_levels_partial_update"];
         trace?: never;
     };
@@ -924,7 +1279,10 @@ export interface paths {
          */
         get: operations["grades_list"];
         put?: never;
-        /** Create Grades */
+        /**
+         * Create Grades
+         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         */
         post: operations["grades_create"];
         delete?: never;
         options?: never;
@@ -944,14 +1302,23 @@ export interface paths {
          * @description Single grade with enriched context: student identity, course assignment (subject, teacher, group, academic year), and academic period.
          */
         get: operations["grades_retrieve"];
-        /** Update Grades */
+        /**
+         * Update Grades
+         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         */
         put: operations["grades_update"];
         post?: never;
-        /** Delete Grades */
+        /**
+         * Delete Grades
+         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         */
         delete: operations["grades_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Grades */
+        /**
+         * Partial update Grades
+         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         */
         patch: operations["grades_partial_update"];
         trace?: never;
     };
@@ -1099,7 +1466,10 @@ export interface paths {
          */
         get: operations["grading_scales_list"];
         put?: never;
-        /** Create Grading Scales */
+        /**
+         * Create Grading Scales
+         * @description Models with direct ``institution_id`` FK.
+         */
         post: operations["grading_scales_create"];
         delete?: never;
         options?: never;
@@ -1114,16 +1484,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Grading Scales */
+        /**
+         * Get Grading Scales
+         * @description Models with direct ``institution_id`` FK.
+         */
         get: operations["grading_scales_retrieve"];
-        /** Update Grading Scales */
+        /**
+         * Update Grading Scales
+         * @description Models with direct ``institution_id`` FK.
+         */
         put: operations["grading_scales_update"];
         post?: never;
-        /** Delete Grading Scales */
+        /**
+         * Delete Grading Scales
+         * @description Models with direct ``institution_id`` FK.
+         */
         delete: operations["grading_scales_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Grading Scales */
+        /**
+         * Partial update Grading Scales
+         * @description Models with direct ``institution_id`` FK.
+         */
         patch: operations["grading_scales_partial_update"];
         trace?: never;
     };
@@ -1331,7 +1713,17 @@ export interface paths {
          */
         get: operations["groups_list"];
         put?: never;
-        /** Create Groups */
+        /**
+         * Create Groups
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         post: operations["groups_create"];
         delete?: never;
         options?: never;
@@ -1346,16 +1738,56 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Groups */
+        /**
+         * Get Groups
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         get: operations["groups_retrieve"];
-        /** Update Groups */
+        /**
+         * Update Groups
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         put: operations["groups_update"];
         post?: never;
-        /** Delete Groups */
+        /**
+         * Delete Groups
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         delete: operations["groups_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Groups */
+        /**
+         * Partial update Groups
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         patch: operations["groups_partial_update"];
         trace?: never;
     };
@@ -1392,7 +1824,17 @@ export interface paths {
          */
         get: operations["institutions_list"];
         put?: never;
-        /** Create Institutions */
+        /**
+         * Create Institutions
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         post: operations["institutions_create"];
         delete?: never;
         options?: never;
@@ -1407,16 +1849,56 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Institutions */
+        /**
+         * Get Institutions
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         get: operations["institutions_retrieve"];
-        /** Update Institutions */
+        /**
+         * Update Institutions
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         put: operations["institutions_update"];
         post?: never;
-        /** Delete Institutions */
+        /**
+         * Delete Institutions
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         delete: operations["institutions_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Institutions */
+        /**
+         * Partial update Institutions
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         patch: operations["institutions_partial_update"];
         trace?: never;
     };
@@ -1433,7 +1915,17 @@ export interface paths {
          */
         get: operations["parents_list"];
         put?: never;
-        /** Create Parents */
+        /**
+         * Create Parents
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         post: operations["parents_create"];
         delete?: never;
         options?: never;
@@ -1448,16 +1940,56 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Parents */
+        /**
+         * Get Parents
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         get: operations["parents_retrieve"];
-        /** Update Parents */
+        /**
+         * Update Parents
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         put: operations["parents_update"];
         post?: never;
-        /** Delete Parents */
+        /**
+         * Delete Parents
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         delete: operations["parents_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Parents */
+        /**
+         * Partial update Parents
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         patch: operations["parents_partial_update"];
         trace?: never;
     };
@@ -1494,7 +2026,10 @@ export interface paths {
          */
         get: operations["performance_summaries_list"];
         put?: never;
-        /** Create Performance Summaries */
+        /**
+         * Create Performance Summaries
+         * @description PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.
+         */
         post: operations["performance_summaries_create"];
         delete?: never;
         options?: never;
@@ -1509,16 +2044,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Performance Summaries */
+        /**
+         * Get Performance Summaries
+         * @description PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.
+         */
         get: operations["performance_summaries_retrieve"];
-        /** Update Performance Summaries */
+        /**
+         * Update Performance Summaries
+         * @description PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.
+         */
         put: operations["performance_summaries_update"];
         post?: never;
-        /** Delete Performance Summaries */
+        /**
+         * Delete Performance Summaries
+         * @description PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.
+         */
         delete: operations["performance_summaries_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Performance Summaries */
+        /**
+         * Partial update Performance Summaries
+         * @description PerformanceSummary, DisciplinaryReport, SchoolRecord, etc.
+         */
         patch: operations["performance_summaries_partial_update"];
         trace?: never;
     };
@@ -1790,7 +2337,17 @@ export interface paths {
          */
         get: operations["student_guardians_list"];
         put?: never;
-        /** Create Student Guardians */
+        /**
+         * Create Student Guardians
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         post: operations["student_guardians_create"];
         delete?: never;
         options?: never;
@@ -1805,16 +2362,56 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Student Guardians */
+        /**
+         * Get Student Guardians
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         get: operations["student_guardians_retrieve"];
-        /** Update Student Guardians */
+        /**
+         * Update Student Guardians
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         put: operations["student_guardians_update"];
         post?: never;
-        /** Delete Student Guardians */
+        /**
+         * Delete Student Guardians
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         delete: operations["student_guardians_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Student Guardians */
+        /**
+         * Partial update Student Guardians
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         patch: operations["student_guardians_partial_update"];
         trace?: never;
     };
@@ -1851,7 +2448,17 @@ export interface paths {
          */
         get: operations["students_list"];
         put?: never;
-        /** Create Students */
+        /**
+         * Create Students
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         post: operations["students_create"];
         delete?: never;
         options?: never;
@@ -1866,16 +2473,56 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Students */
+        /**
+         * Get Students
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         get: operations["students_retrieve"];
-        /** Update Students */
+        /**
+         * Update Students
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         put: operations["students_update"];
         post?: never;
-        /** Delete Students */
+        /**
+         * Delete Students
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         delete: operations["students_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Students */
+        /**
+         * Partial update Students
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         patch: operations["students_partial_update"];
         trace?: never;
     };
@@ -2052,7 +2699,10 @@ export interface paths {
          */
         get: operations["subjects_list"];
         put?: never;
-        /** Create Subjects */
+        /**
+         * Create Subjects
+         * @description Models with direct ``institution_id`` FK.
+         */
         post: operations["subjects_create"];
         delete?: never;
         options?: never;
@@ -2067,16 +2717,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Subjects */
+        /**
+         * Get Subjects
+         * @description Models with direct ``institution_id`` FK.
+         */
         get: operations["subjects_retrieve"];
-        /** Update Subjects */
+        /**
+         * Update Subjects
+         * @description Models with direct ``institution_id`` FK.
+         */
         put: operations["subjects_update"];
         post?: never;
-        /** Delete Subjects */
+        /**
+         * Delete Subjects
+         * @description Models with direct ``institution_id`` FK.
+         */
         delete: operations["subjects_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Subjects */
+        /**
+         * Partial update Subjects
+         * @description Models with direct ``institution_id`` FK.
+         */
         patch: operations["subjects_partial_update"];
         trace?: never;
     };
@@ -2113,7 +2775,17 @@ export interface paths {
          */
         get: operations["teachers_list"];
         put?: never;
-        /** Create Teachers */
+        /**
+         * Create Teachers
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         post: operations["teachers_create"];
         delete?: never;
         options?: never;
@@ -2128,16 +2800,56 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Teachers */
+        /**
+         * Get Teachers
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         get: operations["teachers_retrieve"];
-        /** Update Teachers */
+        /**
+         * Update Teachers
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         put: operations["teachers_update"];
         post?: never;
-        /** Delete Teachers */
+        /**
+         * Delete Teachers
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         delete: operations["teachers_destroy"];
         options?: never;
         head?: never;
-        /** Partial update Teachers */
+        /**
+         * Partial update Teachers
+         * @description Mixin for ViewSets to filter queryset by user role scope.
+         *
+         *     - ADMIN: no filter (all data)
+         *     - COORDINATOR: filter by institution_id from profile
+         *     - TEACHER: filter by course_assignments (override filter_queryset_for_teacher)
+         *     - PARENT: filter by students via StudentGuardian (override filter_queryset_for_parent)
+         *
+         *     Subclass and override filter_queryset_by_role() or the role-specific methods.
+         */
         patch: operations["teachers_partial_update"];
         trace?: never;
     };
@@ -2261,7 +2973,7 @@ export interface components {
             catalog?: string | null;
             readonly catalog_label: string;
             outcome?: components["schemas"]["OutcomeEnum"] | components["schemas"]["BlankEnum"];
-            description: string;
+            description?: string;
             /** Format: decimal */
             numerical_grade?: string | null;
             performance_level?: string;
@@ -2279,6 +2991,9 @@ export interface components {
             /** Format: uuid */
             grade_level: string;
             readonly grade_level_name: string;
+            /** @description Número de periodo (1–4). Vacío = plantilla genérica para todos. */
+            period_number?: number | null;
+            readonly period_label: string;
             achievement_below_basic: string;
             achievement_basic_or_above: string;
             /** Format: date-time */
@@ -2291,6 +3006,8 @@ export interface components {
             academic_area: string;
             /** Format: uuid */
             grade_level: string;
+            /** @description Número de periodo (1–4). Vacío = plantilla genérica para todos. */
+            period_number?: number | null;
             achievement_below_basic: string;
             achievement_basic_or_above: string;
         };
@@ -2304,7 +3021,7 @@ export interface components {
             /** Format: uuid */
             catalog?: string | null;
             outcome?: components["schemas"]["OutcomeEnum"] | components["schemas"]["BlankEnum"];
-            description: string;
+            description?: string;
             /** Format: decimal */
             numerical_grade?: string | null;
             performance_level?: string;
@@ -3478,6 +4195,8 @@ export interface components {
             academic_area?: string;
             /** Format: uuid */
             grade_level?: string;
+            /** @description Número de periodo (1–4). Vacío = plantilla genérica para todos. */
+            period_number?: number | null;
             achievement_below_basic?: string;
             achievement_basic_or_above?: string;
         };
@@ -4473,6 +5192,8 @@ export interface operations {
                 offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
+                /** @description Filter by exact value of `period_number`. */
+                period_number?: string;
                 /** @description Search text across: academic_area__name, grade_level__name, achievement_below_basic, achievement_basic_or_above. */
                 search?: string;
             };

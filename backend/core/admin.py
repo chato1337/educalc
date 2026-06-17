@@ -88,9 +88,14 @@ class AcademicIndicatorCatalogAdmin(admin.ModelAdmin):
     list_display = (
         "academic_area",
         "grade_level",
+        "period_number",
         "created_at",
     )
-    list_filter = ("academic_area__institution", "grade_level__institution")
+    list_filter = (
+        "academic_area__institution",
+        "grade_level__institution",
+        "period_number",
+    )
     search_fields = (
         "academic_area__name",
         "grade_level__name",

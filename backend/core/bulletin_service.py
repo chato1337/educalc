@@ -18,7 +18,7 @@ from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
 from weasyprint import HTML
 
-from .indicator_utils import resolve_indicator_outcome
+from .indicator_utils import resolve_indicator_catalog, resolve_indicator_outcome
 from .models import (
     AcademicIndicator,
     AcademicIndicatorCatalog,
@@ -162,6 +162,24 @@ def _latest_grade_in_periods(
         for g in glist:
             if g.academic_period_id == pid:
                 return g
+    return None
+
+
+def _indicator_target_period_id(
+    ca_id: Any,
+    period_order: list[UUID],
+    ind_by_ca_period: dict[tuple[Any, Any], AcademicIndicator],
+    grades_by_ca: dict[Any, list[Grade]],
+) -> UUID | None:
+    """Periodo de referencia para indicadores: indicador guardado o nota más reciente."""
+    for pid in reversed(period_order):
+        if (ca_id, pid) in ind_by_ca_period:
+            return pid
+    grade = _latest_grade_in_periods(grades_by_ca.get(ca_id, []), period_order)
+    if grade:
+        return grade.academic_period_id
+    if len(period_order) == 1:
+        return period_order[0]
     return None
 
 
@@ -384,23 +402,27 @@ def build_bulletin_context(
         )
         .order_by("course_assignment_id", "-academic_period__number")
     )
-    ind_by_ca: dict[Any, AcademicIndicator] = {}
+    ind_by_ca_period: dict[tuple[Any, Any], AcademicIndicator] = {}
     for ind in ind_candidates:
-        if ind.course_assignment_id not in ind_by_ca:
-            ind_by_ca[ind.course_assignment_id] = ind
+        key = (ind.course_assignment_id, ind.academic_period_id)
+        if key not in ind_by_ca_period:
+            ind_by_ca_period[key] = ind
 
-    area_ids = {ca.subject.academic_area_id for ca in assignments}
-    catalog_by_area: dict[Any, AcademicIndicatorCatalog] = {}
-    if area_ids:
-        for cat in AcademicIndicatorCatalog.objects.filter(
-            grade_level_id=group.grade_level_id,
-            academic_area_id__in=area_ids,
-        ):
-            catalog_by_area[cat.academic_area_id] = cat
+    period_by_id = {p.id: p for p in periods}
 
     indicators_out: list[dict[str, Any]] = []
     for ca in assignments:
-        ind = ind_by_ca.get(ca.id)
+        target_period_id = _indicator_target_period_id(
+            ca.id,
+            period_order,
+            ind_by_ca_period,
+            grades_by_ca,
+        )
+        if target_period_id is None:
+            continue
+        target_period = period_by_id[target_period_id]
+
+        ind = ind_by_ca_period.get((ca.id, target_period_id))
         if ind:
             score = ind.numerical_grade
             pl = (ind.performance_level or "").strip().upper()
@@ -418,11 +440,18 @@ def build_bulletin_context(
             )
             continue
 
-        cat = catalog_by_area.get(ca.subject.academic_area_id)
+        cat = resolve_indicator_catalog(
+            ca.subject.academic_area,
+            group.grade_level,
+            target_period.number,
+        )
         if not cat:
             continue
         glist = grades_by_ca.get(ca.id, [])
-        grade = _latest_grade_in_periods(glist, period_order)
+        grade = next(
+            (g for g in glist if g.academic_period_id == target_period_id),
+            None,
+        )
         if not grade:
             continue
         score = grade.numerical_grade

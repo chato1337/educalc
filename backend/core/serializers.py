@@ -471,6 +471,7 @@ class AcademicIndicatorCatalogSerializer(serializers.ModelSerializer):
         source="academic_area.name", read_only=True
     )
     grade_level_name = serializers.CharField(source="grade_level.name", read_only=True)
+    period_label = serializers.SerializerMethodField()
 
     class Meta:
         model = AcademicIndicatorCatalog
@@ -480,11 +481,18 @@ class AcademicIndicatorCatalogSerializer(serializers.ModelSerializer):
             "academic_area_name",
             "grade_level",
             "grade_level_name",
+            "period_number",
+            "period_label",
             "achievement_below_basic",
             "achievement_basic_or_above",
             "created_at",
             "updated_at",
         ]
+
+    def get_period_label(self, obj) -> str:
+        if obj.period_number is None:
+            return "Todos"
+        return f"P{obj.period_number}"
 
     def validate(self, attrs):
         instance = self.instance
@@ -500,18 +508,43 @@ class AcademicIndicatorCatalogSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "El área académica y el grado deben pertenecer a la misma institución."
             )
+        if "period_number" in attrs:
+            period_number = attrs["period_number"]
+        else:
+            period_number = instance.period_number if instance else None
+        if period_number is not None and not 1 <= period_number <= 4:
+            raise serializers.ValidationError(
+                {"period_number": "El número de periodo debe estar entre 1 y 4."}
+            )
+        if area and gl:
+            qs = AcademicIndicatorCatalog.objects.filter(
+                academic_area=area,
+                grade_level=gl,
+            )
+            if period_number is None:
+                qs = qs.filter(period_number__isnull=True)
+            else:
+                qs = qs.filter(period_number=period_number)
+            if instance:
+                qs = qs.exclude(pk=instance.pk)
+            if qs.exists():
+                raise serializers.ValidationError(
+                    "Ya existe una plantilla para esta área, grado y periodo."
+                )
         return attrs
 
 
 class AcademicIndicatorSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source="student.full_name", read_only=True)
     catalog_label = serializers.SerializerMethodField()
+    description = serializers.CharField(allow_blank=True, required=False)
 
     def get_catalog_label(self, obj):
         c = obj.catalog
         if not c:
             return ""
-        return f"{c.academic_area.name} / {c.grade_level.name}"
+        period = f" / P{c.period_number}" if c.period_number else ""
+        return f"{c.academic_area.name} / {c.grade_level.name}{period}"
 
     class Meta:
         model = AcademicIndicator
@@ -562,6 +595,11 @@ class AcademicIndicatorSerializer(serializers.ModelSerializer):
         else:
             desc_in = instance.description if instance else ""
 
+        if "academic_period" in attrs:
+            academic_period = attrs["academic_period"]
+        else:
+            academic_period = instance.academic_period if instance else None
+
         if ca and catalog:
             if catalog.academic_area_id != ca.subject.academic_area_id:
                 raise serializers.ValidationError(
@@ -578,6 +616,20 @@ class AcademicIndicatorSerializer(serializers.ModelSerializer):
                         "catalog": (
                             "El catálogo debe corresponder al grado del grupo de la "
                             "asignación."
+                        )
+                    }
+                )
+            if (
+                academic_period is not None
+                and catalog.period_number is not None
+                and catalog.period_number != academic_period.number
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "catalog": (
+                            "El catálogo debe corresponder al periodo del indicador "
+                            f"(se esperaba P{catalog.period_number}, "
+                            f"periodo del indicador: P{academic_period.number})."
                         )
                     }
                 )
