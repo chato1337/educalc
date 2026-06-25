@@ -1376,6 +1376,170 @@ class ActivityGradingModuleTests(TestCase):
         self.assertEqual(grade.performance_level.code, "SP")
         self.assertEqual(r.data["performance_level_name"], "Superior")
 
+    def _score_all_activities_for_student(self, student, activities, scores=None):
+        default_scores = [Decimal("4.50"), Decimal("4.00"), Decimal("5.00"), Decimal("4.00")]
+        for index, activity in enumerate(activities):
+            score = scores[index] if scores else default_scores[index]
+            StudentActivityScore.objects.create(
+                activity=activity,
+                student=student,
+                score=score,
+            )
+
+    def test_bulk_apply_suggestion_applies_eligible_only(self):
+        self._create_default_grading_scales()
+        scheme, quiz1, partial, workshop, attitude_act = self._build_valid_scheme()
+        activities = [quiz1, partial, workshop, attitude_act]
+        self._score_all_activities_for_student(self.student, activities)
+
+        student2 = Student.objects.create(
+            document_number="GS2",
+            first_name="María",
+            first_last_name="López",
+            full_name="María López",
+        )
+        Enrollment.objects.create(
+            student=student2,
+            group=self.group,
+            academic_year=self.ay,
+            status="active",
+        )
+        StudentActivityScore.objects.create(
+            activity=quiz1, student=student2, score=Decimal("3.00")
+        )
+
+        url = reverse("gradingscheme-apply-suggestion-bulk", kwargs={"pk": scheme.id})
+        r = self.client.post(url, {}, format="json")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["applied_count"], 1)
+        self.assertEqual(r.data["skipped_count"], 1)
+        self.assertEqual(r.data["eligible_count"], 1)
+        self.assertTrue(r.data["ranking_recalculated"])
+        self.assertEqual(r.data["skipped"][0]["reason"], "incomplete_scores")
+
+        grade = Grade.objects.get(
+            student=self.student,
+            course_assignment=self.ca,
+            academic_period=self.period,
+        )
+        self.assertEqual(grade.numerical_grade, Decimal("4.42"))
+        self.assertFalse(
+            Grade.objects.filter(
+                student=student2,
+                course_assignment=self.ca,
+                academic_period=self.period,
+            ).exists()
+        )
+
+    def test_bulk_apply_preview_does_not_persist_or_recalc_ranking(self):
+        self._create_default_grading_scales()
+        scheme, quiz1, partial, workshop, attitude_act = self._build_valid_scheme()
+        self._score_all_activities_for_student(
+            self.student, [quiz1, partial, workshop, attitude_act]
+        )
+
+        preview_url = reverse(
+            "gradingscheme-apply-suggestion-bulk-preview", kwargs={"pk": scheme.id}
+        )
+        r = self.client.get(preview_url)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["applied_count"], 1)
+        self.assertTrue(r.data["dry_run"])
+        self.assertFalse(r.data["ranking_recalculated"])
+        self.assertFalse(
+            Grade.objects.filter(
+                student=self.student,
+                course_assignment=self.ca,
+                academic_period=self.period,
+            ).exists()
+        )
+        self.assertFalse(
+            PerformanceSummary.objects.filter(
+                student=self.student, group=self.group
+            ).exists()
+        )
+
+    def test_bulk_apply_no_activities_returns_400(self):
+        SubjectComponent.objects.create(
+            subject=self.subject,
+            name="Cognitivo",
+            weight_percent=Decimal("100.00"),
+            sort_order=1,
+        )
+        scheme = GradingScheme.objects.create(
+            course_assignment=self.ca,
+            academic_period=self.period,
+        )
+        url = reverse("gradingscheme-apply-suggestion-bulk", kwargs={"pk": scheme.id})
+        r = self.client.post(url, {}, format="json")
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("actividades", r.data["error"].lower())
+
+    def test_bulk_apply_recalculates_ranking(self):
+        self._create_default_grading_scales()
+        scheme, quiz1, partial, workshop, attitude_act = self._build_valid_scheme()
+        activities = [quiz1, partial, workshop, attitude_act]
+
+        student2 = Student.objects.create(
+            document_number="GS3",
+            first_name="Pedro",
+            first_last_name="Alto",
+            full_name="Pedro Alto",
+        )
+        Enrollment.objects.create(
+            student=student2,
+            group=self.group,
+            academic_year=self.ay,
+            status="active",
+        )
+        self._score_all_activities_for_student(
+            self.student,
+            activities,
+            [Decimal("4.50"), Decimal("4.00"), Decimal("5.00"), Decimal("4.00")],
+        )
+        self._score_all_activities_for_student(
+            student2,
+            activities,
+            [Decimal("3.00"), Decimal("3.00"), Decimal("3.00"), Decimal("3.00")],
+        )
+
+        url = reverse("gradingscheme-apply-suggestion-bulk", kwargs={"pk": scheme.id})
+        r = self.client.post(url, {}, format="json")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["applied_count"], 2)
+        self.assertTrue(r.data["ranking_recalculated"])
+
+        summary_high = PerformanceSummary.objects.get(
+            student=self.student, group=self.group, academic_period=self.period
+        )
+        summary_low = PerformanceSummary.objects.get(
+            student=student2, group=self.group, academic_period=self.period
+        )
+        self.assertEqual(summary_high.rank, 1)
+        self.assertEqual(summary_low.rank, 2)
+        self.assertGreater(summary_high.period_average, summary_low.period_average)
+
+    def test_bulk_apply_preserves_definitive_grade(self):
+        self._create_default_grading_scales()
+        scheme, quiz1, partial, workshop, attitude_act = self._build_valid_scheme()
+        self._score_all_activities_for_student(
+            self.student, [quiz1, partial, workshop, attitude_act]
+        )
+        grade = Grade.objects.create(
+            student=self.student,
+            course_assignment=self.ca,
+            academic_period=self.period,
+            numerical_grade=Decimal("2.00"),
+            definitive_grade=Decimal("3.50"),
+        )
+
+        url = reverse("gradingscheme-apply-suggestion-bulk", kwargs={"pk": scheme.id})
+        r = self.client.post(url, {}, format="json")
+        self.assertEqual(r.status_code, 200)
+        grade.refresh_from_db()
+        self.assertEqual(grade.numerical_grade, Decimal("4.42"))
+        self.assertEqual(grade.definitive_grade, Decimal("3.50"))
+
     def test_teacher_cannot_see_other_teacher_scheme(self):
         other_scheme = GradingScheme.objects.create(
             course_assignment=self.other_ca,

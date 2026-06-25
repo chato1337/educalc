@@ -7,6 +7,7 @@ import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
 import { queryKeys } from '@/api/queryKeys'
 import { GradingSchemeBreakdownPanel } from '@/features/operations/GradingSchemeBreakdownPanel'
 import type { GradingScheme } from '@/features/operations/gradingApi'
+import { formatGradingSchemeOptionLabel } from '@/features/operations/gradingApi'
 import { useUiStore } from '@/stores/uiStore'
 
 export function SuggestedGradesPage() {
@@ -38,9 +39,7 @@ export function SuggestedGradesPage() {
         options={schemes}
         loading={listQuery.isLoading}
         getOptionKey={(s: GradingScheme) => s.id}
-        getOptionLabel={(s: GradingScheme) =>
-          `${s.course_assignment_subject_name} — ${s.course_assignment_group_name} · ${s.academic_period_name}`
-        }
+        getOptionLabel={formatGradingSchemeOptionLabel}
         value={selectedScheme}
         onChange={(_, v) => setSelectedScheme(v)}
         renderInput={(params: AutocompleteRenderInputParams) => (

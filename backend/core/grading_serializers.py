@@ -24,6 +24,9 @@ class GradingSchemeSerializer(serializers.ModelSerializer):
     course_assignment_group_name = serializers.CharField(
         source="course_assignment.group.name", read_only=True
     )
+    course_assignment_group_campus_name = serializers.CharField(
+        source="course_assignment.group.campus.name", read_only=True
+    )
     course_assignment_teacher_name = serializers.CharField(
         source="course_assignment.teacher.full_name", read_only=True
     )
@@ -43,6 +46,7 @@ class GradingSchemeSerializer(serializers.ModelSerializer):
             "course_assignment",
             "course_assignment_subject_name",
             "course_assignment_group_name",
+            "course_assignment_group_campus_name",
             "course_assignment_teacher_name",
             "academic_period",
             "academic_period_name",
@@ -331,6 +335,72 @@ class ApplySuggestionResponseSerializer(serializers.Serializer):
     created = serializers.BooleanField(
         help_text="True si se creó un nuevo registro Grade."
     )
+
+
+@extend_schema_serializer(component_name="ApplySuggestionBulkRequest")
+class ApplySuggestionBulkSerializer(serializers.Serializer):
+    dry_run = serializers.BooleanField(
+        default=False,
+        required=False,
+        help_text=(
+            "Si es true, simula la operación sin persistir Grade ni recalcular ranking."
+        ),
+    )
+
+
+@extend_schema_serializer(component_name="ApplySuggestionBulkAppliedItem")
+class ApplySuggestionBulkAppliedItemSerializer(serializers.Serializer):
+    student_id = serializers.UUIDField()
+    student_name = serializers.CharField()
+    student_document_number = serializers.CharField()
+    suggested_grade = serializers.DecimalField(max_digits=4, decimal_places=2)
+    grade_id = serializers.UUIDField(allow_null=True)
+    numerical_grade = serializers.DecimalField(max_digits=4, decimal_places=2)
+    performance_level = serializers.UUIDField(allow_null=True)
+    performance_level_name = serializers.CharField(allow_null=True)
+    created = serializers.BooleanField()
+
+
+@extend_schema_serializer(component_name="ApplySuggestionBulkSkippedItem")
+class ApplySuggestionBulkSkippedItemSerializer(serializers.Serializer):
+    student_id = serializers.UUIDField()
+    student_name = serializers.CharField()
+    student_document_number = serializers.CharField()
+    reason = serializers.ChoiceField(
+        choices=[
+            ("incomplete_scores", "incomplete_scores"),
+            ("suggestion_unavailable", "suggestion_unavailable"),
+        ],
+        help_text="incomplete_scores: faltan notas por actividad; suggestion_unavailable: no se pudo calcular.",
+    )
+    scored_activities = serializers.IntegerField()
+    total_activities = serializers.IntegerField()
+    missing_activities = serializers.IntegerField()
+
+
+@extend_schema_serializer(component_name="ApplySuggestionBulkResponse")
+class ApplySuggestionBulkResponseSerializer(serializers.Serializer):
+    grading_scheme_id = serializers.UUIDField()
+    group_id = serializers.UUIDField()
+    group_name = serializers.CharField()
+    academic_period_id = serializers.UUIDField()
+    total_activities = serializers.IntegerField()
+    enrolled_count = serializers.IntegerField()
+    eligible_count = serializers.IntegerField(
+        help_text="Estudiantes matriculados con todas las actividades calificadas."
+    )
+    applied_count = serializers.IntegerField(
+        help_text="Estudiantes a los que se aplicó (o simularía) la sugerencia."
+    )
+    skipped_count = serializers.IntegerField()
+    created_count = serializers.IntegerField()
+    updated_count = serializers.IntegerField()
+    dry_run = serializers.BooleanField()
+    ranking_recalculated = serializers.BooleanField(
+        help_text="True si se recalculó PerformanceSummary (ranking) tras aplicar."
+    )
+    applied = ApplySuggestionBulkAppliedItemSerializer(many=True)
+    skipped = ApplySuggestionBulkSkippedItemSerializer(many=True)
 
 
 @extend_schema_serializer(component_name="BulkLoadGradingStructureStats")

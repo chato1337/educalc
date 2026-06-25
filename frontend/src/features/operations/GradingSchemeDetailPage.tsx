@@ -10,9 +10,9 @@ import {
   Typography,
 } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink, useParams } from 'react-router-dom'
+import { Link as RouterLink, useParams, useSearchParams } from 'react-router-dom'
 
 import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
@@ -20,13 +20,29 @@ import { queryKeys } from '@/api/queryKeys'
 import { GradingSchemeBreakdownPanel } from '@/features/operations/GradingSchemeBreakdownPanel'
 import { GradingSchemeScoresPanel } from '@/features/operations/GradingSchemeScoresPanel'
 import { GradingSchemeStructurePanel } from '@/features/operations/GradingSchemeStructurePanel'
-import { fetchGradingScheme } from '@/features/operations/gradingApi'
+import { fetchGradingScheme, formatGradingSchemeOptionLabel } from '@/features/operations/gradingApi'
 import type { CourseAssignment } from '@/types/schemas'
 
 export function GradingSchemeDetailPage() {
   const { t } = useTranslation()
   const { id = '' } = useParams<{ id: string }>()
-  const [tab, setTab] = useState(0)
+  const [searchParams] = useSearchParams()
+  const tabFromQuery = Number(searchParams.get('tab'))
+  const [tab, setTab] = useState(
+    Number.isInteger(tabFromQuery) && tabFromQuery >= 0 && tabFromQuery <= 2
+      ? tabFromQuery
+      : 0,
+  )
+
+  useEffect(() => {
+    if (
+      Number.isInteger(tabFromQuery) &&
+      tabFromQuery >= 0 &&
+      tabFromQuery <= 2
+    ) {
+      setTab(tabFromQuery)
+    }
+  }, [tabFromQuery])
 
   const {
     data: scheme,
@@ -76,7 +92,7 @@ export function GradingSchemeDetailPage() {
 
       <Typography variant="h6">{t('gradingSchemes.detailTitle')}</Typography>
       <Typography variant="body2" color="text.secondary">
-        {`${scheme.course_assignment_subject_name} · ${scheme.course_assignment_group_name} · ${scheme.academic_period_name}`}
+        {formatGradingSchemeOptionLabel(scheme)}
       </Typography>
 
       <Paper variant="outlined" sx={{ p: 2 }}>

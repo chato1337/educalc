@@ -42,6 +42,7 @@ import {
 } from '@/features/operations/activityPlanning/activityPlanningUtils'
 import {
   deleteGradingActivity,
+  formatGradingSchemeOptionLabel,
   type GradingActivity,
 } from '@/features/operations/gradingApi'
 import { useUiStore } from '@/stores/uiStore'
@@ -172,7 +173,7 @@ export function ActivityPlanningWorkspacePage() {
 
       <Typography variant="h6">{t('activityPlanning.workspaceTitle')}</Typography>
       <Typography variant="body2" color="text.secondary">
-        {`${scheme.course_assignment_subject_name} · ${scheme.course_assignment_group_name} · ${scheme.academic_period_name}`}
+        {formatGradingSchemeOptionLabel(scheme)}
       </Typography>
 
       <Alert severity="info">{t('activityPlanning.workspaceHint')}</Alert>

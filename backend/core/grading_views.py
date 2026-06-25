@@ -12,6 +12,8 @@ from .bulk_load_grading import (
     bulk_load_student_activity_scores,
 )
 from .grading_openapi import (
+    grading_scheme_apply_suggestion_bulk_preview_schema,
+    grading_scheme_apply_suggestion_bulk_schema,
     grading_scheme_apply_suggestion_schema,
     grading_scheme_breakdown_schema,
     grading_scheme_bulk_load_schema,
@@ -19,6 +21,7 @@ from .grading_openapi import (
     student_activity_scores_bulk_load_schema,
 )
 from .grading_serializers import (
+    ApplySuggestionBulkSerializer,
     ApplySuggestionSerializer,
     ComponentSegmentSerializer,
     GradingActivitySerializer,
@@ -27,12 +30,15 @@ from .grading_serializers import (
     SubjectComponentSerializer,
     scheme_weights_error,
 )
-from .grading_suggestion_service import build_grade_breakdown, compute_suggested_grade
-from .indicator_utils import resolve_grading_scale_for_score
+from .grading_suggestion_service import (
+    apply_suggested_grade_to_record,
+    bulk_apply_result_to_dict,
+    bulk_apply_suggested_grades,
+    build_grade_breakdown,
+)
 from .models import GradingScale
 from .models import (
     ComponentSegment,
-    Grade,
     GradingActivity,
     GradingScheme,
     Student,
@@ -157,6 +163,7 @@ class GradingSchemeViewSet(GradingRoleScopeMixin, viewsets.ModelViewSet):
         "course_assignment",
         "course_assignment__subject",
         "course_assignment__group",
+        "course_assignment__group__campus",
         "course_assignment__teacher",
         "academic_period",
     ).all()
@@ -232,44 +239,21 @@ class GradingSchemeViewSet(GradingRoleScopeMixin, viewsets.ModelViewSet):
                 {"error": weight_error},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        try:
-            suggested = compute_suggested_grade(student, scheme)
-        except DjangoValidationError as exc:
-            messages = exc.messages if hasattr(exc, "messages") else [str(exc)]
-            return Response(
-                {"error": messages[0] if messages else "Error de validación."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if suggested is None:
-            return Response(
-                {"error": "No hay notas suficientes para calcular una sugerencia."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
         institution_id = scheme.course_assignment.subject.institution_id
         scales = list(
             GradingScale.objects.filter(institution_id=institution_id).order_by(
                 "-min_score"
             )
         )
-        performance_level = resolve_grading_scale_for_score(suggested, scales)
-        grade, created = Grade.objects.get_or_create(
-            student=student,
-            course_assignment=scheme.course_assignment,
-            academic_period=scheme.academic_period,
-            defaults={
-                "numerical_grade": suggested,
-                "performance_level": performance_level,
-            },
-        )
-        if not created:
-            grade.numerical_grade = suggested
-            grade.performance_level = performance_level
-            grade.save(
-                update_fields=[
-                    "numerical_grade",
-                    "performance_level",
-                    "updated_at",
-                ]
+        try:
+            grade, created, _suggested = apply_suggested_grade_to_record(
+                student, scheme, scales
+            )
+        except DjangoValidationError as exc:
+            messages = exc.messages if hasattr(exc, "messages") else [str(exc)]
+            return Response(
+                {"error": messages[0] if messages else "Error de validación."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(
             {
@@ -287,6 +271,38 @@ class GradingSchemeViewSet(GradingRoleScopeMixin, viewsets.ModelViewSet):
                 "created": created,
             }
         )
+
+    def _bulk_apply_suggestion_response(self, scheme, *, dry_run: bool):
+        weight_error = scheme_weights_error(scheme)
+        if weight_error:
+            return Response(
+                {"error": weight_error},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            result = bulk_apply_suggested_grades(scheme, dry_run=dry_run)
+        except DjangoValidationError as exc:
+            messages = exc.messages if hasattr(exc, "messages") else [str(exc)]
+            return Response(
+                {"error": messages[0] if messages else "Error de validación."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(bulk_apply_result_to_dict(result))
+
+    @grading_scheme_apply_suggestion_bulk_preview_schema()
+    @action(detail=True, methods=["get"], url_path="apply-suggestion-bulk-preview")
+    def apply_suggestion_bulk_preview(self, request, pk=None):
+        scheme = self.get_object()
+        return self._bulk_apply_suggestion_response(scheme, dry_run=True)
+
+    @grading_scheme_apply_suggestion_bulk_schema()
+    @action(detail=True, methods=["post"], url_path="apply-suggestion-bulk")
+    def apply_suggestion_bulk(self, request, pk=None):
+        scheme = self.get_object()
+        serializer = ApplySuggestionBulkSerializer(data=request.data or {})
+        serializer.is_valid(raise_exception=True)
+        dry_run = serializer.validated_data.get("dry_run", False)
+        return self._bulk_apply_suggestion_response(scheme, dry_run=dry_run)
 
 
 @schema_viewset(

@@ -2,7 +2,10 @@ import type { AutocompleteRenderInputParams } from '@mui/material/Autocomplete'
 import { Alert, Autocomplete, TextField } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
-import type { GradingScheme } from '@/features/operations/gradingApi'
+import {
+  type GradingScheme,
+  formatGradingSchemeOptionLabel,
+} from '@/features/operations/gradingApi'
 
 export type PlanningSchemeSelectorProps = {
   schemes: GradingScheme[]
@@ -31,9 +34,7 @@ export function PlanningSchemeSelector({
         options={schemes}
         loading={loading}
         getOptionKey={(s: GradingScheme) => s.id}
-        getOptionLabel={(s: GradingScheme) =>
-          `${s.course_assignment_subject_name} — ${s.course_assignment_group_name} · ${s.academic_period_name}`
-        }
+        getOptionLabel={formatGradingSchemeOptionLabel}
         value={value}
         onChange={(_, next) => onChange(next)}
         renderInput={(params: AutocompleteRenderInputParams) => (

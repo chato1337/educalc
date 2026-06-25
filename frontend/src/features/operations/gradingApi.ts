@@ -3,6 +3,12 @@ import { fetchReferenceListResults, type PaginatedList } from '@/api/list'
 import type { components } from '@/types/openapi'
 
 export type GradingScheme = components['schemas']['GradingScheme']
+export function formatGradingSchemeOptionLabel(s: GradingScheme): string {
+  const groupPart = s.course_assignment_group_campus_name
+    ? `${s.course_assignment_group_name} (${s.course_assignment_group_campus_name})`
+    : s.course_assignment_group_name
+  return `${s.course_assignment_subject_name} — ${groupPart} · ${s.academic_period_name}`
+}
 export type GradingSchemeRequest = components['schemas']['GradingSchemeRequest']
 export type PatchedGradingSchemeRequest =
   components['schemas']['PatchedGradingSchemeRequest']
@@ -31,6 +37,8 @@ export type GradeBreakdown = components['schemas']['GradeBreakdown']
 export type ValidateWeights = components['schemas']['ValidateWeights']
 export type ApplySuggestionResponse =
   components['schemas']['ApplySuggestionResponse']
+export type ApplySuggestionBulkResponse =
+  components['schemas']['ApplySuggestionBulkResponse']
 
 const LARGE_PAGE = 500
 
@@ -111,6 +119,25 @@ export async function applyGradingSchemeSuggestion(
   const { data } = await apiClient.post<ApplySuggestionResponse>(
     `/api/grading-schemes/${schemeId}/apply-suggestion/`,
     { student: studentId },
+  )
+  return data
+}
+
+export async function fetchApplySuggestionBulkPreview(
+  schemeId: string,
+): Promise<ApplySuggestionBulkResponse> {
+  const { data } = await apiClient.get<ApplySuggestionBulkResponse>(
+    `/api/grading-schemes/${schemeId}/apply-suggestion-bulk-preview/`,
+  )
+  return data
+}
+
+export async function applyGradingSchemeSuggestionBulk(
+  schemeId: string,
+): Promise<ApplySuggestionBulkResponse> {
+  const { data } = await apiClient.post<ApplySuggestionBulkResponse>(
+    `/api/grading-schemes/${schemeId}/apply-suggestion-bulk/`,
+    { dry_run: false },
   )
   return data
 }

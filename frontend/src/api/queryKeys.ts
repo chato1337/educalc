@@ -44,6 +44,8 @@ export const queryKeys = {
     ['grading-schemes', schemeId, 'structure'] as const,
   gradingSchemeBreakdown: (schemeId: string, studentId: string) =>
     ['grading-schemes', schemeId, 'breakdown', studentId] as const,
+  gradingSchemeBulkPreview: (schemeId: string) =>
+    ['grading-schemes', schemeId, 'apply-suggestion-bulk-preview'] as const,
   gradingSchemeValidateWeights: (schemeId: string) =>
     ['grading-schemes', schemeId, 'validate-weights'] as const,
   studentActivityScores: (params: Record<string, string | undefined>) =>

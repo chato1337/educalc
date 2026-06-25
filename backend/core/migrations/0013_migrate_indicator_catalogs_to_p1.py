@@ -46,8 +46,8 @@ class Migration(migrations.Migration):
 
     operations = [
         # Solo para entornos con plantillas legacy (period_number=NULL).
-        migrations.RunPython(
-            migrate_generic_catalogs_to_period_1,
-            migrations.RunPython.noop,
-        ),
+        # migrations.RunPython(
+        #     migrate_generic_catalogs_to_period_1,
+        #     migrations.RunPython.noop,
+        # ),
     ]

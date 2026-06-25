@@ -824,7 +824,7 @@
         "/api/academic-indicators/": {
             "get": {
                 "operationId": "academic_indicators_list",
-                "description": "Qualitative achievement descriptor for a student Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level, catalog__achievement_below_basic, catalog__achievement_basic_or_above. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__subject__academic_area, course_assignment__teacher__document_number, academic_period, academic_period__number, performance_level, catalog, outcome. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "description": "Qualitative achievement descriptor for a student Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level, catalog__achievement_below_basic, catalog__achievement_basic_or_above. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__subject__institution, course_assignment__subject__academic_area, course_assignment__teacher__document_number, academic_period, academic_period__number, academic_period__academic_year, performance_level, catalog, outcome. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Academic Indicators",
                 "parameters": [
                     {
@@ -834,6 +834,14 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `academic_period`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "academic_period__academic_year",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `academic_period__academic_year`."
                     },
                     {
                         "in": "query",
@@ -866,6 +874,14 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `course_assignment__subject__academic_area`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "course_assignment__subject__institution",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `course_assignment__subject__institution`."
                     },
                     {
                         "in": "query",
@@ -1462,7 +1478,7 @@
         "/api/academic-indicators/bulk-load/": {
             "post": {
                 "operationId": "academic_indicators_bulk_load_create",
-                "description": "Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO (sin DOC_ESTUDIANTE); upsert en catálogo área+grado. (2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION, NOTA (opcional), NIVEL_DESEMPENO_TEXTO (opcional).",
+                "description": "Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO, PERIODO_NUM opcional (1–4; omitir = plantilla genérica); upsert en catálogo área+grado+periodo. (2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION, NOTA (opcional), NIVEL_DESEMPENO_TEXTO (opcional).",
                 "summary": "Bulk load academic indicators from CSV",
                 "tags": [
                     "Academic Indicators"
@@ -7157,6 +7173,153 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ApplySuggestionResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Error payload with an ``error`` message."
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Resource not found."
+                    }
+                }
+            }
+        },
+        "/api/grading-schemes/{id}/apply-suggestion-bulk/": {
+            "post": {
+                "operationId": "grading_schemes_apply_suggestion_bulk_create",
+                "description": "Aplica la nota sugerida a todos los estudiantes matriculados activos del grupo del esquema que tengan **todas** las actividades calificadas (``score`` no nulo). Los estudiantes con notas incompletas se omiten y se reportan en ``skipped``. Al finalizar (si ``applied_count > 0`` y ``dry_run`` es false), recalcula ``PerformanceSummary`` (promedio y ranking del periodo en el grupo). No modifica ``definitive_grade``.",
+                "summary": "Apply suggested grades to eligible students in the group",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Grading Scheme.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Grading Schemes"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApplySuggestionBulkRequestRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApplySuggestionBulkRequestRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApplySuggestionBulkRequestRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApplySuggestionBulkResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Error payload with an ``error`` message."
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": "Resource not found."
+                    }
+                }
+            }
+        },
+        "/api/grading-schemes/{id}/apply-suggestion-bulk-preview/": {
+            "get": {
+                "operationId": "grading_schemes_apply_suggestion_bulk_preview_retrieve",
+                "description": "Vista previa de la aplicación masiva de notas sugeridas: mismo criterio de elegibilidad que ``apply-suggestion-bulk`` pero sin persistir ``Grade`` ni recalcular ranking.",
+                "summary": "Preview bulk apply of suggested grades for the group",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Grading Scheme.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Grading Schemes"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApplySuggestionBulkResponse"
                                 }
                             }
                         },
@@ -12887,6 +13050,189 @@
                     "year"
                 ]
             },
+            "ApplySuggestionBulkAppliedItem": {
+                "type": "object",
+                "properties": {
+                    "student_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "student_name": {
+                        "type": "string"
+                    },
+                    "student_document_number": {
+                        "type": "string"
+                    },
+                    "suggested_grade": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$"
+                    },
+                    "grade_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "numerical_grade": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,2}(?:\\.\\d{0,2})?$"
+                    },
+                    "performance_level": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "performance_level_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "created",
+                    "grade_id",
+                    "numerical_grade",
+                    "performance_level",
+                    "performance_level_name",
+                    "student_document_number",
+                    "student_id",
+                    "student_name",
+                    "suggested_grade"
+                ]
+            },
+            "ApplySuggestionBulkRequestRequest": {
+                "type": "object",
+                "properties": {
+                    "dry_run": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Si es true, simula la operación sin persistir Grade ni recalcular ranking."
+                    }
+                }
+            },
+            "ApplySuggestionBulkResponse": {
+                "type": "object",
+                "properties": {
+                    "grading_scheme_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "group_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "group_name": {
+                        "type": "string"
+                    },
+                    "academic_period_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "total_activities": {
+                        "type": "integer"
+                    },
+                    "enrolled_count": {
+                        "type": "integer"
+                    },
+                    "eligible_count": {
+                        "type": "integer",
+                        "description": "Estudiantes matriculados con todas las actividades calificadas."
+                    },
+                    "applied_count": {
+                        "type": "integer",
+                        "description": "Estudiantes a los que se aplicó (o simularía) la sugerencia."
+                    },
+                    "skipped_count": {
+                        "type": "integer"
+                    },
+                    "created_count": {
+                        "type": "integer"
+                    },
+                    "updated_count": {
+                        "type": "integer"
+                    },
+                    "dry_run": {
+                        "type": "boolean"
+                    },
+                    "ranking_recalculated": {
+                        "type": "boolean",
+                        "description": "True si se recalculó PerformanceSummary (ranking) tras aplicar."
+                    },
+                    "applied": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ApplySuggestionBulkAppliedItem"
+                        }
+                    },
+                    "skipped": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ApplySuggestionBulkSkippedItem"
+                        }
+                    }
+                },
+                "required": [
+                    "academic_period_id",
+                    "applied",
+                    "applied_count",
+                    "created_count",
+                    "dry_run",
+                    "eligible_count",
+                    "enrolled_count",
+                    "grading_scheme_id",
+                    "group_id",
+                    "group_name",
+                    "ranking_recalculated",
+                    "skipped",
+                    "skipped_count",
+                    "total_activities",
+                    "updated_count"
+                ]
+            },
+            "ApplySuggestionBulkSkippedItem": {
+                "type": "object",
+                "properties": {
+                    "student_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "student_name": {
+                        "type": "string"
+                    },
+                    "student_document_number": {
+                        "type": "string"
+                    },
+                    "reason": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ReasonEnum"
+                            }
+                        ],
+                        "description": "incomplete_scores: faltan notas por actividad; suggestion_unavailable: no se pudo calcular.\n\n* `incomplete_scores` - incomplete_scores\n* `suggestion_unavailable` - suggestion_unavailable"
+                    },
+                    "scored_activities": {
+                        "type": "integer"
+                    },
+                    "total_activities": {
+                        "type": "integer"
+                    },
+                    "missing_activities": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "missing_activities",
+                    "reason",
+                    "scored_activities",
+                    "student_document_number",
+                    "student_id",
+                    "student_name",
+                    "total_activities"
+                ]
+            },
             "ApplySuggestionRequestRequest": {
                 "type": "object",
                 "properties": {
@@ -14448,6 +14794,10 @@
                         "type": "string",
                         "readOnly": true
                     },
+                    "course_assignment_group_campus_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
                     "course_assignment_teacher_name": {
                         "type": "string",
                         "readOnly": true
@@ -14491,6 +14841,7 @@
                     "academic_period_name",
                     "academic_period_number",
                     "course_assignment",
+                    "course_assignment_group_campus_name",
                     "course_assignment_group_name",
                     "course_assignment_subject_name",
                     "course_assignment_teacher_name",
@@ -16854,6 +17205,14 @@
                     "period_average",
                     "student"
                 ]
+            },
+            "ReasonEnum": {
+                "enum": [
+                    "incomplete_scores",
+                    "suggestion_unavailable"
+                ],
+                "type": "string",
+                "description": "* `incomplete_scores` - incomplete_scores\n* `suggestion_unavailable` - suggestion_unavailable"
             },
             "RoleEnum": {
                 "enum": [

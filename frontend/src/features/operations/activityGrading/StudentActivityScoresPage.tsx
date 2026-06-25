@@ -46,6 +46,7 @@ import {
   createStudentActivityScore,
   deleteStudentActivityScore,
   fetchGradingActivitiesForScheme,
+  formatGradingSchemeOptionLabel,
   patchStudentActivityScore,
   type GradingActivity,
   type GradingScheme,
@@ -371,8 +372,7 @@ export function StudentActivityScoresPage() {
             <MenuItem value="">{t('gradingSchemes.all')}</MenuItem>
             {schemesForFilter.map((s) => (
               <MenuItem key={s.id} value={s.id}>
-                {s.course_assignment_subject_name} — {s.course_assignment_group_name}{' '}
-                · {s.academic_period_name}
+                {formatGradingSchemeOptionLabel(s)}
               </MenuItem>
             ))}
           </Select>
@@ -444,7 +444,7 @@ export function StudentActivityScoresPage() {
               >
                 {allSchemes.map((s) => (
                   <MenuItem key={s.id} value={s.id}>
-                    {s.course_assignment_subject_name} — {s.course_assignment_group_name}
+                    {formatGradingSchemeOptionLabel(s)}
                   </MenuItem>
                 ))}
               </Select>

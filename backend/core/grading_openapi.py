@@ -3,6 +3,8 @@
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 
 from .grading_serializers import (
+    ApplySuggestionBulkResponseSerializer,
+    ApplySuggestionBulkSerializer,
     ApplySuggestionResponseSerializer,
     ApplySuggestionSerializer,
     BulkLoadGradingStructureStatsSerializer,
@@ -131,6 +133,42 @@ def grading_scheme_apply_suggestion_schema():
         methods=["POST"],
         request=ApplySuggestionSerializer,
         responses={200: ApplySuggestionResponseSerializer, **openapi_error_response()},
+    )
+
+
+APPLY_SUGGESTION_BULK_DESCRIPTION = (
+    "Aplica la nota sugerida a todos los estudiantes matriculados activos del grupo "
+    "del esquema que tengan **todas** las actividades calificadas (``score`` no nulo). "
+    "Los estudiantes con notas incompletas se omiten y se reportan en ``skipped``. "
+    "Al finalizar (si ``applied_count > 0`` y ``dry_run`` es false), recalcula "
+    "``PerformanceSummary`` (promedio y ranking del periodo en el grupo). "
+    "No modifica ``definitive_grade``."
+)
+
+APPLY_SUGGESTION_BULK_PREVIEW_DESCRIPTION = (
+    "Vista previa de la aplicación masiva de notas sugeridas: mismo criterio de elegibilidad "
+    "que ``apply-suggestion-bulk`` pero sin persistir ``Grade`` ni recalcular ranking."
+)
+
+
+def grading_scheme_apply_suggestion_bulk_schema():
+    return extend_schema(
+        summary="Apply suggested grades to eligible students in the group",
+        description=APPLY_SUGGESTION_BULK_DESCRIPTION,
+        tags=["Grading Schemes"],
+        methods=["POST"],
+        request=ApplySuggestionBulkSerializer,
+        responses={200: ApplySuggestionBulkResponseSerializer, **openapi_error_response()},
+    )
+
+
+def grading_scheme_apply_suggestion_bulk_preview_schema():
+    return extend_schema(
+        summary="Preview bulk apply of suggested grades for the group",
+        description=APPLY_SUGGESTION_BULK_PREVIEW_DESCRIPTION,
+        tags=["Grading Schemes"],
+        methods=["GET"],
+        responses={200: ApplySuggestionBulkResponseSerializer, **openapi_error_response()},
     )
 
 

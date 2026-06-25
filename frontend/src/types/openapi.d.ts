@@ -200,7 +200,7 @@ export interface paths {
         };
         /**
          * List Academic Indicators
-         * @description Qualitative achievement descriptor for a student Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level, catalog__achievement_below_basic, catalog__achievement_basic_or_above. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__subject__academic_area, course_assignment__teacher__document_number, academic_period, academic_period__number, performance_level, catalog, outcome. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Qualitative achievement descriptor for a student Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, description, performance_level, catalog__achievement_below_basic, catalog__achievement_basic_or_above. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__subject__institution, course_assignment__subject__academic_area, course_assignment__teacher__document_number, academic_period, academic_period__number, academic_period__academic_year, performance_level, catalog, outcome. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["academic_indicators_list"];
         put?: never;
@@ -322,7 +322,7 @@ export interface paths {
         put?: never;
         /**
          * Bulk load academic indicators from CSV
-         * @description Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO (sin DOC_ESTUDIANTE); upsert en catálogo área+grado. (2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION, NOTA (opcional), NIVEL_DESEMPENO_TEXTO (opcional).
+         * @description Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO, PERIODO_NUM opcional (1–4; omitir = plantilla genérica); upsert en catálogo área+grado+periodo. (2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION, NOTA (opcional), NIVEL_DESEMPENO_TEXTO (opcional).
          */
         post: operations["academic_indicators_bulk_load_create"];
         delete?: never;
@@ -1634,6 +1634,46 @@ export interface paths {
          * @description Calcula la nota sugerida desde las actividades y la escribe en ``Grade.numerical_grade``, asignando también ``performance_level`` según la escala de la institución. No modifica ``definitive_grade``. Crea el registro ``Grade`` si no existe.
          */
         post: operations["grading_schemes_apply_suggestion_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/grading-schemes/{id}/apply-suggestion-bulk/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply suggested grades to eligible students in the group
+         * @description Aplica la nota sugerida a todos los estudiantes matriculados activos del grupo del esquema que tengan **todas** las actividades calificadas (``score`` no nulo). Los estudiantes con notas incompletas se omiten y se reportan en ``skipped``. Al finalizar (si ``applied_count > 0`` y ``dry_run`` es false), recalcula ``PerformanceSummary`` (promedio y ranking del periodo en el grupo). No modifica ``definitive_grade``.
+         */
+        post: operations["grading_schemes_apply_suggestion_bulk_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/grading-schemes/{id}/apply-suggestion-bulk-preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview bulk apply of suggested grades for the group
+         * @description Vista previa de la aplicación masiva de notas sugeridas: mismo criterio de elegibilidad que ``apply-suggestion-bulk`` pero sin persistir ``Grade`` ni recalcular ranking.
+         */
+        get: operations["grading_schemes_apply_suggestion_bulk_preview_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3115,6 +3155,68 @@ export interface components {
             end_date?: string | null;
             is_active?: boolean;
         };
+        ApplySuggestionBulkAppliedItem: {
+            /** Format: uuid */
+            student_id: string;
+            student_name: string;
+            student_document_number: string;
+            /** Format: decimal */
+            suggested_grade: string;
+            /** Format: uuid */
+            grade_id: string | null;
+            /** Format: decimal */
+            numerical_grade: string;
+            /** Format: uuid */
+            performance_level: string | null;
+            performance_level_name: string | null;
+            created: boolean;
+        };
+        ApplySuggestionBulkRequestRequest: {
+            /**
+             * @description Si es true, simula la operación sin persistir Grade ni recalcular ranking.
+             * @default false
+             */
+            dry_run: boolean;
+        };
+        ApplySuggestionBulkResponse: {
+            /** Format: uuid */
+            grading_scheme_id: string;
+            /** Format: uuid */
+            group_id: string;
+            group_name: string;
+            /** Format: uuid */
+            academic_period_id: string;
+            total_activities: number;
+            enrolled_count: number;
+            /** @description Estudiantes matriculados con todas las actividades calificadas. */
+            eligible_count: number;
+            /** @description Estudiantes a los que se aplicó (o simularía) la sugerencia. */
+            applied_count: number;
+            skipped_count: number;
+            created_count: number;
+            updated_count: number;
+            dry_run: boolean;
+            /** @description True si se recalculó PerformanceSummary (ranking) tras aplicar. */
+            ranking_recalculated: boolean;
+            applied: components["schemas"]["ApplySuggestionBulkAppliedItem"][];
+            skipped: components["schemas"]["ApplySuggestionBulkSkippedItem"][];
+        };
+        ApplySuggestionBulkSkippedItem: {
+            /** Format: uuid */
+            student_id: string;
+            student_name: string;
+            student_document_number: string;
+            /**
+             * @description incomplete_scores: faltan notas por actividad; suggestion_unavailable: no se pudo calcular.
+             *
+             *     * `incomplete_scores` - incomplete_scores
+             *     * `suggestion_unavailable` - suggestion_unavailable
+             */
+            reason: components["schemas"]["ReasonEnum"];
+            scored_activities: number;
+            total_activities: number;
+            missing_activities: number;
+        };
         ApplySuggestionRequestRequest: {
             /**
              * Format: uuid
@@ -3607,6 +3709,7 @@ export interface components {
             course_assignment: string;
             readonly course_assignment_subject_name: string;
             readonly course_assignment_group_name: string;
+            readonly course_assignment_group_campus_name: string;
             readonly course_assignment_teacher_name: string;
             /** Format: uuid */
             academic_period: string;
@@ -4585,6 +4688,12 @@ export interface components {
             definitive_average?: string | null;
         };
         /**
+         * @description * `incomplete_scores` - incomplete_scores
+         *     * `suggestion_unavailable` - suggestion_unavailable
+         * @enum {string}
+         */
+        ReasonEnum: "incomplete_scores" | "suggestion_unavailable";
+        /**
          * @description * `ADMIN` - Administrator
          *     * `COORDINATOR` - Coordinator
          *     * `TEACHER` - Teacher
@@ -5342,6 +5451,8 @@ export interface operations {
             query?: {
                 /** @description Filter by exact value of `academic_period`. */
                 academic_period?: string;
+                /** @description Filter by exact value of `academic_period__academic_year`. */
+                academic_period__academic_year?: string;
                 /** @description Filter by exact value of `academic_period__number`. */
                 academic_period__number?: string;
                 /** @description Filter by exact value of `catalog`. */
@@ -5350,6 +5461,8 @@ export interface operations {
                 course_assignment?: string;
                 /** @description Filter by exact value of `course_assignment__subject__academic_area`. */
                 course_assignment__subject__academic_area?: string;
+                /** @description Filter by exact value of `course_assignment__subject__institution`. */
+                course_assignment__subject__institution?: string;
                 /** @description Filter by exact value of `course_assignment__teacher__document_number`. */
                 course_assignment__teacher__document_number?: string;
                 /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
@@ -8393,6 +8506,100 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApplySuggestionResponse"];
+                };
+            };
+            /** @description Error payload with an ``error`` message. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Resource not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    grading_schemes_apply_suggestion_bulk_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Grading Scheme. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ApplySuggestionBulkRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ApplySuggestionBulkRequestRequest"];
+                "multipart/form-data": components["schemas"]["ApplySuggestionBulkRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplySuggestionBulkResponse"];
+                };
+            };
+            /** @description Error payload with an ``error`` message. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Resource not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    grading_schemes_apply_suggestion_bulk_preview_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Grading Scheme. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplySuggestionBulkResponse"];
                 };
             };
             /** @description Error payload with an ``error`` message. */
