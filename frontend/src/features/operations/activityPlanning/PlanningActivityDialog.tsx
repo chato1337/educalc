@@ -1,10 +1,7 @@
 import {
   Alert,
   Button,
-  Dialog,
   DialogActions,
-  DialogContent,
-  DialogTitle,
   MenuItem,
   Stack,
   TextField,
@@ -16,6 +13,7 @@ import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
+import { FormDialog, FormDialogContent } from '@/components/FormDialog'
 import { RichTextEditor } from '@/components/RichTextEditor'
 import { normalizeRichText } from '@/components/richTextUtils'
 import { getErrorMessage } from '@/api/errors'
@@ -126,18 +124,23 @@ export function PlanningActivityDialog({
   })
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {editing
-          ? t('gradingSchemes.editActivity')
-          : t('gradingSchemes.newActivity')}
-        {segmentName ? ` · ${segmentName}` : ''}
-      </DialogTitle>
+    <FormDialog
+      open={open}
+      onClose={onClose}
+      title={
+        <>
+          {editing
+            ? t('gradingSchemes.editActivity')
+            : t('gradingSchemes.newActivity')}
+          {segmentName ? ` · ${segmentName}` : ''}
+        </>
+      }
+    >
       <form
         onSubmit={form.handleSubmit((values) => saveMutation.mutate(values))}
       >
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
+        <FormDialogContent>
+          <Stack spacing={2} sx={{ pt: 1, flex: 1, minHeight: 0 }}>
             {saveMutation.error ? (
               <Alert severity="error">{getErrorMessage(saveMutation.error)}</Alert>
             ) : null}
@@ -199,14 +202,8 @@ export function PlanningActivityDialog({
               fullWidth
               {...form.register('max_score')}
             />
-            <TextField
-              label={t('gradingSchemes.sortOrder')}
-              type="number"
-              fullWidth
-              {...form.register('sort_order')}
-            />
           </Stack>
-        </DialogContent>
+        </FormDialogContent>
         <DialogActions>
           <Button onClick={onClose}>{t('common.cancel')}</Button>
           <Button
@@ -218,6 +215,6 @@ export function PlanningActivityDialog({
           </Button>
         </DialogActions>
       </form>
-    </Dialog>
+    </FormDialog>
   )
 }

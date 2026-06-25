@@ -22,10 +22,13 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { useForm, type Resolver } from 'react-hook-form'
+import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
+import { FormDialog, FormDialogContent } from '@/components/FormDialog'
+import { RichTextEditor } from '@/components/RichTextEditor'
+import { normalizeRichText } from '@/components/richTextUtils'
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
 import {
@@ -308,7 +311,7 @@ export function GradingSchemeStructurePanel({
           grading_scheme: scheme.id,
           subject_component: dialog.componentId,
           name: values.name,
-          description: values.description?.trim() || undefined,
+          description: normalizeRichText(values.description),
           weight_percent: values.weight_percent!,
           sort_order: values.sort_order ?? 0,
         }
@@ -320,7 +323,7 @@ export function GradingSchemeStructurePanel({
       const body = {
         segment: dialog.segmentId,
         name: values.name,
-        description: values.description?.trim() || undefined,
+        description: normalizeRichText(values.description),
         activity_date: values.activity_date!,
         max_score: values.max_score?.trim() || undefined,
         sort_order: values.sort_order ?? 0,
@@ -483,26 +486,24 @@ export function GradingSchemeStructurePanel({
         ))
       )}
 
-      <Dialog
+      <FormDialog
         open={dialog != null}
         onClose={() => setDialog(null)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>
-          {dialog?.kind === 'segment'
+        title={
+          dialog?.kind === 'segment'
             ? dialog.editing
               ? t('gradingSchemes.editSegment')
               : t('gradingSchemes.newSegment')
             : dialog?.editing
               ? t('gradingSchemes.editActivity')
-              : t('gradingSchemes.newActivity')}
-        </DialogTitle>
+              : t('gradingSchemes.newActivity')
+        }
+      >
         <form
           key={dialog?.kind ?? 'none'}
           onSubmit={form.handleSubmit((values) => saveMutation.mutate(values))}
         >
-          <DialogContent className="flex flex-col gap-2 pt-1">
+          <FormDialogContent className="flex flex-col gap-2 pt-1">
             {formError ? <Alert severity="error">{formError}</Alert> : null}
             <TextField
               label={t('gradingSchemes.name')}
@@ -512,12 +513,16 @@ export function GradingSchemeStructurePanel({
               error={!!form.formState.errors.name}
               helperText={form.formState.errors.name?.message}
             />
-            <TextField
-              label={t('gradingSchemes.description')}
-              fullWidth
-              multiline
-              minRows={2}
-              {...form.register('description')}
+            <Controller
+              name="description"
+              control={form.control}
+              render={({ field }) => (
+                <RichTextEditor
+                  label={t('gradingSchemes.description')}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                />
+              )}
             />
             {dialog?.kind === 'segment' ? (
               <TextField
@@ -555,13 +560,7 @@ export function GradingSchemeStructurePanel({
                 />
               </>
             )}
-            <TextField
-              label={t('gradingSchemes.sortOrder')}
-              type="number"
-              fullWidth
-              {...form.register('sort_order')}
-            />
-          </DialogContent>
+          </FormDialogContent>
           <DialogActions>
             <Button onClick={() => setDialog(null)}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained" disabled={saveMutation.isPending}>
@@ -569,7 +568,7 @@ export function GradingSchemeStructurePanel({
             </Button>
           </DialogActions>
         </form>
-      </Dialog>
+      </FormDialog>
 
       <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
         <DialogTitle>{t('gradingSchemes.deleteEntity')}</DialogTitle>

@@ -2,6 +2,10 @@
   "app": {
     "adminTitle": "{{appName}} - Administración"
   },
+  "formDialog": {
+    "enterFullscreen": "Pantalla completa",
+    "exitFullscreen": "Salir de pantalla completa"
+  },
   "richTextEditor": {
     "bold": "Negrita",
     "italic": "Cursiva",

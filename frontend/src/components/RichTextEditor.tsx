@@ -31,6 +31,8 @@ import StarterKit from '@tiptap/starter-kit'
 import { useEffect, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useFormDialogLayout } from '@/components/FormDialog'
+
 type RichTextEditorProps = {
   label?: string
   value?: string
@@ -298,7 +300,9 @@ export function RichTextEditor({
   minHeight = 120,
   disabled = false,
 }: RichTextEditorProps) {
+  const { isFullscreen } = useFormDialogLayout()
   const labelId = label ? 'rich-text-editor-label' : undefined
+  const effectiveMinHeight = isFullscreen ? Math.max(minHeight, 320) : minHeight
 
   const editor = useEditor({
     extensions: [
@@ -331,15 +335,53 @@ export function RichTextEditor({
   }, [editor, value])
 
   return (
-    <FormControl fullWidth error={error} disabled={disabled}>
+    <FormControl
+      fullWidth
+      error={error}
+      disabled={disabled}
+      sx={
+        isFullscreen
+          ? {
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
+            }
+          : undefined
+      }
+    >
       {label ? (
         <InputLabel shrink htmlFor={labelId} sx={{ position: 'static', mb: 0.5, transform: 'none' }}>
           {label}
         </InputLabel>
       ) : null}
-      <EditorRoot error={error} disabled={disabled}>
+      <EditorRoot
+        error={error}
+        disabled={disabled}
+        sx={
+          isFullscreen
+            ? {
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: 0,
+              }
+            : undefined
+        }
+      >
         {editor ? <EditorToolbar editor={editor} disabled={disabled} /> : null}
-        <EditorBody minHeight={minHeight} disabled={disabled}>
+        <EditorBody
+          minHeight={effectiveMinHeight}
+          disabled={disabled}
+          sx={
+            isFullscreen
+              ? {
+                  flex: 1,
+                  minHeight: effectiveMinHeight,
+                }
+              : undefined
+          }
+        >
           <EditorContent editor={editor} id={labelId} />
         </EditorBody>
       </EditorRoot>
