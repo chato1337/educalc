@@ -1,6 +1,7 @@
 """API ViewSets with OpenAPI documentation and role-based queryset scoping."""
 from django.utils import timezone
 from typing import List, Optional
+from django.db.models import Q
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     OpenApiExample,
@@ -54,6 +55,7 @@ from .models import (
     Enrollment,
     Grade,
     GradeDirector,
+    GradeRecovery,
     GradingScheme,
     GradingScale,
     GradeLevel,
@@ -71,7 +73,14 @@ from .models import (
 from .grading_openapi import grade_suggested_schema
 from .openapi_utils import bulk_csv_load_schema, openapi_error_response
 from .pagination import StandardLimitOffsetPagination
-from .permissions import IsAdminUser, IsBulkLoadStaff, IsCoordinator
+from .permissions import IsAdminUser, IsBulkLoadStaff, IsCoordinator, IsTeacher
+from .recovery_openapi import grade_recovery_create_schema, grade_recovery_eligible_schema
+from .recovery_utils import (
+    exclude_grades_with_recovery,
+    filter_grades_in_bajo_scale,
+    grade_is_in_bajo_scale,
+    parse_bool_query_param,
+)
 from .scope_mixins import (
     AcademicIndicatorCatalogRoleScopeMixin,
     AcademicIndicatorsReportRoleScopeMixin,
@@ -82,6 +91,7 @@ from .scope_mixins import (
     CourseAssignmentRoleScopeMixin,
     EnrollmentRoleScopeMixin,
     GradeDirectorRoleScopeMixin,
+    GradeRecoveryRoleScopeMixin,
     GroupRoleScopeMixin,
     InstitutionFkRoleScopeMixin,
     InstitutionRoleScopeMixin,
@@ -114,6 +124,8 @@ from .serializers import (
     DisciplinaryReportSerializer,
     EnrollmentSerializer,
     GradeDirectorSerializer,
+    GradeRecoveryCreateSerializer,
+    GradeRecoverySerializer,
     GradeSerializer,
     GradingScaleSerializer,
     GradeLevelSerializer,
@@ -1365,6 +1377,192 @@ class GradeViewSet(CourseAssignmentFkRoleScopeMixin, viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(data)
+
+
+@schema_viewset(
+    ["Grade Recoveries"],
+    "Recoveries that overwrite Grade.definitive_grade for students in Bajo scale.",
+    search_fields=[
+        "grade__student__document_number",
+        "grade__student__full_name",
+        "grade__course_assignment__subject__name",
+        "grade__course_assignment__group__name",
+        "description",
+    ],
+    filter_fields=[
+        "grade",
+        "grade__student",
+        "grade__course_assignment",
+        "grade__course_assignment__group",
+        "grade__course_assignment__teacher__document_number",
+        "grade__academic_period",
+        "grade__academic_period__number",
+    ],
+)
+class GradeRecoveryViewSet(GradeRecoveryRoleScopeMixin, viewsets.ModelViewSet):
+    """
+    List recovery history and apply recoveries for grades in Bajo scale.
+
+    Teachers are scoped to their course assignments (RoleScopeMixin).
+    """
+
+    queryset = GradeRecovery.objects.select_related(
+        "grade",
+        "grade__student",
+        "grade__course_assignment",
+        "grade__course_assignment__subject",
+        "grade__course_assignment__teacher",
+        "grade__course_assignment__group",
+        "grade__academic_period",
+        "created_by",
+    ).all()
+    serializer_class = GradeRecoverySerializer
+    permission_classes = [IsAuthenticated, IsTeacher]
+    http_method_names = ["get", "post", "head", "options"]
+    filterset_fields = [
+        "grade",
+        "grade__student",
+        "grade__course_assignment",
+        "grade__course_assignment__group",
+        "grade__course_assignment__teacher__document_number",
+        "grade__academic_period",
+        "grade__academic_period__number",
+    ]
+    search_fields = [
+        "grade__student__document_number",
+        "grade__student__full_name",
+        "grade__course_assignment__subject__name",
+        "grade__course_assignment__group__name",
+        "description",
+    ]
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return GradeRecoveryCreateSerializer
+        return GradeRecoverySerializer
+
+    @grade_recovery_create_schema()
+    def create(self, request, *args, **kwargs):
+        serializer = GradeRecoveryCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        grade_id = serializer.validated_data["grade"]
+        recovery_grade = serializer.validated_data["recovery_grade"]
+        description = serializer.validated_data["description"]
+
+        grade_qs = Grade.objects.select_related(
+            "course_assignment",
+            "course_assignment__subject",
+            "course_assignment__teacher",
+            "student",
+            "academic_period",
+        )
+        # Scope grades the same way as GradeViewSet for teachers/coordinators.
+        grade_qs = CourseAssignmentFkRoleScopeMixin().filter_queryset_by_role(
+            grade_qs, request
+        )
+        grade = grade_qs.filter(pk=grade_id).first()
+        if grade is None:
+            return Response(
+                {"error": "Calificación no accesible para su rol."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        if not grade_is_in_bajo_scale(grade):
+            return Response(
+                {
+                    "error": (
+                        "Solo se pueden registrar recuperaciones para notas "
+                        "en la escala de valoración Baja."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        profile = get_user_profile(request.user)
+        created_by = (
+            profile.teacher
+            if profile and profile.role == "TEACHER" and profile.teacher_id
+            else None
+        )
+
+        previous = grade.definitive_grade
+        recovery = GradeRecovery.objects.create(
+            grade=grade,
+            recovery_grade=recovery_grade,
+            description=description,
+            previous_definitive_grade=previous,
+            created_by=created_by,
+        )
+        grade.definitive_grade = recovery_grade
+        grade.save(update_fields=["definitive_grade", "updated_at"])
+
+        out = GradeRecoverySerializer(recovery)
+        return Response(out.data, status=status.HTTP_201_CREATED)
+
+    @grade_recovery_eligible_schema()
+    @action(detail=False, methods=["get"], url_path="eligible")
+    def eligible(self, request):
+        qs = Grade.objects.select_related(
+            "student",
+            "course_assignment",
+            "course_assignment__subject",
+            "course_assignment__subject__academic_area",
+            "course_assignment__teacher",
+            "course_assignment__group",
+            "course_assignment__academic_year",
+            "academic_period",
+            "performance_level",
+        )
+        qs = CourseAssignmentFkRoleScopeMixin().filter_queryset_by_role(qs, request)
+        qs = filter_grades_in_bajo_scale(qs)
+
+        if parse_bool_query_param(request.query_params.get("hide_recovered")):
+            qs = exclude_grades_with_recovery(qs)
+
+        # Optional filters from query string (same names as GradeViewSet).
+        for param, field in (
+            ("student", "student"),
+            ("course_assignment", "course_assignment"),
+            ("course_assignment__group", "course_assignment__group"),
+            (
+                "course_assignment__academic_year",
+                "course_assignment__academic_year",
+            ),
+            (
+                "course_assignment__teacher__document_number",
+                "course_assignment__teacher__document_number",
+            ),
+            (
+                "course_assignment__subject__academic_area",
+                "course_assignment__subject__academic_area",
+            ),
+            ("academic_period", "academic_period"),
+            ("academic_period__number", "academic_period__number"),
+        ):
+            value = request.query_params.get(param)
+            if value:
+                qs = qs.filter(**{field: value})
+
+        search = request.query_params.get("search")
+        if search:
+            qs = qs.filter(
+                Q(student__document_number__icontains=search)
+                | Q(student__full_name__icontains=search)
+                | Q(course_assignment__subject__name__icontains=search)
+                | Q(course_assignment__group__name__icontains=search)
+                | Q(academic_period__name__icontains=search)
+            )
+
+        qs = qs.order_by(
+            "course_assignment__group__name",
+            "student__full_name",
+            "academic_period__number",
+        )
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = GradeSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = GradeSerializer(qs, many=True)
+        return Response(serializer.data)
 
 
 @schema_viewset(

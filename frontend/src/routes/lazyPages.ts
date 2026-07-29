@@ -173,6 +173,12 @@ export const GradesPage = lazy(() =>
   })),
 )
 
+export const GradeRecoveriesPage = lazy(() =>
+  import('@/features/operations/GradeRecoveriesPage').then((m) => ({
+    default: m.GradeRecoveriesPage,
+  })),
+)
+
 export const AcademicIndicatorCatalogsPage = lazy(() =>
   import('@/features/operations/AcademicIndicatorCatalogsPage').then((m) => ({
     default: m.AcademicIndicatorCatalogsPage,

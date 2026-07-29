@@ -37,6 +37,9 @@ export const queryKeys = {
     ['course-assignments', params] as const,
   grades: (params: Record<string, string | undefined>) =>
     ['grades', params] as const,
+  gradeRecoveriesEligible: (
+    params: Record<string, string | number | boolean | undefined>,
+  ) => ['grade-recoveries', 'eligible', params] as const,
   gradingSchemes: (params: Record<string, string | undefined>) =>
     ['grading-schemes', params] as const,
   gradingScheme: (id: string) => ['grading-schemes', id] as const,

@@ -28,6 +28,7 @@ import {
   EnrollmentsPage,
   GradeDirectorsPage,
   GradeLevelsPage,
+  GradeRecoveriesPage,
   GradesPage,
   GradingSchemeDetailPage,
   GradingSchemesPage,
@@ -142,6 +143,7 @@ export function AppRoutes() {
             element={<RedirectLegacyGradingSchemeDetail />}
           />
           <Route path="grades" element={<GradesPage />} />
+          <Route path="grade-recoveries" element={<GradeRecoveriesPage />} />
           <Route
             path="academic-indicator-catalogs"
             element={<AcademicIndicatorCatalogsPage />}

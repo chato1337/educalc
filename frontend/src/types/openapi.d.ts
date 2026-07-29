@@ -1266,6 +1266,72 @@ export interface paths {
         patch: operations["grade_levels_partial_update"];
         trace?: never;
     };
+    "/api/grade-recoveries/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Grade Recoveries
+         * @description Recoveries that overwrite Grade.definitive_grade for students in Bajo scale. Text search available through query param `search`. Supported fields: grade__student__document_number, grade__student__full_name, grade__course_assignment__subject__name, grade__course_assignment__group__name, description. Available exact-match filters via query params: grade, grade__student, grade__course_assignment, grade__course_assignment__group, grade__course_assignment__teacher__document_number, grade__academic_period, grade__academic_period__number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         */
+        get: operations["grade_recoveries_list"];
+        put?: never;
+        /**
+         * Create Grade Recoveries
+         * @description Registra una recuperación para una calificación en escala Baja (BJ) y sobrescribe ``Grade.definitive_grade`` con ``recovery_grade``. El alcance por rol aplica como en ``/api/grades/`` (docente: solo sus asignaciones).
+         */
+        post: operations["grade_recoveries_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/grade-recoveries/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Grade Recoveries
+         * @description List recovery history and apply recoveries for grades in Bajo scale.
+         *
+         *     Teachers are scoped to their course assignments (RoleScopeMixin).
+         */
+        get: operations["grade_recoveries_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/grade-recoveries/eligible/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List grades eligible for recovery (Bajo scale)
+         * @description Devuelve calificaciones cuya ``numerical_grade`` está en la escala Bajo (BJ) de la institución. Si no existe esa escala, usa ``max_score = 2.99`` como fallback. Respuesta paginada de ``Grade``. Scope por rol como ``/api/grades/``. Con ``hide_recovered=true`` se ocultan las que ya tienen recuperación.
+         */
+        get: operations["grade_recoveries_eligible_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/grades/": {
         parameters: {
             query?: never;
@@ -3629,6 +3695,48 @@ export interface components {
             name: string;
             level_order?: number;
         };
+        GradeRecovery: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            grade: string;
+            /** Format: decimal */
+            recovery_grade: string;
+            description: string;
+            /** Format: decimal */
+            readonly previous_definitive_grade: string | null;
+            /** Format: uuid */
+            readonly created_by: string | null;
+            readonly created_by_name: string | null;
+            readonly student_name: string;
+            readonly student_document_number: string;
+            readonly course_assignment_subject_name: string;
+            readonly course_assignment_group_name: string;
+            readonly academic_period_name: string;
+            /** Format: decimal */
+            readonly numerical_grade: string;
+            /** Format: decimal */
+            readonly definitive_grade: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /** @description Body to apply a recovery that overwrites ``Grade.definitive_grade``. */
+        GradeRecoveryCreateRequest: {
+            /**
+             * Format: uuid
+             * @description ID de la calificación (Grade) en escala Baja a recuperar.
+             */
+            grade: string;
+            /**
+             * Format: decimal
+             * @description Nota de recuperación; sobrescribe definitive_grade.
+             */
+            recovery_grade: string;
+            /** @description Descripción de la recuperación presentada. */
+            description: string;
+        };
         GradeRequest: {
             /** Format: uuid */
             student: string;
@@ -4028,6 +4136,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Grade"][];
+        };
+        PaginatedGradeRecoveryList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["GradeRecovery"][];
         };
         PaginatedGradingActivityList: {
             /** @example 123 */
@@ -7708,6 +7831,148 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GradeLevel"];
+                };
+            };
+        };
+    };
+    grade_recoveries_list: {
+        parameters: {
+            query?: {
+                /** @description Filter by exact value of `grade`. */
+                grade?: string;
+                /** @description Filter by exact value of `grade__academic_period`. */
+                grade__academic_period?: string;
+                /** @description Filter by exact value of `grade__academic_period__number`. */
+                grade__academic_period__number?: string;
+                /** @description Filter by exact value of `grade__course_assignment`. */
+                grade__course_assignment?: string;
+                /** @description Filter by exact value of `grade__course_assignment__group`. */
+                grade__course_assignment__group?: string;
+                /** @description Filter by exact value of `grade__course_assignment__teacher__document_number`. */
+                grade__course_assignment__teacher__document_number?: string;
+                /** @description Filter by exact value of `grade__student`. */
+                grade__student?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description Search text across: grade__student__document_number, grade__student__full_name, grade__course_assignment__subject__name, grade__course_assignment__group__name, description. */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedGradeRecoveryList"];
+                };
+            };
+        };
+    };
+    grade_recoveries_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GradeRecoveryCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["GradeRecoveryCreateRequest"];
+                "multipart/form-data": components["schemas"]["GradeRecoveryCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradeRecovery"];
+                };
+            };
+        };
+    };
+    grade_recoveries_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Grade Recovery. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradeRecovery"];
+                };
+            };
+        };
+    };
+    grade_recoveries_eligible_list: {
+        parameters: {
+            query?: {
+                /** @description Filtrar por UUID de periodo académico. */
+                academic_period?: string;
+                /** @description Filtrar por número de periodo (1–4). */
+                academic_period__number?: number;
+                /** @description Filtrar por UUID de asignación docente-curso. */
+                course_assignment?: string;
+                /** @description Filtrar por UUID de año lectivo. */
+                course_assignment__academic_year?: string;
+                /** @description Filtrar por UUID de grupo. */
+                course_assignment__group?: string;
+                /** @description Filtrar por UUID de área académica. */
+                course_assignment__subject__academic_area?: string;
+                /** @description Filtrar por documento exacto del docente. */
+                course_assignment__teacher__document_number?: string;
+                grade?: string;
+                grade__academic_period?: string;
+                grade__academic_period__number?: number;
+                grade__course_assignment?: string;
+                grade__course_assignment__group?: string;
+                grade__course_assignment__teacher__document_number?: string;
+                grade__student?: string;
+                /** @description Si es true (1/true/yes/si), excluye calificaciones que ya tienen al menos una recuperación registrada. */
+                hide_recovered?: boolean;
+                /** @description Number of results to return per page. */
+                limit?: number;
+                /** @description The initial index from which to return the results. */
+                offset?: number;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description Búsqueda en documento/nombre del estudiante, asignatura, grupo y periodo. */
+                search?: string;
+                /** @description Filtrar por UUID de estudiante. */
+                student?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedGradeList"];
                 };
             };
         };

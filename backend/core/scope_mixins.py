@@ -285,6 +285,29 @@ class CourseAssignmentFkRoleScopeMixin(RoleScopeMixin, ScopedQuerysetMixin):
         return queryset.filter(student_id__in=parent_student_ids_qs(parent_id))
 
 
+class GradeRecoveryRoleScopeMixin(RoleScopeMixin, ScopedQuerysetMixin):
+    """GradeRecovery — scoped via grade.course_assignment.teacher."""
+
+    def _filter_by_institution(self, queryset, institution_id):
+        return queryset.filter(
+            grade__course_assignment__subject__institution_id=institution_id
+        )
+
+    def filter_queryset_for_teacher(self, queryset, request):
+        teacher = getattr(getattr(request.user, "profile", None), "teacher", None)
+        if not teacher:
+            return queryset.none()
+        return queryset.filter(grade__course_assignment__teacher=teacher)
+
+    def filter_queryset_for_parent(self, queryset, request):
+        parent_id = getattr(getattr(request.user, "profile", None), "parent_id", None)
+        if not parent_id:
+            return queryset.none()
+        return queryset.filter(
+            grade__student_id__in=parent_student_ids_qs(parent_id)
+        )
+
+
 class StudentFkRoleScopeMixin(RoleScopeMixin, ScopedQuerysetMixin):
     """PerformanceSummary, DisciplinaryReport, SchoolRecord, etc."""
 

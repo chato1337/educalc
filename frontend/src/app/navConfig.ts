@@ -17,6 +17,7 @@ import {
   LocalLibrary,
   People,
   Person,
+  Replay,
   Report,
   School,
   Subject,
@@ -194,6 +195,12 @@ export const navSections: NavSection[] = [
         labelKey: 'nav.grades',
         path: '/grades',
         icon: Grade,
+        rolesAllowed: STAFF_ROLES,
+      },
+      {
+        labelKey: 'nav.gradeRecoveries',
+        path: '/grade-recoveries',
+        icon: Replay,
         rolesAllowed: STAFF_ROLES,
       },
       {

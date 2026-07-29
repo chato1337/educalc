@@ -24,6 +24,7 @@ function staffPrefixes(): PathRule[] {
     '/enrollments',
     '/course-assignments',
     '/grades',
+    '/grade-recoveries',
     '/activity-planning',
     '/activity-grading',
     '/grading-scales',

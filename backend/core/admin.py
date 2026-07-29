@@ -18,6 +18,7 @@ from .models import (
     Enrollment,
     Grade,
     GradeDirector,
+    GradeRecovery,
     GradingActivity,
     GradingScheme,
     GradingScale,
@@ -215,6 +216,24 @@ class GradeAdmin(admin.ModelAdmin):
     search_fields = ("student__full_name",)
     readonly_fields = ("id", "created_at", "updated_at")
     autocomplete_fields = ("student", "course_assignment", "academic_period", "performance_level")
+
+
+@admin.register(GradeRecovery)
+class GradeRecoveryAdmin(admin.ModelAdmin):
+    list_display = (
+        "grade",
+        "recovery_grade",
+        "previous_definitive_grade",
+        "created_by",
+        "created_at",
+    )
+    search_fields = (
+        "grade__student__full_name",
+        "grade__student__document_number",
+        "description",
+    )
+    readonly_fields = ("id", "created_at", "updated_at")
+    autocomplete_fields = ("grade", "created_by")
 
 
 @admin.register(Attendance)

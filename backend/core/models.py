@@ -543,6 +543,34 @@ class Grade(TimeStampedModel):
         return f"{self.student.full_name} - {self.numerical_grade}"
 
 
+class GradeRecovery(TimeStampedModel):
+    """Recovery attempt that overwrites Grade.definitive_grade."""
+
+    grade = models.ForeignKey(
+        Grade, on_delete=models.CASCADE, related_name="recoveries"
+    )
+    recovery_grade = models.DecimalField(max_digits=4, decimal_places=2)
+    description = models.TextField()
+    previous_definitive_grade = models.DecimalField(
+        max_digits=4, decimal_places=2, null=True, blank=True
+    )
+    created_by = models.ForeignKey(
+        "Teacher",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="grade_recoveries",
+    )
+
+    class Meta:
+        verbose_name = "Grade Recovery"
+        verbose_name_plural = "Grade Recoveries"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.grade} → {self.recovery_grade}"
+
+
 class Attendance(TimeStampedModel):
     """Absences per subject and period."""
 

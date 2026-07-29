@@ -3724,6 +3724,267 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/grade-recoveries/:
+    get:
+      operationId: grade_recoveries_list
+      description: 'Recoveries that overwrite Grade.definitive_grade for students
+        in Bajo scale. Text search available through query param `search`. Supported
+        fields: grade__student__document_number, grade__student__full_name, grade__course_assignment__subject__name,
+        grade__course_assignment__group__name, description. Available exact-match
+        filters via query params: grade, grade__student, grade__course_assignment,
+        grade__course_assignment__group, grade__course_assignment__teacher__document_number,
+        grade__academic_period, grade__academic_period__number. Paginated list: response
+        JSON has `count`, `next`, `previous`, and `results` (array of resources).
+        Use `limit` and `offset` to page through `results`.'
+      summary: List Grade Recoveries
+      parameters:
+      - in: query
+        name: grade
+        schema:
+          type: string
+        description: Filter by exact value of `grade`.
+      - in: query
+        name: grade__academic_period
+        schema:
+          type: string
+        description: Filter by exact value of `grade__academic_period`.
+      - in: query
+        name: grade__academic_period__number
+        schema:
+          type: string
+        description: Filter by exact value of `grade__academic_period__number`.
+      - in: query
+        name: grade__course_assignment
+        schema:
+          type: string
+        description: Filter by exact value of `grade__course_assignment`.
+      - in: query
+        name: grade__course_assignment__group
+        schema:
+          type: string
+        description: Filter by exact value of `grade__course_assignment__group`.
+      - in: query
+        name: grade__course_assignment__teacher__document_number
+        schema:
+          type: string
+        description: Filter by exact value of `grade__course_assignment__teacher__document_number`.
+      - in: query
+        name: grade__student
+        schema:
+          type: string
+        description: Filter by exact value of `grade__student`.
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: 'Search text across: grade__student__document_number, grade__student__full_name,
+          grade__course_assignment__subject__name, grade__course_assignment__group__name,
+          description.'
+      tags:
+      - Grade Recoveries
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGradeRecoveryList'
+          description: ''
+    post:
+      operationId: grade_recoveries_create
+      description: 'Registra una recuperación para una calificación en escala Baja
+        (BJ) y sobrescribe ``Grade.definitive_grade`` con ``recovery_grade``. El alcance
+        por rol aplica como en ``/api/grades/`` (docente: solo sus asignaciones).'
+      summary: Create Grade Recoveries
+      tags:
+      - Grade Recoveries
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GradeRecoveryCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GradeRecoveryCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GradeRecoveryCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GradeRecovery'
+          description: ''
+  /api/grade-recoveries/{id}/:
+    get:
+      operationId: grade_recoveries_retrieve
+      description: |-
+        List recovery history and apply recoveries for grades in Bajo scale.
+
+        Teachers are scoped to their course assignments (RoleScopeMixin).
+      summary: Get Grade Recoveries
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Grade Recovery.
+        required: true
+      tags:
+      - Grade Recoveries
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GradeRecovery'
+          description: ''
+  /api/grade-recoveries/eligible/:
+    get:
+      operationId: grade_recoveries_eligible_list
+      description: Devuelve calificaciones cuya ``numerical_grade`` está en la escala
+        Bajo (BJ) de la institución. Si no existe esa escala, usa ``max_score = 2.99``
+        como fallback. Respuesta paginada de ``Grade``. Scope por rol como ``/api/grades/``.
+      summary: List grades eligible for recovery (Bajo scale)
+      parameters:
+      - in: query
+        name: academic_period
+        schema:
+          type: string
+        description: Filtrar por UUID de periodo académico.
+      - in: query
+        name: academic_period__number
+        schema:
+          type: integer
+        description: Filtrar por número de periodo (1–4).
+      - in: query
+        name: course_assignment
+        schema:
+          type: string
+        description: Filtrar por UUID de asignación docente-curso.
+      - in: query
+        name: course_assignment__academic_year
+        schema:
+          type: string
+        description: Filtrar por UUID de año lectivo.
+      - in: query
+        name: course_assignment__group
+        schema:
+          type: string
+        description: Filtrar por UUID de grupo.
+      - in: query
+        name: course_assignment__subject__academic_area
+        schema:
+          type: string
+        description: Filtrar por UUID de área académica.
+      - in: query
+        name: course_assignment__teacher__document_number
+        schema:
+          type: string
+        description: Filtrar por documento exacto del docente.
+      - in: query
+        name: grade
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: grade__academic_period
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: grade__academic_period__number
+        schema:
+          type: integer
+      - in: query
+        name: grade__course_assignment
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: grade__course_assignment__group
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: grade__course_assignment__teacher__document_number
+        schema:
+          type: string
+      - in: query
+        name: grade__student
+        schema:
+          type: string
+          format: uuid
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Búsqueda en documento/nombre del estudiante, asignatura, grupo
+          y periodo.
+      - in: query
+        name: student
+        schema:
+          type: string
+        description: Filtrar por UUID de estudiante.
+      tags:
+      - grade-recoveries
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGradeList'
+          description: ''
   /api/grades/:
     get:
       operationId: grades_list
@@ -10110,6 +10371,109 @@ components:
       required:
       - institution
       - name
+    GradeRecovery:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        grade:
+          type: string
+          format: uuid
+        recovery_grade:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+        description:
+          type: string
+        previous_definitive_grade:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        created_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        student_name:
+          type: string
+          readOnly: true
+        student_document_number:
+          type: string
+          readOnly: true
+        course_assignment_subject_name:
+          type: string
+          readOnly: true
+        course_assignment_group_name:
+          type: string
+          readOnly: true
+        academic_period_name:
+          type: string
+          readOnly: true
+        numerical_grade:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          readOnly: true
+        definitive_grade:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - academic_period_name
+      - course_assignment_group_name
+      - course_assignment_subject_name
+      - created_at
+      - created_by
+      - created_by_name
+      - definitive_grade
+      - description
+      - grade
+      - id
+      - numerical_grade
+      - previous_definitive_grade
+      - recovery_grade
+      - student_document_number
+      - student_name
+      - updated_at
+    GradeRecoveryCreateRequest:
+      type: object
+      description: Body to apply a recovery that overwrites ``Grade.definitive_grade``.
+      properties:
+        grade:
+          type: string
+          format: uuid
+          description: ID de la calificación (Grade) en escala Baja a recuperar.
+        recovery_grade:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          description: Nota de recuperación; sobrescribe definitive_grade.
+        description:
+          type: string
+          minLength: 1
+          description: Descripción de la recuperación presentada.
+      required:
+      - description
+      - grade
+      - recovery_grade
     GradeRequest:
       type: object
       properties:
@@ -10891,6 +11255,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Grade'
+    PaginatedGradeRecoveryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/GradeRecovery'
     PaginatedGradingActivityList:
       type: object
       required:

@@ -46,6 +46,7 @@ from core.views import (
     EnrollmentViewSet,
     GradeDirectorViewSet,
     GradeLevelViewSet,
+    GradeRecoveryViewSet,
     GradeViewSet,
     GradingScaleViewSet,
     GroupViewSet,
@@ -80,6 +81,7 @@ router.register(r"course-assignments", CourseAssignmentViewSet, basename="course
 router.register(r"academic-periods", AcademicPeriodViewSet, basename="academicperiod")
 router.register(r"grading-scales", GradingScaleViewSet, basename="gradingscale")
 router.register(r"grades", GradeViewSet, basename="grade")
+router.register(r"grade-recoveries", GradeRecoveryViewSet, basename="graderecovery")
 router.register(r"grading-schemes", GradingSchemeViewSet, basename="gradingscheme")
 router.register(r"subject-components", SubjectComponentViewSet, basename="subjectcomponent")
 router.register(r"component-segments", ComponentSegmentViewSet, basename="componentsegment")

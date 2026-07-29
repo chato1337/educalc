@@ -17,6 +17,7 @@ from .models import (
     Enrollment,
     Grade,
     GradeDirector,
+    GradeRecovery,
     GradingScale,
     GradeLevel,
     Group,
@@ -446,6 +447,88 @@ class GradeSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+
+@extend_schema_serializer(component_name="GradeRecovery")
+class GradeRecoverySerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(
+        source="grade.student.full_name", read_only=True
+    )
+    student_document_number = serializers.CharField(
+        source="grade.student.document_number", read_only=True
+    )
+    course_assignment_subject_name = serializers.CharField(
+        source="grade.course_assignment.subject.name", read_only=True
+    )
+    course_assignment_group_name = serializers.CharField(
+        source="grade.course_assignment.group.name", read_only=True
+    )
+    academic_period_name = serializers.CharField(
+        source="grade.academic_period.name", read_only=True
+    )
+    numerical_grade = serializers.DecimalField(
+        source="grade.numerical_grade",
+        max_digits=4,
+        decimal_places=2,
+        read_only=True,
+    )
+    definitive_grade = serializers.DecimalField(
+        source="grade.definitive_grade",
+        max_digits=4,
+        decimal_places=2,
+        read_only=True,
+        allow_null=True,
+    )
+    created_by_name = serializers.CharField(
+        source="created_by.full_name", read_only=True, allow_null=True
+    )
+
+    class Meta:
+        model = GradeRecovery
+        fields = [
+            "id",
+            "grade",
+            "recovery_grade",
+            "description",
+            "previous_definitive_grade",
+            "created_by",
+            "created_by_name",
+            "student_name",
+            "student_document_number",
+            "course_assignment_subject_name",
+            "course_assignment_group_name",
+            "academic_period_name",
+            "numerical_grade",
+            "definitive_grade",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "previous_definitive_grade",
+            "created_by",
+            "created_at",
+            "updated_at",
+        ]
+
+
+@extend_schema_serializer(component_name="GradeRecoveryCreate")
+class GradeRecoveryCreateSerializer(serializers.Serializer):
+    """Body to apply a recovery that overwrites ``Grade.definitive_grade``."""
+
+    grade = serializers.UUIDField(
+        help_text="ID de la calificación (Grade) en escala Baja a recuperar."
+    )
+    recovery_grade = serializers.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        help_text="Nota de recuperación; sobrescribe definitive_grade.",
+    )
+    description = serializers.CharField(
+        allow_blank=False,
+        trim_whitespace=True,
+        help_text="Descripción de la recuperación presentada.",
+    )
 
 
 class AttendanceSerializer(serializers.ModelSerializer):
