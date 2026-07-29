@@ -144,6 +144,7 @@ bun run build
 
 ## Documentación
 
+- **Guía para implementar features/mejoras:** [`docs/guia-implementacion-features.md`](docs/guia-implementacion-features.md)
 - **API (Swagger, exportación del schema, CORS):** [`docs/api-documentacion.md`](docs/api-documentacion.md)
 - **Modelos y referencia de dominio:** `docs/analisis-entidades-reporte-academico.md` (citado en el código del backend)
 - **Frontend i18n (implementacion y convenciones):** `frontend/docs/i18n-implementacion.md`
