@@ -40,6 +40,7 @@ import {
   LoginPage,
   ParentsPage,
   PerformanceSummariesPage,
+  RollCallPage,
   SchoolRecordsPage,
   StudentActivityScoresPage,
   StudentDetailPage,
@@ -157,6 +158,7 @@ export function AppRoutes() {
             element={<PerformanceSummariesPage />}
           />
           <Route path="attendances" element={<AttendancesPage />} />
+          <Route path="roll-call" element={<RollCallPage />} />
           <Route
             path="disciplinary-reports"
             element={<DisciplinaryReportsPage />}

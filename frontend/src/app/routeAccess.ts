@@ -32,6 +32,7 @@ function staffPrefixes(): PathRule[] {
     '/academic-indicators',
     '/performance-summaries',
     '/attendances',
+    '/roll-call',
     '/disciplinary-reports',
     '/school-records',
     '/academic-indicators-reports',

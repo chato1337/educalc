@@ -572,13 +572,30 @@ class GradeRecovery(TimeStampedModel):
 
 
 class Attendance(TimeStampedModel):
-    """Absences per subject and period."""
+    """
+    Absences per period, either per subject or consolidated for the whole group.
+
+    ``course_assignment`` null means a group-level (general) row: it holds the
+    consolidated day count produced by the roll call (``DailyAttendance``) and is
+    recalculated by ``daily_attendance_service``, not edited by hand.
+    """
 
     student = models.ForeignKey(
         Student, on_delete=models.CASCADE, related_name="attendances"
     )
     course_assignment = models.ForeignKey(
-        CourseAssignment, on_delete=models.CASCADE, related_name="attendances"
+        CourseAssignment,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="attendances",
+    )
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="attendances",
     )
     academic_period = models.ForeignKey(
         AcademicPeriod, on_delete=models.CASCADE, related_name="attendances"
@@ -589,10 +606,120 @@ class Attendance(TimeStampedModel):
     class Meta:
         verbose_name = "Attendance"
         verbose_name_plural = "Attendances"
-        unique_together = [["student", "course_assignment", "academic_period"]]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["student", "course_assignment", "academic_period"],
+                condition=models.Q(course_assignment__isnull=False),
+                name="uniq_attendance_student_ca_period",
+            ),
+            models.UniqueConstraint(
+                fields=["student", "group", "academic_period"],
+                condition=models.Q(course_assignment__isnull=True),
+                name="uniq_attendance_student_group_period",
+            ),
+        ]
+
+    @property
+    def is_general(self) -> bool:
+        return self.course_assignment_id is None
+
+    def clean(self):
+        super().clean()
+        if not self.course_assignment_id and not self.group_id:
+            raise ValidationError(
+                "Indica una asignación docente-curso o un grupo para la asistencia."
+            )
+
+    def save(self, *args, **kwargs):
+        if self.course_assignment_id and not self.group_id:
+            self.group_id = self.course_assignment.group_id
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.student.full_name} - SE:{self.unexcused_absences} CE:{self.excused_absences}"
+
+
+class DailyAttendance(TimeStampedModel):
+    """
+    One roll-call entry for a student on a calendar date.
+
+    A roll call is either *general* (whole group, ``course_assignment`` null) or
+    tied to a subject. Several teachers may call the same day; each source keeps
+    its own row and the consolidated value for the day is derived, so the period
+    totals never count a date more than once.
+    """
+
+    STATUS_PRESENT = "PRESENT"
+    STATUS_EXCUSED = "EXCUSED"
+    STATUS_UNEXCUSED = "UNEXCUSED"
+    STATUS_CHOICES = [
+        (STATUS_PRESENT, "Presente"),
+        (STATUS_EXCUSED, "Falta con excusa"),
+        (STATUS_UNEXCUSED, "Falta sin excusa"),
+    ]
+
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name="daily_attendances"
+    )
+    group = models.ForeignKey(
+        Group, on_delete=models.CASCADE, related_name="daily_attendances"
+    )
+    academic_period = models.ForeignKey(
+        AcademicPeriod, on_delete=models.CASCADE, related_name="daily_attendances"
+    )
+    date = models.DateField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+    course_assignment = models.ForeignKey(
+        CourseAssignment,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="daily_attendances",
+    )
+    recorded_by = models.ForeignKey(
+        Teacher,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recorded_daily_attendances",
+    )
+    notes = models.TextField(blank=True, default="")
+
+    class Meta:
+        verbose_name = "Daily Attendance"
+        verbose_name_plural = "Daily Attendances"
+        ordering = ["-date", "student__full_name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["student", "date", "course_assignment"],
+                condition=models.Q(course_assignment__isnull=False),
+                name="uniq_daily_attendance_subject_source",
+            ),
+            models.UniqueConstraint(
+                fields=["student", "date"],
+                condition=models.Q(course_assignment__isnull=True),
+                name="uniq_daily_attendance_general_source",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["group", "date"], name="core_daily_att_group_date_idx"),
+            models.Index(
+                fields=["academic_period", "student"],
+                name="core_daily_att_period_stu_idx",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.course_assignment_id and self.group_id:
+            if self.course_assignment.group_id != self.group_id:
+                raise ValidationError(
+                    "La asignación docente-curso no pertenece al grupo del llamado a lista."
+                )
+
+    def __str__(self):
+        source = self.course_assignment.subject.name if self.course_assignment_id else "General"
+        return f"{self.student.full_name} - {self.date} - {self.status} ({source})"
 
 
 class AcademicIndicator(TimeStampedModel):

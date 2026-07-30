@@ -285,6 +285,50 @@ class CourseAssignmentFkRoleScopeMixin(RoleScopeMixin, ScopedQuerysetMixin):
         return queryset.filter(student_id__in=parent_student_ids_qs(parent_id))
 
 
+class AttendanceRoleScopeMixin(CourseAssignmentFkRoleScopeMixin):
+    """
+    Attendance — per-subject rows scope like grades; group-level rows (``course_assignment``
+    null, produced by the roll call) scope through ``group``.
+    """
+
+    def _filter_by_institution(self, queryset, institution_id):
+        return queryset.filter(
+            Q(course_assignment__subject__institution_id=institution_id)
+            | Q(
+                course_assignment__isnull=True,
+                group__academic_year__institution_id=institution_id,
+            )
+        )
+
+    def filter_queryset_for_teacher(self, queryset, request):
+        teacher = getattr(getattr(request.user, "profile", None), "teacher", None)
+        if not teacher:
+            return queryset.none()
+        return queryset.filter(
+            Q(course_assignment__teacher=teacher)
+            | Q(course_assignment__isnull=True, group_id__in=teacher_group_ids(teacher))
+        )
+
+
+class DailyAttendanceRoleScopeMixin(RoleScopeMixin, ScopedQuerysetMixin):
+    """DailyAttendance — roll call entries are always tied to a group."""
+
+    def _filter_by_institution(self, queryset, institution_id):
+        return queryset.filter(group__academic_year__institution_id=institution_id)
+
+    def filter_queryset_for_teacher(self, queryset, request):
+        teacher = getattr(getattr(request.user, "profile", None), "teacher", None)
+        if not teacher:
+            return queryset.none()
+        return queryset.filter(group_id__in=teacher_group_ids(teacher))
+
+    def filter_queryset_for_parent(self, queryset, request):
+        parent_id = getattr(getattr(request.user, "profile", None), "parent_id", None)
+        if not parent_id:
+            return queryset.none()
+        return queryset.filter(student_id__in=parent_student_ids_qs(parent_id))
+
+
 class GradeRecoveryRoleScopeMixin(RoleScopeMixin, ScopedQuerysetMixin):
     """GradeRecovery — scoped via grade.course_assignment.teacher."""
 

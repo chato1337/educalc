@@ -19,6 +19,7 @@ import {
   Paper,
   Select,
   TextField,
+  Tooltip,
 } from '@mui/material'
 import {
   DataGrid,
@@ -75,6 +76,10 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
+/** Las filas del llamado a lista no tienen asignación docente–curso, así que los
+ * filtros por área o documento sólo aplican al origen "por asignatura". */
+type OriginFilter = 'ALL' | 'SUBJECT' | 'GENERAL'
+
 export function AttendancesPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -87,6 +92,7 @@ export function AttendancesPage() {
     null,
   )
   const [filterTeacherDocExact, setFilterTeacherDocExact] = useState('')
+  const [filterOrigin, setFilterOrigin] = useState<OriginFilter>('ALL')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogYearId, setDialogYearId] = useState<string | null>(null)
   const [editing, setEditing] = useState<Attendance | null>(null)
@@ -128,8 +134,10 @@ export function AttendancesPage() {
     academicYears,
     teacherAssignments,
     setFilterYearId,
-    setFilterTeacherDocExact,
-    setFilterAcademicAreaId,
+    // El backend ya limita la lista al docente; prefiltrar por documento o área
+    // dejaría fuera las filas generales del llamado a lista.
+    () => {},
+    () => {},
     () => {},
   )
 
@@ -147,12 +155,17 @@ export function AttendancesPage() {
     filterYearId,
   )
 
+  const subjectOrigin = filterOrigin === 'SUBJECT'
   const listParams = {
     academic_period: filterPeriodId ?? undefined,
-    course_assignment__subject__academic_area:
-      filterAcademicAreaId ?? undefined,
-    course_assignment__teacher__document_number:
-      filterTeacherDocExact.trim() || undefined,
+    course_assignment__isnull:
+      filterOrigin === 'ALL' ? undefined : filterOrigin === 'GENERAL',
+    course_assignment__subject__academic_area: subjectOrigin
+      ? (filterAcademicAreaId ?? undefined)
+      : undefined,
+    course_assignment__teacher__document_number: subjectOrigin
+      ? filterTeacherDocExact.trim() || undefined
+      : undefined,
     search: appliedSearch || undefined,
   }
 
@@ -254,7 +267,7 @@ export function AttendancesPage() {
       setDialogYearId(null)
       form.reset({
         student: row.student,
-        course_assignment: row.course_assignment,
+        course_assignment: row.course_assignment ?? '',
         academic_period: row.academic_period,
         unexcused_absences: row.unexcused_absences,
         excused_absences: row.excused_absences,
@@ -272,6 +285,17 @@ export function AttendancesPage() {
         flex: 1,
         minWidth: 180,
         sortable: false,
+      },
+      {
+        field: 'origin',
+        headerName: t('attendances.origin'),
+        flex: 0.9,
+        minWidth: 160,
+        sortable: false,
+        valueGetter: (_value, row: Attendance) =>
+          row.is_general
+            ? `${t('attendances.originGeneral')} · ${row.group_name ?? ''}`.trim()
+            : (row.subject_name ?? ''),
       },
       {
         field: 'unexcused_absences',
@@ -293,22 +317,40 @@ export function AttendancesPage() {
         align: 'right',
         headerAlign: 'right',
         getActions: (params: GridRenderCellParams<Attendance>) => [
-          <IconButton
+          <Tooltip
             key="edit"
-            size="small"
-            onClick={() => openEdit(params.row)}
-            aria-label={t('attendances.edit')}
+            title={
+              params.row.is_general ? t('attendances.generalRowHint') : ''
+            }
           >
-            <EditIcon fontSize="small" />
-          </IconButton>,
-          <IconButton
+            <span>
+              <IconButton
+                size="small"
+                disabled={params.row.is_general}
+                onClick={() => openEdit(params.row)}
+                aria-label={t('attendances.edit')}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>,
+          <Tooltip
             key="delete"
-            size="small"
-            onClick={() => setDeleteTarget(params.row)}
-            aria-label={t('attendances.delete')}
+            title={
+              params.row.is_general ? t('attendances.generalRowHint') : ''
+            }
           >
-            <DeleteOutlineIcon fontSize="small" />
-          </IconButton>,
+            <span>
+              <IconButton
+                size="small"
+                disabled={params.row.is_general}
+                onClick={() => setDeleteTarget(params.row)}
+                aria-label={t('attendances.delete')}
+              >
+                <DeleteOutlineIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>,
         ],
       },
     ],
@@ -404,14 +446,35 @@ export function AttendancesPage() {
             ))}
           </Select>
         </FormControl>
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <InputLabel>{t('attendances.origin')}</InputLabel>
+          <Select
+            label={t('attendances.origin')}
+            value={filterOrigin}
+            onChange={(e) => {
+              const v = e.target.value as OriginFilter
+              setFilterOrigin(v)
+              if (v !== 'SUBJECT') {
+                setFilterAcademicAreaId(null)
+                setFilterTeacherDocExact('')
+              }
+            }}
+          >
+            <MenuItem value="ALL">{t('attendances.originAll')}</MenuItem>
+            <MenuItem value="SUBJECT">{t('attendances.originSubject')}</MenuItem>
+            <MenuItem value="GENERAL">{t('attendances.originGeneral')}</MenuItem>
+          </Select>
+        </FormControl>
         <FormControl size="small" sx={{ minWidth: 170 }} disabled={!selectedInstitutionId}>
           <InputLabel>{t('attendances.academicArea')}</InputLabel>
           <Select
             label={t('attendances.academicArea')}
             value={filterAcademicAreaId ?? ''}
-            onChange={(e) =>
-              setFilterAcademicAreaId(e.target.value === '' ? null : e.target.value)
-            }
+            onChange={(e) => {
+              const v = e.target.value === '' ? null : e.target.value
+              setFilterAcademicAreaId(v)
+              if (v) setFilterOrigin('SUBJECT')
+            }}
           >
             <MenuItem value="">{t('attendances.all')}</MenuItem>
             {academicAreaFilterOptions.map((a) => (
@@ -425,7 +488,10 @@ export function AttendancesPage() {
           size="small"
           label={t('attendances.teacherDocExact')}
           value={filterTeacherDocExact}
-          onChange={(e) => setFilterTeacherDocExact(e.target.value)}
+          onChange={(e) => {
+            setFilterTeacherDocExact(e.target.value)
+            if (e.target.value.trim()) setFilterOrigin('SUBJECT')
+          }}
           sx={{ minWidth: 180 }}
         />
       </Paper>

@@ -25,6 +25,7 @@ from core.report_views import (
     AcademicIndicatorsReportByStudentPeriodView,
     SchoolRecordByStudentYearView,
 )
+from core.daily_attendance_views import DailyAttendanceViewSet
 from core.grading_views import (
     ComponentSegmentViewSet,
     GradingActivityViewSet,
@@ -92,6 +93,9 @@ router.register(
     basename="studentactivityscore",
 )
 router.register(r"attendances", AttendanceViewSet, basename="attendance")
+router.register(
+    r"daily-attendances", DailyAttendanceViewSet, basename="dailyattendance"
+)
 router.register(r"academic-indicators", AcademicIndicatorViewSet, basename="academicindicator")
 router.register(r"performance-summaries", PerformanceSummaryViewSet, basename="performancesummary")
 router.register(r"disciplinary-reports", DisciplinaryReportViewSet, basename="disciplinaryreport")

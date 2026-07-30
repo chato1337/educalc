@@ -13,6 +13,7 @@ import {
   Gavel,
   Grade,
   Group,
+  HowToReg,
   Layers,
   LocalLibrary,
   People,
@@ -250,6 +251,12 @@ export const navSections: NavSection[] = [
   {
     titleKey: 'nav.coexistenceAttendanceSection',
     items: [
+      {
+        labelKey: 'nav.rollCall',
+        path: '/roll-call',
+        icon: HowToReg,
+        rolesAllowed: STAFF_ROLES,
+      },
       {
         labelKey: 'nav.attendance',
         path: '/attendances',

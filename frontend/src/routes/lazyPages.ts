@@ -221,6 +221,12 @@ export const AttendancesPage = lazy(() =>
   })),
 )
 
+export const RollCallPage = lazy(() =>
+  import('@/features/operations/rollCall/RollCallPage').then((m) => ({
+    default: m.RollCallPage,
+  })),
+)
+
 export const DisciplinaryReportsPage = lazy(() =>
   import('@/features/operations/DisciplinaryReportsPage').then((m) => ({
     default: m.DisciplinaryReportsPage,

@@ -507,13 +507,14 @@ export interface paths {
         };
         /**
          * List Attendance
-         * @description Absences per subject and period Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__subject__academic_area, course_assignment__teacher__document_number, academic_period, academic_period__number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Absences per period. Rows with a `course_assignment` are per-subject totals (manual or CSV); rows without it are the group-level totals consolidated by the roll call (`/api/daily-attendances/`), where a date counts only once. Text search available through query param `search`. Supported fields: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, group__name, academic_period__name. Available exact-match filters via query params: student, student__document_number, course_assignment, course_assignment__isnull, course_assignment__subject__academic_area, course_assignment__teacher__document_number, group, academic_period, academic_period__number. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["attendances_list"];
         put?: never;
         /**
          * Create Attendance
-         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         * @description Attendance — per-subject rows scope like grades; group-level rows (``course_assignment``
+         *     null, produced by the roll call) scope through ``group``.
          */
         post: operations["attendances_create"];
         delete?: never;
@@ -531,25 +532,29 @@ export interface paths {
         };
         /**
          * Get Attendance
-         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         * @description Attendance — per-subject rows scope like grades; group-level rows (``course_assignment``
+         *     null, produced by the roll call) scope through ``group``.
          */
         get: operations["attendances_retrieve"];
         /**
          * Update Attendance
-         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         * @description Attendance — per-subject rows scope like grades; group-level rows (``course_assignment``
+         *     null, produced by the roll call) scope through ``group``.
          */
         put: operations["attendances_update"];
         post?: never;
         /**
          * Delete Attendance
-         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         * @description Attendance — per-subject rows scope like grades; group-level rows (``course_assignment``
+         *     null, produced by the roll call) scope through ``group``.
          */
         delete: operations["attendances_destroy"];
         options?: never;
         head?: never;
         /**
          * Partial update Attendance
-         * @description Grade, Attendance, AcademicIndicator — scoped via course_assignment.teacher.
+         * @description Attendance — per-subject rows scope like grades; group-level rows (``course_assignment``
+         *     null, produced by the roll call) scope through ``group``.
          */
         patch: operations["attendances_partial_update"];
         trace?: never;
@@ -906,6 +911,93 @@ export interface paths {
         get: operations["course_assignments_for_teacher_retrieve"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/daily-attendances/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Roll Call
+         * @description Llamado a lista diario. El llamado a lista es acumulable: la misma fecha puede llamarse varias veces, de forma general para el grupo (``course_assignment`` nulo) o por asignatura. Cada origen guarda su propia fila, pero la fecha solo cuenta una vez: el estado único del día se resuelve con la precedencia **falta con excusa > falta sin excusa > presente** y los días consolidados se acumulan en la fila ``Attendance`` de nivel grupo (``course_assignment`` nulo) del periodo. Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, course_assignment__subject__name. Available exact-match filters via query params: student, group, academic_period, date, status, course_assignment. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         */
+        get: operations["daily_attendances_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/daily-attendances/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Roll Call
+         * @description Historial de llamados a lista en solo lectura.
+         *
+         *     La escritura pasa siempre por ``save-roll-call/`` para que el acumulado del
+         *     periodo se recalcule en la misma transacción.
+         */
+        get: operations["daily_attendances_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/daily-attendances/roster/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listado de estudiantes para el llamado a lista
+         * @description Estudiantes con matrícula activa en el grupo, junto con lo ya registrado para la fecha: ``status`` es lo guardado por este mismo origen y ``consolidated_status`` es el estado único del día tras cruzar todos los llamados. El llamado a lista es acumulable: la misma fecha puede llamarse varias veces, de forma general para el grupo (``course_assignment`` nulo) o por asignatura. Cada origen guarda su propia fila, pero la fecha solo cuenta una vez: el estado único del día se resuelve con la precedencia **falta con excusa > falta sin excusa > presente** y los días consolidados se acumulan en la fila ``Attendance`` de nivel grupo (``course_assignment`` nulo) del periodo.
+         */
+        get: operations["daily_attendances_roster_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/daily-attendances/save-roll-call/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Guardar el llamado a lista de un grupo
+         * @description Guarda en una sola petición las marcas de todos los estudiantes del grupo para una fecha y recalcula el acumulado del periodo en la misma transacción.
+         *
+         *     El llamado a lista es acumulable: la misma fecha puede llamarse varias veces, de forma general para el grupo (``course_assignment`` nulo) o por asignatura. Cada origen guarda su propia fila, pero la fecha solo cuenta una vez: el estado único del día se resuelve con la precedencia **falta con excusa > falta sin excusa > presente** y los días consolidados se acumulan en la fila ``Attendance`` de nivel grupo (``course_assignment`` nulo) del periodo.
+         *
+         *     **Reglas:** los estudiantes deben tener matrícula activa en el grupo; la asignatura debe pertenecer al grupo; volver a guardar el mismo origen sobrescribe las marcas anteriores en lugar de duplicarlas.
+         */
+        post: operations["daily_attendances_save_roll_call_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3310,7 +3402,12 @@ export interface components {
             student: string;
             readonly student_name: string;
             /** Format: uuid */
-            course_assignment: string;
+            course_assignment?: string | null;
+            readonly subject_name: string | null;
+            /** Format: uuid */
+            group?: string | null;
+            readonly group_name: string | null;
+            readonly is_general: boolean;
             /** Format: uuid */
             academic_period: string;
             unexcused_absences?: number;
@@ -3324,7 +3421,9 @@ export interface components {
             /** Format: uuid */
             student: string;
             /** Format: uuid */
-            course_assignment: string;
+            course_assignment?: string | null;
+            /** Format: uuid */
+            group?: string | null;
             /** Format: uuid */
             academic_period: string;
             unexcused_absences?: number;
@@ -3392,16 +3491,6 @@ export interface components {
             name: string;
             code?: string;
         };
-        /**
-         * @description * `invalid_transfer` - invalid_transfer
-         *     * `student_not_found` - student_not_found
-         *     * `group_not_found` - group_not_found
-         *     * `no_active_enrollment` - no_active_enrollment
-         *     * `same_group` - same_group
-         *     * `institution_mismatch` - institution_mismatch
-         * @enum {string}
-         */
-        CodeEnum: "invalid_transfer" | "student_not_found" | "group_not_found" | "no_active_enrollment" | "same_group" | "institution_mismatch";
         ComponentSegment: {
             /** Format: uuid */
             readonly id: string;
@@ -3475,6 +3564,34 @@ export interface components {
         CustomTokenObtainPairRequest: {
             username: string;
             password: string;
+        };
+        /** @description Historial: una fila por estudiante, fecha y origen del llamado. */
+        DailyAttendance: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            student: string;
+            readonly student_name: string;
+            /** Format: uuid */
+            group: string;
+            readonly group_name: string;
+            /** Format: uuid */
+            academic_period: string;
+            readonly academic_period_name: string;
+            /** Format: date */
+            date: string;
+            status: components["schemas"]["RollCallStatusEnum"];
+            /** Format: uuid */
+            course_assignment?: string | null;
+            readonly subject_name: string | null;
+            /** Format: uuid */
+            recorded_by?: string | null;
+            readonly recorded_by_name: string | null;
+            notes?: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
         };
         DashboardKpisCounts: {
             institutions: number;
@@ -3562,7 +3679,7 @@ export interface components {
             readonly academic_year_year: number;
             /** Format: date */
             enrollment_date?: string | null;
-            status: components["schemas"]["StatusEnum"];
+            status: components["schemas"]["EnrollmentStatusEnum"];
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -3577,8 +3694,15 @@ export interface components {
             academic_year: string;
             /** Format: date */
             enrollment_date?: string | null;
-            status: components["schemas"]["StatusEnum"];
+            status: components["schemas"]["EnrollmentStatusEnum"];
         };
+        /**
+         * @description * `active` - Active
+         *     * `withdrawn` - Withdrawn
+         *     * `graduated` - Graduated
+         * @enum {string}
+         */
+        EnrollmentStatusEnum: "active" | "withdrawn" | "graduated";
         Grade: {
             /** Format: uuid */
             readonly id: string;
@@ -3906,6 +4030,8 @@ export interface components {
          * @enum {string}
          */
         ModeEnum: "from_grades" | "all_combinations";
+        /** @enum {unknown} */
+        NullEnum: null;
         /**
          * @description * `below_basic` - Bajo (por debajo del umbral de Básico)
          *     * `basic_or_above` - Básico o superior
@@ -4061,6 +4187,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["CourseAssignment"][];
+        };
+        PaginatedDailyAttendanceList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["DailyAttendance"][];
         };
         PaginatedDisciplinaryReportList: {
             /** @example 123 */
@@ -4465,7 +4606,9 @@ export interface components {
             /** Format: uuid */
             student?: string;
             /** Format: uuid */
-            course_assignment?: string;
+            course_assignment?: string | null;
+            /** Format: uuid */
+            group?: string | null;
             /** Format: uuid */
             academic_period?: string;
             unexcused_absences?: number;
@@ -4516,7 +4659,7 @@ export interface components {
             academic_year?: string;
             /** Format: date */
             enrollment_date?: string | null;
-            status?: components["schemas"]["StatusEnum"];
+            status?: components["schemas"]["EnrollmentStatusEnum"];
         };
         PatchedGradeDirectorRequest: {
             /** Format: uuid */
@@ -4824,6 +4967,161 @@ export interface components {
          * @enum {string}
          */
         RoleEnum: "ADMIN" | "COORDINATOR" | "TEACHER" | "PARENT";
+        /** @description Marca de un estudiante dentro del llamado a lista. */
+        RollCallEntryRequest: {
+            /**
+             * Format: uuid
+             * @description UUID del estudiante.
+             */
+            student: string;
+            /**
+             * @description ``PRESENT`` asistió, ``EXCUSED`` falta con excusa (CE), ``UNEXCUSED`` falta sin excusa (SE).
+             *
+             *     * `PRESENT` - Presente
+             *     * `EXCUSED` - Falta con excusa
+             *     * `UNEXCUSED` - Falta sin excusa
+             */
+            status: components["schemas"]["RollCallStatusEnum"];
+            /** @description Observación o motivo de la excusa. */
+            notes?: string;
+        };
+        /** @description Respuesta de error de regla de negocio del llamado a lista. */
+        RollCallError: {
+            /** @description Mensaje legible del error. */
+            detail: string;
+            /**
+             * @description ``period_not_found`` (la fecha no cae en ningún periodo con fechas configuradas), ``assignment_not_in_group`` (la asignatura no es del grupo), ``student_not_enrolled`` (sin matrícula activa en el grupo).
+             *
+             *     * `group_not_found` - group_not_found
+             *     * `empty_roll_call` - empty_roll_call
+             *     * `duplicated_student` - duplicated_student
+             *     * `period_not_found` - period_not_found
+             *     * `period_not_in_year` - period_not_in_year
+             *     * `assignment_not_found` - assignment_not_found
+             *     * `assignment_not_in_group` - assignment_not_in_group
+             *     * `student_not_enrolled` - student_not_enrolled
+             */
+            code: components["schemas"]["RollCallErrorCodeEnum"];
+        };
+        /**
+         * @description * `group_not_found` - group_not_found
+         *     * `empty_roll_call` - empty_roll_call
+         *     * `duplicated_student` - duplicated_student
+         *     * `period_not_found` - period_not_found
+         *     * `period_not_in_year` - period_not_in_year
+         *     * `assignment_not_found` - assignment_not_found
+         *     * `assignment_not_in_group` - assignment_not_in_group
+         *     * `student_not_enrolled` - student_not_enrolled
+         * @enum {string}
+         */
+        RollCallErrorCodeEnum: "group_not_found" | "empty_roll_call" | "duplicated_student" | "period_not_found" | "period_not_in_year" | "assignment_not_found" | "assignment_not_in_group" | "student_not_enrolled";
+        /** @description Listado de estudiantes para abrir el modal de llamado a lista. */
+        RollCallRoster: {
+            /** Format: uuid */
+            group: string;
+            group_name: string;
+            /** Format: uuid */
+            academic_year: string;
+            /** Format: date */
+            date: string;
+            /**
+             * Format: uuid
+             * @description Periodo resuelto por fecha. ``null`` cuando ningún periodo del año cubre el día; en ese caso hay que enviar ``academic_period`` al guardar.
+             */
+            academic_period: string | null;
+            academic_period_name: string | null;
+            /**
+             * Format: uuid
+             * @description Origen del llamado: ``null`` es el llamado general del grupo.
+             */
+            course_assignment: string | null;
+            students: components["schemas"]["RollCallRosterStudent"][];
+        };
+        /** @description Estudiante matriculado con lo ya registrado para la fecha. */
+        RollCallRosterStudent: {
+            /**
+             * Format: uuid
+             * @description UUID del estudiante.
+             */
+            student: string;
+            full_name: string;
+            document_number: string;
+            /**
+             * @description Estado ya guardado por este mismo origen (grupo+fecha+asignatura). ``null`` si aún no se ha llamado a lista desde este origen. ``PRESENT`` asistió, ``EXCUSED`` falta con excusa (CE), ``UNEXCUSED`` falta sin excusa (SE).
+             *
+             *     * `PRESENT` - Presente
+             *     * `EXCUSED` - Falta con excusa
+             *     * `UNEXCUSED` - Falta sin excusa
+             */
+            status: (components["schemas"]["RollCallStatusEnum"] | components["schemas"]["NullEnum"]) | null;
+            notes: string;
+            /**
+             * @description Estado único del día tras consolidar todos los llamados (falta con excusa > falta sin excusa > presente).
+             *
+             *     * `PRESENT` - Presente
+             *     * `EXCUSED` - Falta con excusa
+             *     * `UNEXCUSED` - Falta sin excusa
+             */
+            consolidated_status: (components["schemas"]["RollCallStatusEnum"] | components["schemas"]["NullEnum"]) | null;
+            /** @description Cantidad de llamados de otros orígenes que ya registraron ese día. */
+            other_sources: number;
+        };
+        /** @description Cuerpo para ``POST /api/daily-attendances/save-roll-call/``. */
+        RollCallSaveRequest: {
+            /**
+             * Format: uuid
+             * @description UUID del grupo al que se llama a lista.
+             */
+            group: string;
+            /**
+             * Format: date
+             * @description Fecha del llamado (``YYYY-MM-DD``).
+             */
+            date: string;
+            /**
+             * Format: uuid
+             * @description Asignación docente-curso cuando el llamado es por asignatura. Omitir para el llamado general del grupo.
+             */
+            course_assignment?: string | null;
+            /**
+             * Format: uuid
+             * @description Solo necesario cuando la fecha no cae dentro de ningún periodo con fechas configuradas.
+             */
+            academic_period?: string | null;
+            /** @description Marcas de todos los estudiantes; se guardan en una sola petición. */
+            entries: components["schemas"]["RollCallEntryRequest"][];
+        };
+        /** @description Resultado del guardado y del recálculo de acumulados. */
+        RollCallSaveResponse: {
+            /** Format: uuid */
+            group: string;
+            group_name: string;
+            /** Format: date */
+            date: string;
+            /** Format: uuid */
+            academic_period: string;
+            academic_period_name: string;
+            /** Format: uuid */
+            course_assignment: string | null;
+            /** @description Marcas nuevas de este origen. */
+            created: number;
+            /** @description Marcas de este origen que se sobrescribieron. */
+            updated: number;
+            students_processed: number;
+            present_count: number;
+            excused_count: number;
+            unexcused_count: number;
+            /** @description Filas ``Attendance`` de nivel grupo (``course_assignment`` nulo) reescritas con el acumulado consolidado del periodo. */
+            attendance_rows_synced: number;
+            warnings: string[];
+        };
+        /**
+         * @description * `PRESENT` - Presente
+         *     * `EXCUSED` - Falta con excusa
+         *     * `UNEXCUSED` - Falta sin excusa
+         * @enum {string}
+         */
+        RollCallStatusEnum: "PRESENT" | "EXCUSED" | "UNEXCUSED";
         SchoolRecord: {
             /** Format: uuid */
             readonly id: string;
@@ -4871,13 +5169,6 @@ export interface components {
          * @enum {string}
          */
         ScopeEnum: "global" | "institution" | "teacher" | "parent" | "none";
-        /**
-         * @description * `active` - Active
-         *     * `withdrawn` - Withdrawn
-         *     * `graduated` - Graduated
-         * @enum {string}
-         */
-        StatusEnum: "active" | "withdrawn" | "graduated";
         Student: {
             /** Format: uuid */
             readonly id: string;
@@ -4994,8 +5285,18 @@ export interface components {
              *     * `same_group` - same_group
              *     * `institution_mismatch` - institution_mismatch
              */
-            code: components["schemas"]["CodeEnum"];
+            code: components["schemas"]["StudentTransferErrorCodeEnum"];
         };
+        /**
+         * @description * `invalid_transfer` - invalid_transfer
+         *     * `student_not_found` - student_not_found
+         *     * `group_not_found` - group_not_found
+         *     * `no_active_enrollment` - no_active_enrollment
+         *     * `same_group` - same_group
+         *     * `institution_mismatch` - institution_mismatch
+         * @enum {string}
+         */
+        StudentTransferErrorCodeEnum: "invalid_transfer" | "student_not_found" | "group_not_found" | "no_active_enrollment" | "same_group" | "institution_mismatch";
         /** @description Cuerpo para ``POST /api/students/{id}/transfer/``. */
         StudentTransferRequestRequest: {
             /**
@@ -5037,6 +5338,10 @@ export interface components {
             attendances_migrated: number;
             /** @description Asistencias omitidas por las mismas reglas que las notas. */
             attendances_skipped: number;
+            /** @description Marcas de llamado a lista (``DailyAttendance``) reasignadas al grupo destino. */
+            daily_attendances_migrated: number;
+            /** @description Marcas de llamado a lista eliminadas: la asignatura no existe en el destino o ya había una marca para ese día en la asignatura equivalente. */
+            daily_attendances_dropped: number;
             /** @description Filas ``AcademicIndicator`` migradas por coincidencia de asignatura. */
             academic_indicators_migrated: number;
             /** @description Indicadores omitidos por asignatura ausente o conflicto. */
@@ -6257,17 +6562,21 @@ export interface operations {
                 academic_period__number?: string;
                 /** @description Filter by exact value of `course_assignment`. */
                 course_assignment?: string;
+                /** @description Filter by exact value of `course_assignment__isnull`. */
+                course_assignment__isnull?: string;
                 /** @description Filter by exact value of `course_assignment__subject__academic_area`. */
                 course_assignment__subject__academic_area?: string;
                 /** @description Filter by exact value of `course_assignment__teacher__document_number`. */
                 course_assignment__teacher__document_number?: string;
+                /** @description Filter by exact value of `group`. */
+                group?: string;
                 /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
                 limit?: number;
                 /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
                 offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description Search text across: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, academic_period__name. */
+                /** @description Search text across: student__document_number, student__full_name, course_assignment__subject__name, course_assignment__teacher__full_name, group__name, academic_period__name. */
                 search?: string;
                 /** @description Filter by exact value of `student`. */
                 student?: string;
@@ -7076,6 +7385,149 @@ export interface operations {
             };
             /** @description Missing or invalid `teacher`. */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    daily_attendances_list: {
+        parameters: {
+            query?: {
+                /** @description Filter by exact value of `academic_period`. */
+                academic_period?: string;
+                /** @description Filter by exact value of `course_assignment`. */
+                course_assignment?: string;
+                /** @description Filter by exact value of `date`. */
+                date?: string;
+                /** @description Filter by exact value of `group`. */
+                group?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description Search text across: student__document_number, student__full_name, group__name, course_assignment__subject__name. */
+                search?: string;
+                /** @description Filter by exact value of `status`. */
+                status?: string;
+                /** @description Filter by exact value of `student`. */
+                student?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedDailyAttendanceList"];
+                };
+            };
+        };
+    };
+    daily_attendances_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Daily Attendance. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyAttendance"];
+                };
+            };
+        };
+    };
+    daily_attendances_roster_retrieve: {
+        parameters: {
+            query: {
+                /** @description Asignación docente-curso cuando el llamado es por asignatura. Omitir para el llamado general del grupo. */
+                course_assignment?: string;
+                /** @description Fecha del llamado (``YYYY-MM-DD``). */
+                date: string;
+                /** @description UUID del grupo al que se va a llamar a lista. */
+                group: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RollCallRoster"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RollCallError"];
+                };
+            };
+            /** @description Grupo inexistente o fuera del alcance del rol. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    daily_attendances_save_roll_call_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RollCallSaveRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["RollCallSaveRequest"];
+                "multipart/form-data": components["schemas"]["RollCallSaveRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RollCallSaveResponse"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RollCallError"];
+                };
+            };
+            /** @description Grupo inexistente o fuera del alcance del rol. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

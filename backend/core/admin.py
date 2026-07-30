@@ -14,6 +14,7 @@ from .models import (
     Campus,
     ComponentSegment,
     CourseAssignment,
+    DailyAttendance,
     DisciplinaryReport,
     Enrollment,
     Grade,
@@ -238,11 +239,20 @@ class GradeRecoveryAdmin(admin.ModelAdmin):
 
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):
-    list_display = ("student", "course_assignment", "academic_period", "unexcused_absences", "excused_absences", "created_at")
+    list_display = ("student", "course_assignment", "group", "academic_period", "unexcused_absences", "excused_absences", "created_at")
     list_filter = ("academic_period",)
     search_fields = ("student__full_name",)
     readonly_fields = ("id", "created_at", "updated_at")
-    autocomplete_fields = ("student", "course_assignment", "academic_period")
+    autocomplete_fields = ("student", "course_assignment", "group", "academic_period")
+
+
+@admin.register(DailyAttendance)
+class DailyAttendanceAdmin(admin.ModelAdmin):
+    list_display = ("student", "date", "status", "group", "course_assignment", "academic_period", "recorded_by")
+    list_filter = ("status", "date", "academic_period")
+    search_fields = ("student__full_name", "student__document_number", "group__name")
+    readonly_fields = ("id", "created_at", "updated_at")
+    autocomplete_fields = ("student", "group", "course_assignment", "academic_period", "recorded_by")
 
 
 @admin.register(AcademicIndicator)

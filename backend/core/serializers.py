@@ -533,6 +533,16 @@ class GradeRecoveryCreateSerializer(serializers.Serializer):
 
 class AttendanceSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source="student.full_name", read_only=True)
+    group_name = serializers.CharField(
+        source="group.name", read_only=True, allow_null=True, default=None
+    )
+    subject_name = serializers.CharField(
+        source="course_assignment.subject.name",
+        read_only=True,
+        allow_null=True,
+        default=None,
+    )
+    is_general = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Attendance
@@ -541,12 +551,29 @@ class AttendanceSerializer(serializers.ModelSerializer):
             "student",
             "student_name",
             "course_assignment",
+            "subject_name",
+            "group",
+            "group_name",
+            "is_general",
             "academic_period",
             "unexcused_absences",
             "excused_absences",
             "created_at",
             "updated_at",
         ]
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        instance = getattr(self, "instance", None)
+        course_assignment = attrs.get(
+            "course_assignment", getattr(instance, "course_assignment", None)
+        )
+        group = attrs.get("group", getattr(instance, "group", None))
+        if not course_assignment and not group:
+            raise serializers.ValidationError(
+                "Indica una asignación docente-curso o un grupo para la asistencia."
+            )
+        return attrs
 
 
 class AcademicIndicatorCatalogSerializer(serializers.ModelSerializer):
@@ -897,6 +924,17 @@ class StudentTransferResponseSerializer(serializers.Serializer):
     )
     attendances_skipped = serializers.IntegerField(
         help_text="Asistencias omitidas por las mismas reglas que las notas.",
+    )
+    daily_attendances_migrated = serializers.IntegerField(
+        help_text=(
+            "Marcas de llamado a lista (``DailyAttendance``) reasignadas al grupo destino."
+        ),
+    )
+    daily_attendances_dropped = serializers.IntegerField(
+        help_text=(
+            "Marcas de llamado a lista eliminadas: la asignatura no existe en el destino "
+            "o ya había una marca para ese día en la asignatura equivalente."
+        ),
     )
     academic_indicators_migrated = serializers.IntegerField(
         help_text="Filas ``AcademicIndicator`` migradas por coincidencia de asignatura.",

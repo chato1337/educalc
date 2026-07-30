@@ -63,8 +63,23 @@ export const queryKeys = {
     ['academic-indicators', params] as const,
   performanceSummaries: (params: Record<string, string | undefined>) =>
     ['performance-summaries', params] as const,
-  attendances: (params: Record<string, string | undefined>) =>
+  attendances: (params: Record<string, string | boolean | undefined>) =>
     ['attendances', params] as const,
+  dailyAttendances: (params: Record<string, string | undefined>) =>
+    ['daily-attendances', params] as const,
+  /** GET /api/daily-attendances/roster/ */
+  rollCallRoster: (
+    groupId: string,
+    date: string,
+    courseAssignmentId?: string | null,
+  ) =>
+    [
+      'daily-attendances',
+      'roster',
+      groupId,
+      date,
+      courseAssignmentId ?? 'general',
+    ] as const,
   disciplinaryReports: (params: Record<string, string | undefined>) =>
     ['disciplinary-reports', params] as const,
   schoolRecords: (params: Record<string, string | undefined>) =>

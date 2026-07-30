@@ -5,7 +5,7 @@ from collections import defaultdict
 from typing import Any, Optional
 from uuid import UUID
 
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Q
 
 from .models import (
     AcademicArea,
@@ -148,7 +148,11 @@ def compute_kpis_institution(institution_id: UUID) -> dict[str, Any]:
         course_assignment__academic_year__institution_id=institution_id
     ).count()
     row["attendances"] = Attendance.objects.filter(
-        course_assignment__academic_year__institution_id=institution_id
+        Q(course_assignment__academic_year__institution_id=institution_id)
+        | Q(
+            course_assignment__isnull=True,
+            group__academic_year__institution_id=institution_id,
+        )
     ).count()
     row["academic_indicators"] = AcademicIndicator.objects.filter(
         course_assignment__academic_year__institution_id=institution_id
@@ -210,7 +214,8 @@ def compute_kpis_teacher(teacher_id: UUID) -> dict[str, Any]:
 
     row["grades"] = Grade.objects.filter(course_assignment__teacher_id=teacher_id).count()
     row["attendances"] = Attendance.objects.filter(
-        course_assignment__teacher_id=teacher_id
+        Q(course_assignment__teacher_id=teacher_id)
+        | Q(course_assignment__isnull=True, group_id__in=group_ids)
     ).count()
     row["academic_indicators"] = AcademicIndicator.objects.filter(
         course_assignment__teacher_id=teacher_id

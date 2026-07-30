@@ -14,6 +14,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from django.db import transaction
 from django.utils import timezone
 
+from .daily_attendance_service import migrate_roll_call_to_group
 from .models import (
     AcademicIndicator,
     AcademicIndicatorsReport,
@@ -53,6 +54,8 @@ class StudentTransferResult:
     grades_skipped: int = 0
     attendances_migrated: int = 0
     attendances_skipped: int = 0
+    daily_attendances_migrated: int = 0
+    daily_attendances_dropped: int = 0
     academic_indicators_migrated: int = 0
     academic_indicators_skipped: int = 0
     performance_pairs_synced: int = 0
@@ -320,6 +323,13 @@ def transfer_student(
                 warnings=warnings,
             )
         )
+        daily_migrated, daily_dropped = migrate_roll_call_to_group(
+            student_id=student.id,
+            source_group=source_group,
+            target_group=target_group,
+            target_assignment_by_subject=target_assignment_by_subject,
+            warnings=warnings,
+        )
         affected_period_ids.update(grade_periods)
         affected_period_ids.update(att_periods)
         affected_period_ids.update(ind_periods)
@@ -358,6 +368,8 @@ def transfer_student(
         grades_skipped=grades_skipped,
         attendances_migrated=attendances_migrated,
         attendances_skipped=attendances_skipped,
+        daily_attendances_migrated=daily_migrated,
+        daily_attendances_dropped=daily_dropped,
         academic_indicators_migrated=indicators_migrated,
         academic_indicators_skipped=indicators_skipped,
         performance_pairs_synced=len(sync_pairs),

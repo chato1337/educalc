@@ -360,10 +360,12 @@ def build_bulletin_context(
     unexcused_per_period: list[int] = []
     excused_per_period: list[int] = []
     for p in periods:
+        # `group` is denormalized on every row, so this covers both the per-subject
+        # totals and the group-level row consolidated by the roll call.
         agg = Attendance.objects.filter(
             student=student,
             academic_period=p,
-            course_assignment__group=group,
+            group=group,
         ).aggregate(
             u=Sum("unexcused_absences"),
             e=Sum("excused_absences"),

@@ -86,6 +86,7 @@ from .scope_mixins import (
     AcademicIndicatorsReportRoleScopeMixin,
     AcademicPeriodRoleScopeMixin,
     AcademicYearRoleScopeMixin,
+    AttendanceRoleScopeMixin,
     CampusRoleScopeMixin,
     CourseAssignmentFkRoleScopeMixin,
     CourseAssignmentRoleScopeMixin,
@@ -205,8 +206,9 @@ def schema_viewset(
     description: str = "",
     search_fields: Optional[List[str]] = None,
     filter_fields: Optional[List[str]] = None,
+    readonly: bool = False,
 ):
-    """Decorator for ViewSet OpenAPI schema."""
+    """Decorator for ViewSet OpenAPI schema. Pass ``readonly`` for list/retrieve-only sets."""
     list_description = description
     list_parameters = list(_openapi_limit_offset_parameters())
 
@@ -255,19 +257,23 @@ def schema_viewset(
         else OPENAPI_LIST_PAGINATION_DESCRIPTION
     )
 
-    return extend_schema_view(
-        list=extend_schema(
+    overrides = {
+        "list": extend_schema(
             summary=f"List {tags[0]}",
             tags=tags,
             description=list_description,
             parameters=list_parameters,
         ),
-        retrieve=extend_schema(summary=f"Get {tags[0]}", tags=tags),
-        create=extend_schema(summary=f"Create {tags[0]}", tags=tags),
-        update=extend_schema(summary=f"Update {tags[0]}", tags=tags),
-        partial_update=extend_schema(summary=f"Partial update {tags[0]}", tags=tags),
-        destroy=extend_schema(summary=f"Delete {tags[0]}", tags=tags),
-    )
+        "retrieve": extend_schema(summary=f"Get {tags[0]}", tags=tags),
+    }
+    if not readonly:
+        overrides.update(
+            create=extend_schema(summary=f"Create {tags[0]}", tags=tags),
+            update=extend_schema(summary=f"Update {tags[0]}", tags=tags),
+            partial_update=extend_schema(summary=f"Partial update {tags[0]}", tags=tags),
+            destroy=extend_schema(summary=f"Delete {tags[0]}", tags=tags),
+        )
+    return extend_schema_view(**overrides)
 
 
 @schema_viewset(
@@ -572,6 +578,8 @@ class StudentViewSet(StudentRoleScopeMixin, viewsets.ModelViewSet):
                     "grades_skipped": 1,
                     "attendances_migrated": 1,
                     "attendances_skipped": 0,
+                    "daily_attendances_migrated": 3,
+                    "daily_attendances_dropped": 0,
                     "academic_indicators_migrated": 1,
                     "academic_indicators_skipped": 0,
                     "performance_pairs_synced": 2,
@@ -633,6 +641,8 @@ class StudentViewSet(StudentRoleScopeMixin, viewsets.ModelViewSet):
             "grades_skipped": result.grades_skipped,
             "attendances_migrated": result.attendances_migrated,
             "attendances_skipped": result.attendances_skipped,
+            "daily_attendances_migrated": result.daily_attendances_migrated,
+            "daily_attendances_dropped": result.daily_attendances_dropped,
             "academic_indicators_migrated": result.academic_indicators_migrated,
             "academic_indicators_skipped": result.academic_indicators_skipped,
             "performance_pairs_synced": result.performance_pairs_synced,
@@ -1567,49 +1577,59 @@ class GradeRecoveryViewSet(GradeRecoveryRoleScopeMixin, viewsets.ModelViewSet):
 
 @schema_viewset(
     ["Attendance"],
-    "Absences per subject and period",
+    (
+        "Absences per period. Rows with a `course_assignment` are per-subject totals "
+        "(manual or CSV); rows without it are the group-level totals consolidated by the "
+        "roll call (`/api/daily-attendances/`), where a date counts only once."
+    ),
     search_fields=[
         "student__document_number",
         "student__full_name",
         "course_assignment__subject__name",
         "course_assignment__teacher__full_name",
+        "group__name",
         "academic_period__name",
     ],
     filter_fields=[
         "student",
         "student__document_number",
         "course_assignment",
+        "course_assignment__isnull",
         "course_assignment__subject__academic_area",
         "course_assignment__teacher__document_number",
+        "group",
         "academic_period",
         "academic_period__number",
     ],
 )
-class AttendanceViewSet(CourseAssignmentFkRoleScopeMixin, viewsets.ModelViewSet):
+class AttendanceViewSet(AttendanceRoleScopeMixin, viewsets.ModelViewSet):
     queryset = Attendance.objects.select_related(
         "student",
         "course_assignment",
         "course_assignment__subject",
         "course_assignment__subject__academic_area",
         "course_assignment__teacher",
+        "group",
         "academic_period",
     ).all()
     serializer_class = AttendanceSerializer
     permission_classes = [IsAuthenticated]
-    filterset_fields = [
-        "student",
-        "student__document_number",
-        "course_assignment",
-        "course_assignment__subject__academic_area",
-        "course_assignment__teacher__document_number",
-        "academic_period",
-        "academic_period__number",
-    ]
+    filterset_fields = {
+        "student": ["exact"],
+        "student__document_number": ["exact"],
+        "course_assignment": ["exact", "isnull"],
+        "course_assignment__subject__academic_area": ["exact"],
+        "course_assignment__teacher__document_number": ["exact"],
+        "group": ["exact"],
+        "academic_period": ["exact"],
+        "academic_period__number": ["exact"],
+    }
     search_fields = [
         "student__document_number",
         "student__full_name",
         "course_assignment__subject__name",
         "course_assignment__teacher__full_name",
+        "group__name",
         "academic_period__name",
     ]
 
