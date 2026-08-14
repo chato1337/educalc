@@ -327,6 +327,8 @@ class CourseAssignmentSerializer(serializers.ModelSerializer):
 class GradeDirectorSerializer(serializers.ModelSerializer):
     teacher_name = serializers.CharField(source="teacher.full_name", read_only=True)
     group_name = serializers.CharField(source="group.name", read_only=True)
+    campus = serializers.UUIDField(source="group.campus_id", read_only=True)
+    campus_name = serializers.CharField(source="group.campus.name", read_only=True)
     academic_year_year = serializers.IntegerField(source="academic_year.year", read_only=True)
 
     class Meta:
@@ -337,11 +339,19 @@ class GradeDirectorSerializer(serializers.ModelSerializer):
             "teacher_name",
             "group",
             "group_name",
+            "campus",
+            "campus_name",
             "academic_year",
             "academic_year_year",
             "created_at",
             "updated_at",
         ]
+
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        return GradeDirector.objects.select_related(
+            "teacher", "group", "group__campus", "academic_year"
+        ).get(pk=instance.pk)
 
 
 class EnrollmentSerializer(serializers.ModelSerializer):

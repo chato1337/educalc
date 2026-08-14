@@ -1200,7 +1200,7 @@ export interface paths {
         };
         /**
          * List Grade Directors
-         * @description Homeroom teacher for a group Text search available through query param `search`. Supported fields: teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: teacher, teacher__document_number, group, group__name, academic_year, academic_year__year. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Homeroom teacher for a group Text search available through query param `search`. Supported fields: teacher__full_name, teacher__document_number, group__name, group__grade_level__name, group__campus__name, =academic_year__year. Available exact-match filters via query params: teacher, teacher__document_number, group, group__name, academic_year, academic_year__year, campus, campus__name. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["grade_directors_list"];
         put?: never;
@@ -3784,6 +3784,9 @@ export interface components {
             /** Format: uuid */
             group: string;
             readonly group_name: string;
+            /** Format: uuid */
+            readonly campus: string;
+            readonly campus_name: string;
             /** Format: uuid */
             academic_year: string;
             readonly academic_year_year: number;
@@ -7933,6 +7936,10 @@ export interface operations {
                 academic_year?: string;
                 /** @description Filter by exact value of `academic_year__year`. */
                 academic_year__year?: string;
+                /** @description Filter by exact value of `campus`. */
+                campus?: string;
+                /** @description Filter by exact value of `campus__name`. */
+                campus__name?: string;
                 /** @description Filter by exact value of `group`. */
                 group?: string;
                 /** @description Filter by exact value of `group__name`. */
@@ -7943,7 +7950,7 @@ export interface operations {
                 offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description Search text across: teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. */
+                /** @description Search text across: teacher__full_name, teacher__document_number, group__name, group__grade_level__name, group__campus__name, =academic_year__year. */
                 search?: string;
                 /** @description Filter by exact value of `teacher`. */
                 teacher?: string;

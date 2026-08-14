@@ -19,7 +19,7 @@ from rest_framework.response import Response
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
 
-from .filters import CourseAssignmentFilter
+from .filters import CourseAssignmentFilter, GradeDirectorFilter
 from .grading_serializers import scheme_weights_error
 from .grading_suggestion_service import build_grade_breakdown
 from .student_transfer_service import StudentTransferError, transfer_student
@@ -1077,6 +1077,7 @@ class CourseAssignmentViewSet(CourseAssignmentRoleScopeMixin, viewsets.ModelView
         "teacher__document_number",
         "group__name",
         "group__grade_level__name",
+        "group__campus__name",
         "=academic_year__year",
     ],
     filter_fields=[
@@ -1086,27 +1087,23 @@ class CourseAssignmentViewSet(CourseAssignmentRoleScopeMixin, viewsets.ModelView
         "group__name",
         "academic_year",
         "academic_year__year",
+        "campus",
+        "campus__name",
     ],
 )
 class GradeDirectorViewSet(GradeDirectorRoleScopeMixin, viewsets.ModelViewSet):
     queryset = GradeDirector.objects.select_related(
-        "teacher", "group", "academic_year"
+        "teacher", "group", "group__campus", "academic_year"
     ).all()
     serializer_class = GradeDirectorSerializer
     permission_classes = [IsAuthenticated]
-    filterset_fields = [
-        "teacher",
-        "teacher__document_number",
-        "group",
-        "group__name",
-        "academic_year",
-        "academic_year__year",
-    ]
+    filterset_class = GradeDirectorFilter
     search_fields = [
         "teacher__full_name",
         "teacher__document_number",
         "group__name",
         "group__grade_level__name",
+        "group__campus__name",
         "=academic_year__year",
     ]
 

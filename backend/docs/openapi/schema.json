@@ -5149,7 +5149,7 @@
         "/api/grade-directors/": {
             "get": {
                 "operationId": "grade_directors_list",
-                "description": "Homeroom teacher for a group Text search available through query param `search`. Supported fields: teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year. Available exact-match filters via query params: teacher, teacher__document_number, group, group__name, academic_year, academic_year__year. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "description": "Homeroom teacher for a group Text search available through query param `search`. Supported fields: teacher__full_name, teacher__document_number, group__name, group__grade_level__name, group__campus__name, =academic_year__year. Available exact-match filters via query params: teacher, teacher__document_number, group, group__name, academic_year, academic_year__year, campus, campus__name. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Grade Directors",
                 "parameters": [
                     {
@@ -5167,6 +5167,22 @@
                             "type": "string"
                         },
                         "description": "Filter by exact value of `academic_year__year`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "campus",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `campus`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "campus__name",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by exact value of `campus__name`."
                     },
                     {
                         "in": "query",
@@ -5215,7 +5231,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "description": "Search text across: teacher__full_name, teacher__document_number, group__name, group__grade_level__name, =academic_year__year."
+                        "description": "Search text across: teacher__full_name, teacher__document_number, group__name, group__grade_level__name, group__campus__name, =academic_year__year."
                     },
                     {
                         "in": "query",
@@ -15280,6 +15296,15 @@
                         "type": "string",
                         "readOnly": true
                     },
+                    "campus": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "campus_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
                     "academic_year": {
                         "type": "string",
                         "format": "uuid"
@@ -15302,6 +15327,8 @@
                 "required": [
                     "academic_year",
                     "academic_year_year",
+                    "campus",
+                    "campus_name",
                     "created_at",
                     "group",
                     "group_name",

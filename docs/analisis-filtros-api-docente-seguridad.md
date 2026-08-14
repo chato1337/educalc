@@ -167,7 +167,7 @@ Leyenda de columnas:
 | `/api/parents/` | CRUD + bulk-load | Auth | ❌ | `document_type`, `document_number`, `email`, `kinship` |
 | `/api/student-guardians/` | CRUD + bulk-load | Auth | ❌ | `student`, `parent`, `is_primary` |
 | `/api/enrollments/` | CRUD | Auth | ❌ | `student`, `group`, `academic_year`, `status` |
-| `/api/grade-directors/` | CRUD + bulk-load | Auth | ❌ | `teacher`, `group`, `academic_year` |
+| `/api/grade-directors/` | CRUD + bulk-load | Auth | ❌ | `teacher`, `group`, `academic_year`, `campus` |
 
 ### 5.3 Asignaciones y operaciones
 

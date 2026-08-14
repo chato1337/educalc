@@ -29,7 +29,12 @@ import {
   type GridSortModel,
 } from '@mui/x-data-grid'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type InfiniteData,
+} from '@tanstack/react-query'
 import {
   Controller,
   useForm,
@@ -41,11 +46,15 @@ import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { apiClient } from '@/api/client'
-import { fetchReferenceListResults } from '@/api/list'
 import { getErrorMessage } from '@/api/errors'
+import {
+  fetchReferenceListResults,
+  type PaginatedList,
+} from '@/api/list'
 import { flatInfinitePages, useInfiniteList } from '@/api/useInfiniteList'
 import {
   useAcademicYearsQuery,
+  useCampusesForInstitution,
 } from '@/features/academic-structure/academicQueries'
 import { InfiniteDataGridFooter } from '@/components/InfiniteDataGridFooter'
 import {
@@ -57,6 +66,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { useUiStore } from '@/stores/uiStore'
 import type {
   AcademicYear,
+  Campus,
   GradeDirector,
   Group,
   Teacher,
@@ -70,9 +80,26 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
+function replaceInfiniteRow(
+  old: InfiniteData<PaginatedList<GradeDirector>> | undefined,
+  updated: GradeDirector,
+): InfiniteData<PaginatedList<GradeDirector>> | undefined {
+  if (!old?.pages) return old
+  return {
+    ...old,
+    pages: old.pages.map((page) => ({
+      ...page,
+      results: page.results.map((row) =>
+        row.id === updated.id ? { ...row, ...updated } : row,
+      ),
+    })),
+  }
+}
+
 const gradeDirectorSortHandlers = createServerSortHandlers({
   teacher_name: 'teacher__full_name',
   group_name: 'group__name',
+  campus_name: 'group__campus__name',
   academic_year_year: 'academic_year__year',
 })
 
@@ -83,6 +110,7 @@ export function GradeDirectorsPage() {
   const [searchInput, setSearchInput] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
   const [filterYearId, setFilterYearId] = useState<string | null>(null)
+  const [filterCampusId, setFilterCampusId] = useState<string | null>(null)
   const [filterGroupId, setFilterGroupId] = useState<string | null>(null)
   const [filterTeacherId, setFilterTeacherId] = useState<string | null>(null)
   const [filterYearNumber, setFilterYearNumber] = useState('')
@@ -97,16 +125,22 @@ export function GradeDirectorsPage() {
   const { data: academicYears = [] } = useAcademicYearsQuery(
     selectedInstitutionId,
   )
+  const { data: campuses = [] } = useCampusesForInstitution(
+    selectedInstitutionId,
+  )
   const { data: teachers = [] } = useQuery({
     queryKey: ['teachers', 'for-grade-directors'],
     queryFn: async () => fetchReferenceListResults<Teacher>('/api/teachers/'),
   })
 
   const { data: groups = [] } = useQuery({
-    queryKey: ['groups', 'for-gd', filterYearId],
+    queryKey: ['groups', 'for-gd', filterYearId, filterCampusId],
     queryFn: async () =>
       fetchReferenceListResults<Group>('/api/groups/', {
-        params: filterYearId ? { academic_year: filterYearId } : undefined,
+        params: {
+          ...(filterYearId ? { academic_year: filterYearId } : {}),
+          ...(filterCampusId ? { campus: filterCampusId } : {}),
+        },
       }),
     enabled: !!filterYearId,
   })
@@ -119,6 +153,7 @@ export function GradeDirectorsPage() {
 
   const listParams = {
     academic_year: filterYearId ?? undefined,
+    campus: filterCampusId ?? undefined,
     group: filterGroupId ?? undefined,
     teacher: filterTeacherId ?? undefined,
     search: appliedSearch || undefined,
@@ -136,6 +171,11 @@ export function GradeDirectorsPage() {
   const rows = useMemo(() => flatInfinitePages(listQuery.data), [listQuery.data])
   const isLoading = listQuery.isLoading
   const error = listQuery.error
+
+  async function refreshList() {
+    await queryClient.invalidateQueries({ queryKey: ['grade-directors'] })
+    await listQuery.refetch()
+  }
 
   const sortModel = useMemo(
     () => gradeDirectorSortHandlers.orderingToSortModel(ordering),
@@ -161,26 +201,40 @@ export function GradeDirectorsPage() {
   })
 
   const createMutation = useMutation({
-    mutationFn: (body: FormValues) =>
-      apiClient.post<GradeDirector>('/api/grade-directors/', body),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['grade-directors'] })
+    mutationFn: async (body: FormValues) => {
+      const { data } = await apiClient.post<GradeDirector>(
+        '/api/grade-directors/',
+        body,
+      )
+      return data
+    },
+    onSuccess: async () => {
+      await refreshList()
       closeDialog()
     },
     onError: (e) => setFormError(getErrorMessage(e)),
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       id,
       body,
     }: {
       id: string
       body: FormValues
-    }) =>
-      apiClient.patch<GradeDirector>(`/api/grade-directors/${id}/`, body),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['grade-directors'] })
+    }) => {
+      const { data } = await apiClient.patch<GradeDirector>(
+        `/api/grade-directors/${id}/`,
+        body,
+      )
+      return data
+    },
+    onSuccess: async (updated) => {
+      queryClient.setQueriesData<InfiniteData<PaginatedList<GradeDirector>>>(
+        { queryKey: ['grade-directors', 'list'] },
+        (old) => replaceInfiniteRow(old, updated),
+      )
+      await refreshList()
       closeDialog()
     },
     onError: (e) => setFormError(getErrorMessage(e)),
@@ -189,8 +243,8 @@ export function GradeDirectorsPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) =>
       apiClient.delete(`/api/grade-directors/${id}/`),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['grade-directors'] })
+    onSuccess: async () => {
+      await refreshList()
       setDeleteTarget(null)
     },
   })
@@ -232,7 +286,14 @@ export function GradeDirectorsPage() {
       {
         field: 'group_name',
         headerName: t('gradeDirectors.group'),
-        flex: 1,
+        width: 75,
+        minWidth: 60,
+        sortable: true,
+      },
+      {
+        field: 'campus_name',
+        headerName: t('gradeDirectors.campus'),
+        flex: 0.8,
         minWidth: 140,
         sortable: true,
       },
@@ -296,6 +357,8 @@ export function GradeDirectorsPage() {
 
   const filterYear =
     academicYears.find((y) => y.id === filterYearId) ?? null
+  const filterCampus =
+    campuses.find((c) => c.id === filterCampusId) ?? null
   const filterGroup = groups.find((g) => g.id === filterGroupId) ?? null
   const filterTeacher =
     teachers.find((t) => t.id === filterTeacherId) ?? null
@@ -343,9 +406,26 @@ export function GradeDirectorsPage() {
           <Autocomplete
             className="min-w-[200px] flex-1"
             size="small"
+            options={campuses}
+            getOptionLabel={(c: Campus) => c.name}
+            value={filterCampus}
+            onChange={(_, v) => {
+              setFilterCampusId(v?.id ?? null)
+              setFilterGroupId(null)
+            }}
+            renderInput={(params: AutocompleteRenderInputParams) => (
+              <TextField {...params} label={t('gradeDirectors.campus')} />
+            )}
+            isOptionEqualToValue={(a, b) => a.id === b.id}
+          />
+          <Autocomplete
+            className="min-w-[200px] flex-1"
+            size="small"
             options={groups}
             getOptionKey={(g: Group) => g.id}
-            getOptionLabel={(g: Group) => g.name}
+            getOptionLabel={(g: Group) =>
+              g.campus_name ? `${g.name} (${g.campus_name})` : g.name
+            }
             value={filterGroup}
             onChange={(_, v) => setFilterGroupId(v?.id ?? null)}
             disabled={!filterYearId}
@@ -415,6 +495,8 @@ export function GradeDirectorsPage() {
               <MenuItem value="-teacher__full_name">{t('gradeDirectors.teacherDesc')}</MenuItem>
               <MenuItem value="group__name">{t('gradeDirectors.groupAsc')}</MenuItem>
               <MenuItem value="-group__name">{t('gradeDirectors.groupDesc')}</MenuItem>
+              <MenuItem value="group__campus__name">{t('gradeDirectors.campusAsc')}</MenuItem>
+              <MenuItem value="-group__campus__name">{t('gradeDirectors.campusDesc')}</MenuItem>
               <MenuItem value="-academic_year__year">{t('gradeDirectors.yearDesc')}</MenuItem>
               <MenuItem value="academic_year__year">{t('gradeDirectors.yearAsc')}</MenuItem>
             </Select>
@@ -426,6 +508,7 @@ export function GradeDirectorsPage() {
               setSearchInput('')
               setAppliedSearch('')
               setFilterYearId(null)
+              setFilterCampusId(null)
               setFilterGroupId(null)
               setFilterTeacherId(null)
               setFilterYearNumber('')
@@ -450,9 +533,10 @@ export function GradeDirectorsPage() {
 
       <Paper sx={{ width: '100%', p: 0, overflow: 'hidden' }}>
         <DataGrid
+          key={listQuery.dataUpdatedAt}
           rows={rows}
           columns={columns}
-          getRowId={(row) => row.id}
+          getRowId={(row) => `${row.id}:${row.updated_at}`}
           loading={isLoading}
           autoHeight
           hideFooter
@@ -489,7 +573,6 @@ export function GradeDirectorsPage() {
                   getOptionLabel={(t: Teacher) => t.full_name}
                   value={teachers.find((t) => t.id === field.value) ?? null}
                   onChange={(_, v) => field.onChange(v?.id ?? '')}
-                  disabled={!!editing}
                   isOptionEqualToValue={(a, b) => a.id === b.id}
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
@@ -519,7 +602,6 @@ export function GradeDirectorsPage() {
                     field.onChange(v?.id ?? '')
                     form.setValue('group', '')
                   }}
-                  disabled={!!editing}
                   isOptionEqualToValue={(a, b) => a.id === b.id}
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
@@ -547,7 +629,7 @@ export function GradeDirectorsPage() {
                     groupsFiltered.find((g) => g.id === field.value) ?? null
                   }
                   onChange={(_, v) => field.onChange(v?.id ?? '')}
-                  disabled={!!editing || !watchedYear}
+                  disabled={!watchedYear}
                   isOptionEqualToValue={(a, b) => a.id === b.id}
                   renderInput={(params: AutocompleteRenderInputParams) => (
                     <TextField
