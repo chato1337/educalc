@@ -39,6 +39,7 @@ import {
 } from '@/session/navStore'
 import { useSessionPrefsStore } from '@/session/sessionPrefsStore'
 import type { AcademicGradesBulletinQuery } from '@/features/groups/gradesBulletinApi'
+import { APP_MARK } from '@/app/appName'
 import { isTeacherUser } from '@/types/user'
 
 function useAuthHydrated() {
@@ -134,7 +135,7 @@ function TabletRail({
     <nav className="w-[72px] shrink-0 bg-white border-r border-slate-200 flex flex-col py-4 gap-1">
       <div className="flex items-center justify-center mb-4 px-2">
         <div className="w-10 h-10 rounded-xl bg-[#1E3A5F] flex items-center justify-center">
-          <span className="text-white font-bold text-xs">eC</span>
+          <span className="text-white font-bold text-xs">{APP_MARK}</span>
         </div>
       </div>
 

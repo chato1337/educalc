@@ -20,6 +20,7 @@ import {
   useSessionCourse,
   useTeacherSession,
 } from '@/session/TeacherSessionContext'
+import { APP_NAME } from '@/app/appName'
 import type { CourseSection } from '@/session/navStore'
 
 // ─── Login ────────────────────────────────────────────────────────────────────
@@ -52,7 +53,7 @@ export function LoginScreen() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 mb-4">
             <IconBook size={32} />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">eduCalc</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">{APP_NAME}</h1>
           <p className="text-blue-200 text-sm mt-1">Registro Escolar · Docente</p>
         </div>
 
