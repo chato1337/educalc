@@ -2,12 +2,13 @@
 
 Aplicación para **gestión y reportes académicos** en instituciones educativas: API REST con Django, panel de administración en React y modelos de dominio alineados con reportes (calificaciones, asistencia, indicadores, expedientes, etc.).
 
-El repositorio es un **monorepo** con backend, frontend y documentación en la carpeta `docs/`.
+El repositorio es un **monorepo** con backend, panel de administración, app docente y documentación en la carpeta `docs/`.
 
 ## Características principales
 
 - **Backend:** Django REST Framework, autenticación JWT (SimpleJWT), filtros (`django-filter`), esquema **OpenAPI** con Swagger/ReDoc (`drf-spectacular`).
 - **Frontend:** React, Vite, Material UI, TanStack Query, React Router, formularios con React Hook Form y Zod, e internacionalizacion con i18next/react-i18next (base en `frontend/src/i18n/locales/es.json`).
+- **Mobile:** app docente React + Vite + Tailwind (phone/tablet), mismo API y JWT que el panel.
 - **Base de datos:** PostgreSQL o SQLite (configurable por variables de entorno).
 - **Carga masiva:** endpoints de carga por CSV documentados en OpenAPI; plantillas y planes en `docs/`.
 - **Control de acceso:** perfiles de usuario con roles (p. ej. administrador, coordinador, docente, acudiente) y alcance por institución.
@@ -19,20 +20,21 @@ El repositorio es un **monorepo** con backend, frontend y documentación en la c
 | `backend/` | Proyecto Django (`manage.py`, `settings.py`, app `core` con modelos, vistas API, carga masiva). |
 | `backend/docs/openapi/` | Esquemas OpenAPI exportados (JSON/YAML) para clientes y tipos TypeScript. |
 | `frontend/` | SPA de administración (Vite + React). |
+| `mobile/` | App docente (Vite + React + Tailwind). |
 | `docs/` | Análisis de entidades, planes de implementación, CSV de ejemplo para bulk load, documentación de API. |
 
 ## Requisitos previos
 
 - **Python** 3.9+ (el `Pipfile` fija 3.9; puedes usar una versión compatible con el lockfile).
 - **pipenv** (recomendado) o entorno virtual + dependencias equivalentes al `Pipfile`.
-- **Bun** (gestor de paquetes y runner de scripts del frontend).
+- **Bun** (gestor de paquetes y runner de scripts de `frontend/` y `mobile/`).
 - **PostgreSQL** (opcional; si no, usa `DB_ENGINE=sqlite` en el `.env` del backend).
 
 ## Puesta en marcha
 
-### Docker (frontend + backend + PostgreSQL)
+### Docker (frontend + mobile + backend + PostgreSQL)
 
-El proyecto incluye `docker-compose.yml` para desarrollo con hot reload en frontend/backend y base de datos PostgreSQL.
+El proyecto incluye `docker-compose.yml` para desarrollo con hot reload en frontend, mobile, backend y base de datos PostgreSQL.
 
 ```bash
 cp .env.example .env
@@ -41,7 +43,8 @@ docker compose up --build
 
 Servicios disponibles:
 
-- `http://localhost:5173` — Frontend (Vite)
+- `http://localhost:5173` — Frontend administración (Vite)
+- `http://localhost:8443` — App docente (Vite)
 - `http://localhost:8000` — Backend (Django API)
 - `http://localhost:8000/api/docs/` — Swagger UI
 
@@ -61,11 +64,11 @@ docker compose down
 docker compose down -v
 ```
 
-Si ves **No such image: sha256:...** al subir cambios o recrear `backend` / `frontend`, suele ser porque la imagen anterior **ya no existe** (p. ej. `docker image prune`, limpieza en el servidor o otro host). Compose intenta recrear el contenedor apuntando a ese digest y falla.
+Si ves **No such image: sha256:...** al subir cambios o recrear `backend` / `frontend` / `mobile`, suele ser porque la imagen anterior **ya no existe** (p. ej. `docker image prune`, limpieza en el servidor o otro host). Compose intenta recrear el contenedor apuntando a ese digest y falla.
 
 ```bash
 docker compose down
-docker compose build --no-cache backend frontend
+docker compose build --no-cache backend frontend mobile
 docker compose up -d
 ```
 
@@ -80,7 +83,7 @@ Si aparece el aviso de Docker sobre continuar con la imagen nueva, en modo inter
 Notas:
 
 - El archivo de variables para Docker es el `.env` de la raiz (basado en `.env.example`).
-- El frontend llama al API con URL absoluta (`VITE_API_BASE_URL`). En Docker Compose el valor por defecto es `http://localhost:8000` (visto **desde el navegador** en tu máquina, no el hostname interno `backend`).
+- Frontend y mobile llaman al API con URL absoluta (`VITE_API_BASE_URL`). En Docker Compose el valor por defecto es `http://localhost:8000` (visto **desde el navegador** en tu máquina, no el hostname interno `backend`).
 - Asegura en el backend `CORS_ALLOWED_ORIGINS` con el origen del front (p. ej. `https://tu-dominio.com`) cuando front y API son distintos orígenes. Sin barra final; si usas `www`, debe coincidir exactamente con el `Origin` del navegador.
 - En `DJANGO_ALLOWED_HOSTS` incluye el **hostname del API** (p. ej. `api.tudominio.com`), no solo el del front. Si falta, Django puede responder 400 sin cabeceras CORS y el navegador mostrará error de CORS en el preflight.
 - Tras nginx/Traefik con HTTPS, suele hacer falta `TRUST_X_FORWARDED_PROTO=true` (y a veces `USE_X_FORWARDED_HOST=true`) en el backend. El proxy debe **reenviar OPTIONS** al upstream (Django), no responder solo 404/405 sin CORS.
@@ -142,6 +145,24 @@ cd frontend
 bun run build
 ```
 
+### Mobile (app docente)
+
+```bash
+cd mobile
+cp .env.example .env
+# Ajusta VITE_API_BASE_URL si el backend no está en http://127.0.0.1:8000
+
+bun install
+bun dev
+```
+
+En desarrollo, Vite sirve en `http://localhost:8443`. Con `VITE_API_BASE_URL` vacío usa el proxy `/api`; en Docker Compose usa la URL absoluta del API (`http://localhost:8000`).
+
+```bash
+cd mobile
+bun run generate:api-types
+```
+
 ## Documentación
 
 - **Guía para implementar features/mejoras:** [`docs/guia-implementacion-features.md`](docs/guia-implementacion-features.md)
@@ -157,5 +178,6 @@ bun run build
 | Docker Compose | `.env` (raiz) | Puertos, Postgres, Django, `VITE_API_BASE_URL` (URL del API desde el navegador) |
 | Backend | `backend/.env` | `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DB_ENGINE`, credenciales PostgreSQL o `SQLITE_PATH`, JWT, `CORS_ALLOWED_ORIGINS` |
 | Frontend | `frontend/.env` | `VITE_APP_NAME`, `VITE_API_BASE_URL` (URL del backend) |
+| Mobile | `mobile/.env` | `VITE_APP_NAME`, `VITE_API_BASE_URL` (vacío = proxy Vite en local) |
 
 Copia siempre desde los `.env.example` correspondientes y **no subas** `.env` con secretos reales al control de versiones.

@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Work Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --color-primary: #1E3A5F;
+  --color-primary-light: #2D5A8E;
+  --color-primary-surface: #EBF2FB;
+  --color-accent: #059669;
+  --color-accent-surface: #ECFDF5;
+
+  --color-bj: #DC2626;
+  --color-bj-surface: #FEF2F2;
+  --color-bs: #D97706;
+  --color-bs-surface: #FFFBEB;
+  --color-al: #2563EB;
+  --color-al-surface: #EFF6FF;
+  --color-sp: #059669;
+  --color-sp-surface: #ECFDF5;
+
+  --color-present: #059669;
+  --color-excused: #D97706;
+  --color-unexcused: #DC2626;
+
+  --color-bg: #F1F5F9;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-muted: #64748B;
+  --color-subtle: #94A3B8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Work Sans', system-ui, sans-serif;
+  background-color: #F1F5F9;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

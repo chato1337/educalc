@@ -1,0 +1,13 @@
+node_modules/
+dist/
+dist-ssr/
+build/
+.cache/
+.env
+.env.local
+.vite/
+vite.config.*.timestamp-*
+*.tsbuildinfo
+*.local
+logs/
+*.log

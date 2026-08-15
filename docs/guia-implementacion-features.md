@@ -315,6 +315,7 @@ Checklist manual rápido: login con el rol objetivo → menú visible → listad
 | [plan-implementacion-carga-masiva-csv.md](./plan-implementacion-carga-masiva-csv.md) | Bulk CSV |
 | [../frontend/docs/ESTADO-IMPLEMENTACION.md](../frontend/docs/ESTADO-IMPLEMENTACION.md) | Estado del panel admin |
 | [../README.md](../README.md) | Arranque del monorepo |
+| [plan-conexion-mobile-backend.md](./plan-conexion-mobile-backend.md) | App docente `mobile/` ↔ API (fases 0–8 hechas) |
 
 ---
 
