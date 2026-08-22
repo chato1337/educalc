@@ -29,18 +29,21 @@ import {
   useDeleteGradingActivityMutation,
   usePatchComponentSegmentMutation,
   usePatchGradingActivityMutation,
+  usePatchSegmentWeightsMutation,
   useValidateWeightsQuery,
   type ComponentSegment,
   type EnrichedActivity,
   type GradingActivity,
   type SubjectComponent,
 } from "@/features/grading/gradingApi"
+import { SegmentWeightRange } from "@/features/grading/SegmentWeightRange"
 import {
   SEGMENT_TEMPLATES,
   WEIGHT_SUM_TOLERANCE,
   activitiesByDate,
   addMonths,
   calendarGridDays,
+  canResizeSegmentWeights,
   dateToIso,
   formatMonthYear,
   formatWeight,
@@ -128,6 +131,7 @@ export function SchemePlanScreen({
   const createScheme = useCreateGradingSchemeMutation()
   const createSegment = useCreateComponentSegmentMutation()
   const patchSegment = usePatchComponentSegmentMutation()
+  const patchSegmentWeights = usePatchSegmentWeightsMutation()
   const deleteSegment = useDeleteComponentSegmentMutation()
   const createActivity = useCreateGradingActivityMutation()
   const patchActivity = usePatchGradingActivityMutation()
@@ -164,6 +168,7 @@ export function SchemePlanScreen({
     createScheme.isPending ||
     createSegment.isPending ||
     patchSegment.isPending ||
+    patchSegmentWeights.isPending ||
     deleteSegment.isPending ||
     createActivity.isPending ||
     patchActivity.isPending ||
@@ -266,6 +271,31 @@ export function SchemePlanScreen({
     }
   }
 
+  async function commitSegmentWeights(
+    next: { id: string; weight: number }[],
+  ) {
+    const updates = next
+      .filter((item) => {
+        const current = segments.find((s) => s.id === item.id)
+        const currentWeight = parseWeightPercent(current?.weight_percent) ?? 0
+        return Math.abs(currentWeight - item.weight) > WEIGHT_SUM_TOLERANCE
+      })
+      .map((item) => ({
+        id: item.id,
+        weight_percent: formatWeight(item.weight),
+      }))
+    if (updates.length === 0) return
+    setActionError("")
+    try {
+      await patchSegmentWeights.mutateAsync(updates)
+    } catch (err) {
+      setActionError(
+        getErrorMessage(err, "No se pudieron actualizar los pesos."),
+      )
+      throw err
+    }
+  }
+
   async function removeSegment(segment: ComponentSegment) {
     if (
       !window.confirm(
@@ -358,6 +388,7 @@ export function SchemePlanScreen({
       setActivityForm={setActivityForm}
       onAddTemplate={addTemplate}
       onSaveSegment={() => void saveSegment()}
+      onCommitWeights={commitSegmentWeights}
       onDeleteSegment={removeSegment}
       onOpenNewActivity={openNewActivity}
       onEditActivity={(activity) =>
@@ -530,6 +561,7 @@ function StructurePanel({
   setActivityForm,
   onAddTemplate,
   onSaveSegment,
+  onCommitWeights,
   onDeleteSegment,
   onOpenNewActivity,
   onEditActivity,
@@ -551,6 +583,7 @@ function StructurePanel({
     template: typeof SEGMENT_TEMPLATES[number],
   ) => void
   onSaveSegment: () => void
+  onCommitWeights: (next: { id: string; weight: number }[]) => Promise<void>
   onDeleteSegment: (segment: ComponentSegment) => void
   onOpenNewActivity: (segmentId: string) => void
   onEditActivity: (activity: EnrichedActivity) => void
@@ -578,6 +611,10 @@ function StructurePanel({
             .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
           const total = segmentWeightTotal(segments, component.id)
           const remaining = remainingWeightForComponent(segments, component.id)
+          const resizeWeights = canResizeSegmentWeights(
+            componentSegments.length,
+            remaining,
+          )
           const open = openComponentId === component.id
           const existingNames = new Set(
             componentSegments.map((s) => s.name.trim().toLowerCase()),
@@ -605,6 +642,18 @@ function StructurePanel({
                     Restante {formatWeight(remaining)}%. Los componentes son de
                     catálogo (solo lectura).
                   </p>
+                  {resizeWeights && (
+                    <SegmentWeightRange
+                      segments={componentSegments.map((segment) => ({
+                        id: segment.id,
+                        name: segment.name,
+                        weight:
+                          parseWeightPercent(segment.weight_percent) ?? 0,
+                      }))}
+                      disabled={busy}
+                      onCommit={onCommitWeights}
+                    />
+                  )}
                   {remaining > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {SEGMENT_TEMPLATES.map((template) => {
@@ -726,22 +775,24 @@ function StructurePanel({
                         placeholder="Nombre del segmento"
                         className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-400"
                       />
-                      <RangeField
-                        label="Peso"
-                        value={segmentForm.weight}
-                        min={5}
-                        max={remainingWeightForComponent(
-                          segments,
-                          component.id,
-                          segmentForm.editingId,
-                        )}
-                        step={5}
-                        suffix="%"
-                        formatValue={formatWeight}
-                        onChange={(weight) =>
-                          setSegmentForm({ ...segmentForm, weight })
-                        }
-                      />
+                      {!resizeWeights && (
+                        <RangeField
+                          label="Peso"
+                          value={segmentForm.weight}
+                          min={5}
+                          max={remainingWeightForComponent(
+                            segments,
+                            component.id,
+                            segmentForm.editingId,
+                          )}
+                          step={5}
+                          suffix="%"
+                          formatValue={formatWeight}
+                          onChange={(weight) =>
+                            setSegmentForm({ ...segmentForm, weight })
+                          }
+                        />
+                      )}
                       <div className="flex gap-2">
                         <button
                           type="button"

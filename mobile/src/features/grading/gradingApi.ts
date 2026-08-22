@@ -358,6 +358,16 @@ export async function patchComponentSegment(
   return data
 }
 
+export async function patchSegmentWeights(
+  updates: { id: string; weight_percent: string }[],
+): Promise<ComponentSegment[]> {
+  return Promise.all(
+    updates.map((update) =>
+      patchComponentSegment(update.id, { weight_percent: update.weight_percent }),
+    ),
+  )
+}
+
 export async function deleteComponentSegment(id: string): Promise<void> {
   await apiClient.delete(`/api/component-segments/${id}/`)
 }
@@ -422,6 +432,50 @@ export function usePatchComponentSegmentMutation() {
       body: PatchedComponentSegmentRequest
     }) => patchComponentSegment(id, body),
     onSuccess: () => invalidatePlanQueries(queryClient),
+  })
+}
+
+export function usePatchSegmentWeightsMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: patchSegmentWeights,
+    onMutate: async (updates) => {
+      await queryClient.cancelQueries({ queryKey: ['grading'] })
+      const previous = queryClient.getQueriesData<CourseActivitiesBundle>({
+        queryKey: ['grading', 'course-activities'],
+      })
+      const nextWeights = new Map(
+        updates.map((update) => [update.id, update.weight_percent]),
+      )
+      queryClient.setQueriesData<CourseActivitiesBundle>(
+        { queryKey: ['grading', 'course-activities'] },
+        (current) => {
+          if (!current?.segments) return current
+          return {
+            ...current,
+            segments: current.segments.map((segment) => {
+              const weight = nextWeights.get(segment.id)
+              return weight == null
+                ? segment
+                : { ...segment, weight_percent: weight }
+            }),
+          }
+        },
+      )
+      return { previous }
+    },
+    onError: (_error, _updates, context) => {
+      for (const [key, data] of context?.previous ?? []) {
+        queryClient.setQueryData(key, data)
+      }
+    },
+    onSettled: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['grading'] }),
+        queryClient.invalidateQueries({ queryKey: ['grading-schemes'] }),
+        queryClient.invalidateQueries({ queryKey: ['component-segments'] }),
+      ])
+    },
   })
 }
 
