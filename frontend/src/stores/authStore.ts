@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import { loginRequest } from '@/features/auth/loginApi'
+import { faceAuthCallbackRequest, loginRequest } from '@/features/auth/loginApi'
 import { useUiStore } from '@/stores/uiStore'
 import type { AuthUser } from '@/types/user'
 
@@ -17,6 +17,7 @@ type AuthState = {
   }) => void
   clearSession: () => void
   login: (username: string, password: string) => Promise<void>
+  loginWithFaceAuthToken: (token: string) => Promise<void>
   logout: () => void
 }
 
@@ -37,6 +38,15 @@ export const useAuthStore = create<AuthState>()(
       },
       login: async (username, password) => {
         const data = await loginRequest(username, password)
+        set({
+          access: data.access,
+          refresh: data.refresh,
+          user: data.user,
+        })
+        useUiStore.getState().syncInstitutionFromUser(data.user)
+      },
+      loginWithFaceAuthToken: async (token) => {
+        const data = await faceAuthCallbackRequest(token)
         set({
           access: data.access,
           refresh: data.refresh,

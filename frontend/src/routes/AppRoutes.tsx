@@ -37,6 +37,7 @@ import {
   GroupRankingsPage,
   GroupsPage,
   InstitutionsPage,
+  FaceAuthCallbackPage,
   LoginPage,
   ParentsPage,
   PerformanceSummariesPage,
@@ -69,10 +70,19 @@ function LoginRoute() {
   )
 }
 
+function FaceAuthCallbackRoute() {
+  return (
+    <Suspense fallback={<RoutePageFallback />}>
+      <FaceAuthCallbackPage />
+    </Suspense>
+  )
+}
+
 export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginRoute />} />
+      <Route path="/auth/callback" element={<FaceAuthCallbackRoute />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AdminLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />

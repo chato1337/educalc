@@ -13,7 +13,13 @@ from drf_spectacular.views import (
 )
 from rest_framework.routers import DefaultRouter
 
-from core.auth_views import LoginView, MeView, RefreshTokenView
+from core.auth_views import (
+    FaceAuthCallbackView,
+    FaceAuthConfigView,
+    LoginView,
+    MeView,
+    RefreshTokenView,
+)
 from core.dashboard_views import DashboardKPIsView
 from core.academic_grades_report_views import AcademicGradesBulletinPdfView
 from core.performance_summary_views import (
@@ -116,6 +122,12 @@ urlpatterns = [
     path("api/auth/login/", LoginView.as_view(), name="token_obtain_pair"),
     path("api/auth/refresh/", RefreshTokenView.as_view(), name="token_refresh"),
     path("api/auth/me/", MeView.as_view(), name="me"),
+    path("api/auth/faceauth/config/", FaceAuthConfigView.as_view(), name="faceauth-config"),
+    path(
+        "api/auth/faceauth/callback/",
+        FaceAuthCallbackView.as_view(),
+        name="faceauth-callback",
+    ),
     path("api/dashboard/kpis/", DashboardKPIsView.as_view(), name="dashboard-kpis"),
     # Composite report endpoints (must be before router to avoid pk conflict)
     path(

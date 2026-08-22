@@ -175,8 +175,8 @@ bun run generate:api-types
 
 | Ámbito | Archivo | Variables destacadas |
 |--------|---------|----------------------|
-| Docker Compose | `.env` (raiz) | Puertos, Postgres, Django, `VITE_API_BASE_URL` (URL del API desde el navegador) |
-| Backend | `backend/.env` | `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DB_ENGINE`, credenciales PostgreSQL o `SQLITE_PATH`, JWT, `CORS_ALLOWED_ORIGINS` |
+| Docker Compose | `.env` (raiz) | Puertos, Postgres, Django, `VITE_API_BASE_URL`, `FACEAUTH_*` (SSO) |
+| Backend | `backend/.env` | `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DB_ENGINE`, credenciales PostgreSQL o `SQLITE_PATH`, JWT, `CORS_ALLOWED_ORIGINS`, `FACEAUTH_API` / `FACEAUTH_WEB` / `FACEAUTH_APP_ID` / `FACEAUTH_API_KEY` |
 | Frontend | `frontend/.env` | `VITE_APP_NAME`, `VITE_API_BASE_URL` (URL del backend) |
 | Mobile | `mobile/.env` | `VITE_APP_NAME`, `VITE_API_BASE_URL` (vacío = proxy Vite en local) |
 

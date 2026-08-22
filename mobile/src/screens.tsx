@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Course, PerformanceLevel } from './data'
 import { ActivitiesSection } from '@/features/grading/ActivitiesSection'
 import { GradesSummarySection } from '@/features/grades/GradesSummarySection'
@@ -17,6 +17,11 @@ import {
 import { getErrorMessage } from '@/api/errors'
 import { useAuthStore } from '@/auth/authStore'
 import {
+  buildFaceAuthLoginUrl,
+  fetchFaceAuthConfig,
+  type FaceAuthConfig,
+} from '@/features/auth/loginApi'
+import {
   useSessionCourse,
   useTeacherSession,
 } from '@/session/TeacherSessionContext'
@@ -25,12 +30,32 @@ import type { CourseSection } from '@/session/navStore'
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 
-export function LoginScreen() {
+export function LoginScreen({
+  initialError = '',
+}: {
+  initialError?: string
+}) {
   const login = useAuthStore(s => s.login)
   const [user, setUser] = useState('')
   const [pass, setPass] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(initialError)
+  const [faceAuth, setFaceAuth] = useState<FaceAuthConfig | null>(null)
+  const [faceAuthRedirecting, setFaceAuthRedirecting] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void fetchFaceAuthConfig()
+      .then((config) => {
+        if (!cancelled) setFaceAuth(config)
+      })
+      .catch(() => {
+        if (!cancelled) setFaceAuth({ enabled: false, web_url: null, app_id: null })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,6 +71,19 @@ export function LoginScreen() {
     }
   }
 
+  const handleFaceAuthLogin = () => {
+    if (!faceAuth) return
+    const url = buildFaceAuthLoginUrl(faceAuth)
+    if (!url) {
+      setError('Face-Auth no está disponible en este momento.')
+      return
+    }
+    setFaceAuthRedirecting(true)
+    window.location.assign(url)
+  }
+
+  const faceAuthEnabled = Boolean(faceAuth?.enabled)
+
   return (
     <div className="min-h-screen bg-[#1E3A5F] flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm">
@@ -59,6 +97,22 @@ export function LoginScreen() {
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 shadow-2xl">
           <h2 className="text-base font-semibold text-slate-800 mb-5">Iniciar sesión</h2>
+
+          {faceAuthEnabled ? (
+            <div className="mb-5">
+              <button
+                type="button"
+                disabled={faceAuthRedirecting}
+                onClick={handleFaceAuthLogin}
+                className="w-full h-11 rounded-lg bg-[#1E3A5F] text-white font-semibold text-sm hover:bg-[#2D5A8E] disabled:opacity-60 transition-colors"
+              >
+                {faceAuthRedirecting ? 'Redirigiendo…' : 'Iniciar sesión con Face-Auth'}
+              </button>
+              <p className="mt-4 text-center text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                o con usuario y contraseña
+              </p>
+            </div>
+          ) : null}
 
           <div className="space-y-4">
             <div>
@@ -95,7 +149,11 @@ export function LoginScreen() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-5 w-full h-11 rounded-lg bg-[#1E3A5F] text-white font-semibold text-sm hover:bg-[#2D5A8E] disabled:opacity-60 transition-colors"
+            className={`mt-5 w-full h-11 rounded-lg font-semibold text-sm disabled:opacity-60 transition-colors ${
+              faceAuthEnabled
+                ? 'border border-slate-300 text-slate-800 hover:bg-slate-50'
+                : 'bg-[#1E3A5F] text-white hover:bg-[#2D5A8E]'
+            }`}
           >
             {loading ? 'Verificando…' : 'Entrar'}
           </button>
@@ -103,6 +161,35 @@ export function LoginScreen() {
       </div>
     </div>
   )
+}
+
+export function FaceAuthCallbackScreen({
+  onError,
+}: {
+  onError: (message: string) => void
+}) {
+  const loginWithFaceAuthToken = useAuthStore(s => s.loginWithFaceAuthToken)
+  const started = useRef(false)
+
+  useEffect(() => {
+    if (started.current) return
+    started.current = true
+
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('token')
+    window.history.replaceState({}, '', '/')
+
+    if (!token) {
+      onError('No se recibió el token de autenticación. Vuelve a iniciar sesión.')
+      return
+    }
+
+    void loginWithFaceAuthToken(token).catch((err) => {
+      onError(getErrorMessage(err, 'No se pudo completar el inicio de sesión biométrico.'))
+    })
+  }, [loginWithFaceAuthToken, onError])
+
+  return <SplashScreen message="Validando identidad…" />
 }
 
 export function SplashScreen({ message = 'Cargando…' }: { message?: string }) {

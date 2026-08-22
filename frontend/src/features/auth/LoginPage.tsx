@@ -1,3 +1,4 @@
+import FaceRetouchingNaturalOutlinedIcon from '@mui/icons-material/FaceRetouchingNaturalOutlined'
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import {
@@ -5,6 +6,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Divider,
   IconButton,
   InputAdornment,
   Paper,
@@ -13,12 +15,17 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 
 import { APP_NAME } from '@/app/appName'
 import { getErrorMessage } from '@/api/errors'
+import {
+  buildFaceAuthLoginUrl,
+  fetchFaceAuthConfig,
+  type FaceAuthConfig,
+} from '@/features/auth/loginApi'
 import { useAuthStoreHydrated } from '@/hooks/useAuthStoreHydrated'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -36,12 +43,30 @@ export function LoginPage() {
   const from =
     (location.state as { from?: { pathname: string } } | null)?.from
       ?.pathname ?? '/dashboard'
+  const faceAuthErrorFromCallback =
+    (location.state as { faceAuthError?: string } | null)?.faceAuthError ?? null
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(faceAuthErrorFromCallback)
   const [loading, setLoading] = useState(false)
+  const [faceAuth, setFaceAuth] = useState<FaceAuthConfig | null>(null)
+  const [faceAuthRedirecting, setFaceAuthRedirecting] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void fetchFaceAuthConfig()
+      .then((config) => {
+        if (!cancelled) setFaceAuth(config)
+      })
+      .catch(() => {
+        if (!cancelled) setFaceAuth({ enabled: false, web_url: null, app_id: null })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   if (!hydrated) {
     return (
@@ -73,6 +98,19 @@ export function LoginPage() {
       setLoading(false)
     }
   }
+
+  function handleFaceAuthLogin() {
+    if (!faceAuth) return
+    const url = buildFaceAuthLoginUrl(faceAuth)
+    if (!url) {
+      setError(t('login.faceAuthUnavailable'))
+      return
+    }
+    setFaceAuthRedirecting(true)
+    window.location.assign(url)
+  }
+
+  const faceAuthEnabled = Boolean(faceAuth?.enabled)
 
   return (
     <Box
@@ -135,6 +173,31 @@ export function LoginPage() {
             </Alert>
           ) : null}
 
+          {faceAuthEnabled ? (
+            <Box sx={{ mb: 3 }}>
+              <Button
+                type="button"
+                variant="contained"
+                color="primary"
+                size="large"
+                fullWidth
+                disabled={faceAuthRedirecting}
+                startIcon={<FaceRetouchingNaturalOutlinedIcon />}
+                onClick={handleFaceAuthLogin}
+                sx={{ py: 1.4, fontSize: '1rem' }}
+              >
+                {faceAuthRedirecting
+                  ? t('login.faceAuthSubmitting')
+                  : t('login.faceAuth')}
+              </Button>
+              <Divider sx={{ my: 3 }}>
+                <Typography variant="caption" color="text.secondary">
+                  {t('login.orPassword')}
+                </Typography>
+              </Divider>
+            </Box>
+          ) : null}
+
           <Box component="form" onSubmit={handleSubmit} className="flex flex-col gap-3">
             <TextField
               label={t('login.username')}
@@ -184,7 +247,7 @@ export function LoginPage() {
             />
             <Button
               type="submit"
-              variant="contained"
+              variant={faceAuthEnabled ? 'outlined' : 'contained'}
               color="primary"
               size="large"
               disabled={loading}

@@ -50,6 +50,13 @@
     "hidePassword": "Ocultar contraseña",
     "submit": "Iniciar sesión",
     "submitting": "Entrando...",
+    "faceAuth": "Iniciar sesión con Face-Auth",
+    "faceAuthSubmitting": "Redirigiendo…",
+    "faceAuthUnavailable": "Face-Auth no está disponible en este momento.",
+    "orPassword": "o con usuario y contraseña",
+    "callbackExchanging": "Validando identidad…",
+    "callbackMissingToken": "No se recibió el token de autenticación. Vuelve a iniciar sesión.",
+    "callbackError": "No se pudo completar el inicio de sesión biométrico.",
     "slides": {
       "navigation": "Características de la aplicación",
       "academicStructure": {

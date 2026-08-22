@@ -5,6 +5,12 @@ export const LoginPage = lazy(() =>
   import('@/features/auth/LoginPage').then((m) => ({ default: m.LoginPage })),
 )
 
+export const FaceAuthCallbackPage = lazy(() =>
+  import('@/features/auth/FaceAuthCallbackPage').then((m) => ({
+    default: m.FaceAuthCallbackPage,
+  })),
+)
+
 export const DashboardPage = lazy(() =>
   import('@/features/dashboard/DashboardPage').then((m) => ({
     default: m.DashboardPage,

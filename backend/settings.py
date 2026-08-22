@@ -223,6 +223,13 @@ SIMPLE_JWT = {
     ),
 }
 
+# Face-Auth SSO (hosted login + server-to-server token verify → local JWT)
+FACEAUTH_API = os.getenv("FACEAUTH_API", "").strip().rstrip("/")
+FACEAUTH_WEB = os.getenv("FACEAUTH_WEB", "").strip().rstrip("/")
+FACEAUTH_APP_ID = os.getenv("FACEAUTH_APP_ID", "").strip()
+FACEAUTH_API_KEY = os.getenv("FACEAUTH_API_KEY", "").strip()
+FACEAUTH_TIMEOUT_SECONDS = int(os.getenv("FACEAUTH_TIMEOUT_SECONDS", "10"))
+
 # drf-spectacular (OpenAPI / Swagger)
 SPECTACULAR_SETTINGS = {
     "TITLE": "eduCalc API",

@@ -23,6 +23,7 @@ export function getErrorMessage(err: unknown, fallback = 'Error desconocido'): s
     const d = err.response?.data as Record<string, unknown> | string | undefined
     if (typeof d === 'string' && d.trim()) return d
     if (d && typeof d === 'object') {
+      if (typeof d.message === 'string' && d.message.trim()) return d.message
       if (typeof d.detail === 'string') return d.detail
       if (Array.isArray(d.non_field_errors) && d.non_field_errors[0]) {
         return String(d.non_field_errors[0])

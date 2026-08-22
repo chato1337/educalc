@@ -579,6 +579,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/faceauth/callback/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Face-Auth token exchange
+         * @description Exchange a one-time Face-Auth SSO redirect token for eduCalc JWT access/refresh tokens. The backend verifies the token server-to-server (`POST /api/v1/auth/token/verify/` + `X-Api-Key`) and maps `user_id` (or email on first login) to a provisioned local user. Does not reuse the Face-Auth JWT as the app session.
+         */
+        post: operations["auth_faceauth_callback_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/faceauth/config/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Face-Auth SSO configuration
+         * @description Public flags for the hosted SSO button. Never includes the tenant `api_key`. When `enabled` is true, redirect the browser to `{web_url}/login?app_id={app_id}&redirect_uri={callback}`.
+         */
+        get: operations["auth_faceauth_config_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login/": {
         parameters: {
             query?: never;
@@ -3703,6 +3743,18 @@ export interface components {
          * @enum {string}
          */
         EnrollmentStatusEnum: "active" | "withdrawn" | "graduated";
+        FaceAuthCallbackRequestRequest: {
+            /** @description One-time Face-Auth SSO redirect token from the callback query string. */
+            token: string;
+        };
+        FaceAuthConfig: {
+            /** @description True when Face-Auth SSO is fully configured and the login button should show. */
+            enabled: boolean;
+            /** @description Face-Auth hosted frontend origin. Null when SSO is disabled. */
+            web_url: string | null;
+            /** @description Public Face-Auth tenant id. Null when SSO is disabled. */
+            app_id: string | null;
+        };
         Grade: {
             /** Format: uuid */
             readonly id: string;
@@ -6759,6 +6811,80 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    auth_faceauth_callback_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FaceAuthCallbackRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["FaceAuthCallbackRequestRequest"];
+                "multipart/form-data": components["schemas"]["FaceAuthCallbackRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponse"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    auth_faceauth_config_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceAuthConfig"];
                 };
             };
         };

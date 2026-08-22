@@ -371,8 +371,16 @@ class StudentActivityScoreAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "role", "institution", "teacher", "parent", "created_at")
+    list_display = (
+        "user",
+        "role",
+        "institution",
+        "teacher",
+        "parent",
+        "faceauth_user_id",
+        "created_at",
+    )
     list_filter = ("role",)
-    search_fields = ("user__username", "user__email")
+    search_fields = ("user__username", "user__email", "faceauth_user_id")
     readonly_fields = ("id", "created_at", "updated_at")
     autocomplete_fields = ("user", "teacher", "parent", "institution")

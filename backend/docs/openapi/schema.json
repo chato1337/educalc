@@ -2688,6 +2688,145 @@
                 }
             }
         },
+        "/api/auth/faceauth/callback/": {
+            "post": {
+                "operationId": "auth_faceauth_callback_create",
+                "description": "Exchange a one-time Face-Auth SSO redirect token for eduCalc JWT access/refresh tokens. The backend verifies the token server-to-server (`POST /api/v1/auth/token/verify/` + `X-Api-Key`) and maps `user_id` (or email on first login) to a provisioned local user. Does not reuse the Face-Auth JWT as the app session.",
+                "summary": "Face-Auth token exchange",
+                "tags": [
+                    "Authentication"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FaceAuthCallbackRequestRequest"
+                            },
+                            "examples": {
+                                "CallbackRequest": {
+                                    "value": {
+                                        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                    },
+                                    "summary": "Request body"
+                                }
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FaceAuthCallbackRequestRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FaceAuthCallbackRequestRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LoginResponse"
+                                },
+                                "examples": {
+                                    "CallbackResponse": {
+                                        "value": {
+                                            "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+                                            "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+                                            "user": {
+                                                "id": 1,
+                                                "username": "admin",
+                                                "email": "admin@example.com",
+                                                "role": "ADMIN",
+                                                "institution_id": "550e8400-e29b-41d4-a716-446655440000"
+                                            }
+                                        },
+                                        "summary": "Response"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "503": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/auth/faceauth/config/": {
+            "get": {
+                "operationId": "auth_faceauth_config_retrieve",
+                "description": "Public flags for the hosted SSO button. Never includes the tenant `api_key`. When `enabled` is true, redirect the browser to `{web_url}/login?app_id={app_id}&redirect_uri={callback}`.",
+                "summary": "Face-Auth SSO configuration",
+                "tags": [
+                    "Authentication"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FaceAuthConfig"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/auth/login/": {
             "post": {
                 "operationId": "auth_login_create",
@@ -15015,6 +15154,43 @@
                 ],
                 "type": "string",
                 "description": "* `active` - Active\n* `withdrawn` - Withdrawn\n* `graduated` - Graduated"
+            },
+            "FaceAuthCallbackRequestRequest": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "One-time Face-Auth SSO redirect token from the callback query string."
+                    }
+                },
+                "required": [
+                    "token"
+                ]
+            },
+            "FaceAuthConfig": {
+                "type": "object",
+                "properties": {
+                    "enabled": {
+                        "type": "boolean",
+                        "description": "True when Face-Auth SSO is fully configured and the login button should show."
+                    },
+                    "web_url": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Face-Auth hosted frontend origin. Null when SSO is disabled."
+                    },
+                    "app_id": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Public Face-Auth tenant id. Null when SSO is disabled."
+                    }
+                },
+                "required": [
+                    "app_id",
+                    "enabled",
+                    "web_url"
+                ]
             },
             "Grade": {
                 "type": "object",

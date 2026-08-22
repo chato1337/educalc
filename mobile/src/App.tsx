@@ -1,7 +1,8 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { IconHome, IconBook, IconUsers, IconMenu } from './components'
 import {
   LoginScreen,
+  FaceAuthCallbackScreen,
   SplashScreen,
   AccessDeniedScreen,
   BootstrapErrorScreen,
@@ -25,6 +26,7 @@ import {
 import { getErrorMessage } from '@/api/errors'
 import { teacherQueryClient } from '@/api/queryClient'
 import { useAuthStore } from '@/auth/authStore'
+import { isFaceAuthCallbackPath } from '@/features/auth/loginApi'
 import { useRollCallDraftStore } from '@/features/attendance/rollCallDraftStore'
 import { useMeQuery } from '@/features/auth/meApi'
 import {
@@ -577,12 +579,28 @@ function TeacherGate({ onLogout }: { onLogout: () => void }) {
 export default function App() {
   const hydrated = useAuthHydrated()
   const access = useAuthStore(s => s.access)
+  const [faceAuthError, setFaceAuthError] = useState('')
+  const exchangingFaceAuth = useRef(isFaceAuthCallbackPath())
+
+  useEffect(() => {
+    if (access) exchangingFaceAuth.current = false
+  }, [access])
 
   if (!hydrated) {
     return <SplashScreen />
   }
+  if (exchangingFaceAuth.current && !access && !faceAuthError) {
+    return (
+      <FaceAuthCallbackScreen
+        onError={(message) => {
+          exchangingFaceAuth.current = false
+          setFaceAuthError(message)
+        }}
+      />
+    )
+  }
   if (!access) {
-    return <LoginScreen />
+    return <LoginScreen initialError={faceAuthError} />
   }
 
   return (

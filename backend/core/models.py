@@ -915,6 +915,12 @@ class UserProfile(TimeStampedModel):
         blank=True,
         related_name="user_profiles",
     )
+    faceauth_user_id = models.UUIDField(
+        null=True,
+        blank=True,
+        unique=True,
+        help_text="Stable Face-Auth tenant user UUID used as SSO identity key.",
+    )
 
     class Meta:
         verbose_name = "User Profile"
