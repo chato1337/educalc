@@ -318,6 +318,70 @@ export function CourseBadge({ subject, group, campus }: { subject: string; group
   )
 }
 
+export function RangeField({
+  label,
+  value,
+  min,
+  max,
+  step = 0.5,
+  suffix = '',
+  onChange,
+  formatValue = (n) => n.toFixed(2),
+}: {
+  label: string
+  value: string
+  min: number
+  max: number
+  step?: number
+  suffix?: string
+  onChange: (value: string) => void
+  formatValue?: (n: number) => string
+}) {
+  const parsed = Number(String(value).replace(',', '.'))
+  const safeMax = Math.max(0, max)
+  const safeMin = Math.min(min, safeMax)
+  const clamped = Number.isFinite(parsed)
+    ? Math.min(safeMax, Math.max(safeMin, parsed))
+    : safeMax
+  const pct = safeMax === safeMin ? 100 : ((clamped - safeMin) / (safeMax - safeMin)) * 100
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between gap-2">
+        <label className="text-xs font-medium text-slate-600">{label}</label>
+        <span className="font-mono text-sm font-semibold text-slate-800">
+          {formatValue(clamped)}
+          {suffix}
+        </span>
+      </div>
+      <input
+        type="range"
+        min={safeMin}
+        max={safeMax}
+        step={step}
+        value={clamped}
+        onChange={(e) => onChange(formatValue(Number(e.target.value)))}
+        className="app-range"
+        style={{ '--range-progress': `${pct}%` } as React.CSSProperties}
+        aria-label={label}
+        aria-valuemin={safeMin}
+        aria-valuemax={safeMax}
+        aria-valuenow={clamped}
+      />
+      <div className="flex justify-between text-[11px] font-mono text-slate-400">
+        <span>
+          {formatValue(safeMin)}
+          {suffix}
+        </span>
+        <span>
+          máx {formatValue(safeMax)}
+          {suffix}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 export function ScoreKeypad({
   value,
   maxScore,

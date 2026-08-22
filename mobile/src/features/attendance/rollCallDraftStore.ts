@@ -4,7 +4,7 @@ import type { RollCallOrigin } from '@/features/attendance/rollCallApi'
 import type { RollCallStatus } from '@/types/schemas'
 
 export type RollCallMark = {
-  status: RollCallStatus
+  status: RollCallStatus | null
   notes: string
 }
 

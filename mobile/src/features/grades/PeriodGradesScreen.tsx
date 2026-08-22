@@ -1,8 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMemo, useState } from "react"
 
-import { getErrorMessage } from '@/api/errors'
-import { queryKeys } from '@/api/queryKeys'
+import { getErrorMessage } from "@/api/errors"
+import { queryKeys } from "@/api/queryKeys"
 import {
   Avatar,
   Card,
@@ -15,34 +15,40 @@ import {
   Pill,
   SectionHeader,
   WriteError,
-} from '@/components'
+} from "@/components"
 import {
   formatScoreDisplay,
   parseDecimal,
   serializeScore,
-} from '@/features/grading/activityStatus'
+} from "@/features/grading/activityStatus"
 import {
   applyGradingSchemeSuggestionBulk,
   schemeWeightsValid,
   useApplySuggestionBulkPreviewQuery,
   useCourseActivitiesBundle,
   useValidateWeightsQuery,
-} from '@/features/grading/gradingApi'
-import { useGradesQuery, usePatchGradeMutation } from '@/features/grades/gradesApi'
+} from "@/features/grading/gradingApi"
+import {
+  useGradesQuery,
+  usePatchGradeMutation,
+} from "@/features/grades/gradesApi"
 import {
   isLowPerformanceGrade,
   levelFromGrade,
   scaleForScore,
-} from '@/features/grades/scaleUtils'
+} from "@/features/grades/scaleUtils"
+import type { PeriodGradesTab } from "@/navigation"
 import {
   useSessionCourse,
   useTeacherSession,
-} from '@/session/TeacherSessionContext'
-import type { Grade } from '@/types/schemas'
+} from "@/session/TeacherSessionContext"
+import type { Grade } from "@/types/schemas"
 
 export interface PeriodGradesProps {
   courseId: string
   periodId: string
+  tab?: PeriodGradesTab
+  onTabChange?: (tab: PeriodGradesTab) => void
   onBack: () => void
   onGoToRecoveries: () => void
   onGoToPlan?: () => void
@@ -64,6 +70,8 @@ function CourseNotFound({ onBack }: { onBack: () => void }) {
 export function PeriodGradesScreen({
   courseId,
   periodId,
+  tab: tabProp,
+  onTabChange,
   onBack,
   onGoToRecoveries,
   onGoToPlan,
@@ -72,12 +80,16 @@ export function PeriodGradesScreen({
   const session = useTeacherSession()
   const period = session.periods.find((p) => p.id === periodId)
   const queryClient = useQueryClient()
-  const [tab, setTab] = useState<'suggested' | 'review'>('suggested')
-  const [applyError, setApplyError] = useState('')
+  const [tabState, setTabState] = useState<PeriodGradesTab>(
+    tabProp ?? "suggested",
+  )
+  const tab = tabProp ?? tabState
+  const setTab = onTabChange ?? setTabState
+  const [applyError, setApplyError] = useState("")
   const [appliedOk, setAppliedOk] = useState(false)
-  const [reviewFilter, setReviewFilter] = useState<'all' | 'bj'>('all')
+  const [reviewFilter, setReviewFilter] = useState<"all" | "bj">("all")
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editValue, setEditValue] = useState('')
+  const [editValue, setEditValue] = useState("")
 
   const bundleQuery = useCourseActivitiesBundle(
     course?.groupId && course.subjectId && periodId && session.academicYear
@@ -95,24 +107,26 @@ export function PeriodGradesScreen({
   const weightsQuery = useValidateWeightsQuery(scheme?.id)
   const previewQuery = useApplySuggestionBulkPreviewQuery(scheme?.id, weightsOk)
   const gradesQuery = useGradesQuery(
-    periodId ? { course_assignment: courseId, academic_period: periodId } : null,
+    periodId
+      ? { course_assignment: courseId, academic_period: periodId }
+      : null,
   )
 
   const applyMutation = useMutation({
     mutationFn: () => applyGradingSchemeSuggestionBulk(scheme!.id),
     onSuccess: () => {
       setAppliedOk(true)
-      setApplyError('')
-      setTab('review')
-      void queryClient.invalidateQueries({ queryKey: ['grades'] })
+      setApplyError("")
+      setTab("review")
+      void queryClient.invalidateQueries({ queryKey: ["grades"] })
       void queryClient.invalidateQueries({
         queryKey: queryKeys.gradingSchemeBulkPreview(scheme?.id),
       })
-      void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      void queryClient.invalidateQueries({ queryKey: ['grade-recoveries'] })
+      void queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+      void queryClient.invalidateQueries({ queryKey: ["grade-recoveries"] })
     },
     onError: (err) => {
-      setApplyError(getErrorMessage(err, 'No se pudo aplicar la sugerida.'))
+      setApplyError(getErrorMessage(err, "No se pudo aplicar la sugerida."))
     },
   })
 
@@ -122,7 +136,7 @@ export function PeriodGradesScreen({
   const grades = useMemo(
     () =>
       [...(gradesQuery.data ?? [])].sort((a, b) =>
-        a.student_name.localeCompare(b.student_name, 'es'),
+        a.student_name.localeCompare(b.student_name, "es"),
       ),
     [gradesQuery.data],
   )
@@ -134,9 +148,10 @@ export function PeriodGradesScreen({
     return map
   }, [preview])
 
-  const lowGrades = grades.filter((g) => isLowPerformanceGrade(g, session.gradingScales))
-  const visibleGrades =
-    reviewFilter === 'bj' ? lowGrades : grades
+  const lowGrades = grades.filter((g) =>
+    isLowPerformanceGrade(g, session.gradingScales),
+  )
+  const visibleGrades = reviewFilter === "bj" ? lowGrades : grades
 
   const saveEdit = async (grade: Grade) => {
     const serialized = serializeScore(editValue)
@@ -163,24 +178,32 @@ export function PeriodGradesScreen({
   const eligibleCount = preview?.eligible_count ?? 0
   const skipped = preview?.skipped ?? []
   const canApply =
-    weightsOk && eligibleCount > 0 && !applyMutation.isPending && !previewQuery.isLoading
+    weightsOk &&
+    eligibleCount > 0 &&
+    !applyMutation.isPending &&
+    !previewQuery.isLoading
 
   return (
     <div className="flex flex-col h-full bg-[#F1F5F9]">
       <SectionHeader
-        title={`Notas · ${period?.name ?? 'Periodo'}`}
+        title={`Notas · ${period?.name ?? "Periodo"}`}
         subtitle={`${course.subject_name} · ${course.group_name}`}
         onBack={onBack}
       />
 
       <div className="bg-white border-b border-slate-200 flex">
-        {([{ id: 'suggested', label: 'Aplicar sugerida' }, { id: 'review', label: 'Revisar notas' }] as const).map((t) => (
+        {([
+          { id: "suggested", label: "Aplicar sugerida" },
+          { id: "review", label: "Revisar notas" },
+        ] as const).map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => setTab(t.id)}
             className={`flex-1 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
-              tab === t.id ? 'border-[#1E3A5F] text-[#1E3A5F]' : 'border-transparent text-slate-500'
+              tab === t.id
+                ? "border-[#1E3A5F] text-[#1E3A5F]"
+                : "border-transparent text-slate-500"
             }`}
           >
             {t.label}
@@ -189,14 +212,19 @@ export function PeriodGradesScreen({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {tab === 'suggested' && (
+        {tab === "suggested" && (
           <div className="p-4 space-y-4">
             {loading && (
-              <p className="text-sm text-slate-400 text-center py-8">Cargando esquema…</p>
+              <p className="text-sm text-slate-400 text-center py-8">
+                Cargando esquema…
+              </p>
             )}
             {bundleQuery.isError && (
               <p className="text-sm text-red-600 text-center">
-                {getErrorMessage(bundleQuery.error, 'No se pudo cargar el esquema.')}
+                {getErrorMessage(
+                  bundleQuery.error,
+                  "No se pudo cargar el esquema.",
+                )}
               </p>
             )}
             {!loading && !scheme && (
@@ -226,7 +254,7 @@ export function PeriodGradesScreen({
                 </p>
                 <p className="text-xs text-amber-700">
                   {weightsQuery.data?.message ||
-                    'Corrige los pesos de componentes o segmentos antes de aplicar la sugerida.'}
+                    "Corrige los pesos de componentes o segmentos antes de aplicar la sugerida."}
                 </p>
                 {onGoToPlan && (
                   <button
@@ -245,21 +273,28 @@ export function PeriodGradesScreen({
                 <div className="grid grid-cols-2 gap-3">
                   <Card className="p-4 text-center">
                     <p className="font-mono text-3xl font-bold text-emerald-600">
-                      {previewQuery.isLoading ? '…' : eligibleCount}
+                      {previewQuery.isLoading ? "…" : eligibleCount}
                     </p>
-                    <p className="text-xs text-slate-500 mt-1">Listos para aplicar</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Listos para aplicar
+                    </p>
                   </Card>
                   <Card className="p-4 text-center">
                     <p className="font-mono text-3xl font-bold text-amber-600">
-                      {previewQuery.isLoading ? '…' : skipped.length}
+                      {previewQuery.isLoading ? "…" : skipped.length}
                     </p>
-                    <p className="text-xs text-slate-500 mt-1">Con actividades pendientes</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Con actividades pendientes
+                    </p>
                   </Card>
                 </div>
 
                 {previewQuery.isError && (
                   <p className="text-sm text-red-600">
-                    {getErrorMessage(previewQuery.error, 'No se pudo calcular la vista previa.')}
+                    {getErrorMessage(
+                      previewQuery.error,
+                      "No se pudo calcular la vista previa.",
+                    )}
                   </p>
                 )}
 
@@ -270,23 +305,38 @@ export function PeriodGradesScreen({
                       No entran al cálculo masivo
                     </p>
                     {skipped.map((s) => (
-                      <p key={s.student_id} className="text-xs text-amber-700 py-0.5">
+                      <p
+                        key={s.student_id}
+                        className="text-xs text-amber-700 py-0.5"
+                      >
                         · {s.student_name}
-                        {s.reason === 'incomplete_scores'
+                        {s.reason === "incomplete_scores"
                           ? ` (${s.scored_activities}/${s.total_activities})`
-                          : ''}
+                          : ""}
                       </p>
                     ))}
                   </div>
                 )}
 
                 <Card className="p-4">
-                  <p className="text-xs font-semibold text-slate-600 mb-2">¿Qué hace “aplicar sugerida”?</p>
+                  <p className="text-xs font-semibold text-slate-600 mb-2">
+                    ¿Qué hace “aplicar sugerida”?
+                  </p>
                   <div className="space-y-1.5 text-xs text-slate-500">
-                    <p>✓ Escribe <span className="font-semibold text-slate-700">nota oficial del periodo</span> (numerical_grade)</p>
+                    <p>
+                      ✓ Escribe{" "}
+                      <span className="font-semibold text-slate-700">
+                        nota oficial del periodo
+                      </span>{" "}
+                      (numerical_grade)
+                    </p>
                     <p>✓ Asigna nivel de desempeño (BJ / BS / AL / SP)</p>
-                    <p className="text-slate-400">✗ No cambia la nota definitiva</p>
-                    <p className="text-slate-400">✗ No aplica a estudiantes con actividades pendientes</p>
+                    <p className="text-slate-400">
+                      ✗ No cambia la nota definitiva
+                    </p>
+                    <p className="text-slate-400">
+                      ✗ No aplica a estudiantes con actividades pendientes
+                    </p>
                   </div>
                 </Card>
 
@@ -322,14 +372,19 @@ export function PeriodGradesScreen({
           </div>
         )}
 
-        {tab === 'review' && (
+        {tab === "review" && (
           <div className="p-3 space-y-1">
             {gradesQuery.isLoading && (
-              <p className="text-sm text-slate-400 text-center py-8">Cargando notas…</p>
+              <p className="text-sm text-slate-400 text-center py-8">
+                Cargando notas…
+              </p>
             )}
             {gradesQuery.isError && (
               <p className="text-sm text-red-600 text-center py-4">
-                {getErrorMessage(gradesQuery.error, 'No se pudieron cargar las notas.')}
+                {getErrorMessage(
+                  gradesQuery.error,
+                  "No se pudieron cargar las notas.",
+                )}
               </p>
             )}
             {!gradesQuery.isLoading && grades.length === 0 && (
@@ -341,13 +396,13 @@ export function PeriodGradesScreen({
             )}
             {grades.length > 0 && (
               <div className="flex gap-2 pb-2">
-                <button type="button" onClick={() => setReviewFilter('all')}>
-                  <Pill color={reviewFilter === 'all' ? 'blue' : 'default'}>
+                <button type="button" onClick={() => setReviewFilter("all")}>
+                  <Pill color={reviewFilter === "all" ? "blue" : "default"}>
                     Todos ({grades.length})
                   </Pill>
                 </button>
-                <button type="button" onClick={() => setReviewFilter('bj')}>
-                  <Pill color={reviewFilter === 'bj' ? 'red' : 'default'}>
+                <button type="button" onClick={() => setReviewFilter("bj")}>
+                  <Pill color={reviewFilter === "bj" ? "red" : "default"}>
                     Bajo ({lowGrades.length})
                   </Pill>
                 </button>
@@ -358,19 +413,24 @@ export function PeriodGradesScreen({
               const suggested = suggestedByStudent.get(g.student)
               const isEditing = editingId === g.id
               return (
-                <div key={g.id} className="bg-white rounded-xl border border-slate-200">
+                <div
+                  key={g.id}
+                  className="bg-white rounded-xl border border-slate-200"
+                >
                   <button
                     type="button"
                     onClick={() => {
                       setEditingId(isEditing ? null : g.id)
-                      setEditValue(g.numerical_grade ?? '')
+                      setEditValue(g.numerical_grade ?? "")
                     }}
                     className="w-full text-left flex items-center px-3.5 py-3 gap-3"
                   >
                     <Avatar name={g.student_name} size="sm" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{g.student_name}</p>
-                      {suggested != null && suggested !== '' && (
+                      <p className="text-sm font-medium text-slate-900 truncate">
+                        {g.student_name}
+                      </p>
+                      {suggested != null && suggested !== "" && (
                         <p className="text-[10px] text-slate-400">
                           Sugerida {formatScoreDisplay(suggested)}
                         </p>
@@ -386,7 +446,13 @@ export function PeriodGradesScreen({
                       {level && <LevelChip level={level} compact />}
                       <div className="text-right">
                         <p className="text-[10px] text-slate-400">Definitiva</p>
-                        <p className={`font-mono text-sm font-bold ${g.definitive_grade ? 'text-slate-800' : 'text-slate-300'}`}>
+                        <p
+                          className={`font-mono text-sm font-bold ${
+                            g.definitive_grade
+                              ? "text-slate-800"
+                              : "text-slate-300"
+                          }`}
+                        >
                           {formatScoreDisplay(g.definitive_grade)}
                         </p>
                       </div>
@@ -409,16 +475,22 @@ export function PeriodGradesScreen({
                         />
                         <button
                           type="button"
-                          disabled={patchMutation.isPending || serializeScore(editValue) == null}
+                          disabled={
+                            patchMutation.isPending ||
+                            serializeScore(editValue) == null
+                          }
                           onClick={() => void saveEdit(g)}
                           className="h-10 px-3 rounded-lg bg-[#1E3A5F] text-white text-xs font-semibold disabled:opacity-40"
                         >
-                          {patchMutation.isPending ? '…' : 'Guardar'}
+                          {patchMutation.isPending ? "…" : "Guardar"}
                         </button>
                       </div>
                       {patchMutation.isError && (
                         <WriteError
-                          message={getErrorMessage(patchMutation.error, 'No se pudo guardar.')}
+                          message={getErrorMessage(
+                            patchMutation.error,
+                            "No se pudo guardar.",
+                          )}
                           onRetry={() => void saveEdit(g)}
                           disabled={patchMutation.isPending}
                         />

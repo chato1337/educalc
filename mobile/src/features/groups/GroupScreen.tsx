@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState } from "react"
 
-import { getErrorMessage } from '@/api/errors'
+import { getErrorMessage } from "@/api/errors"
 import {
   Avatar,
   Card,
@@ -12,35 +12,34 @@ import {
   LoadMoreButton,
   Pill,
   WriteError,
-} from '@/components'
-import {
-  flatInfinitePages,
-  infiniteListCount,
-} from '@/api/useInfiniteList'
-import { formatScoreDisplay } from '@/features/grading/activityStatus'
-import { useRollCallRosterQuery } from '@/features/attendance/rollCallApi'
-import { useGroupRankingsQuery } from '@/features/groups/groupRankingsApi'
-import { useActiveEnrollmentsQuery } from '@/features/students/enrollmentsApi'
+} from "@/components"
+import { flatInfinitePages, infiniteListCount } from "@/api/useInfiniteList"
+import { formatScoreDisplay } from "@/features/grading/activityStatus"
+import { useRollCallRosterQuery } from "@/features/attendance/rollCallApi"
+import { useGroupRankingsQuery } from "@/features/groups/groupRankingsApi"
+import { useActiveEnrollmentsQuery } from "@/features/students/enrollmentsApi"
 import {
   useCreateDisciplinaryReportMutation,
   useDisciplinaryReportsInfiniteQuery,
   usePatchDisciplinaryReportMutation,
-} from '@/features/students/disciplinaryReportsApi'
-import { formatLongDate, todayIso } from '@/session/periodUtils'
-import { useTeacherSession } from '@/session/TeacherSessionContext'
-import type { GroupTab } from '@/session/navStore'
-import type { DisciplinaryReport, Enrollment } from '@/types/schemas'
+} from "@/features/students/disciplinaryReportsApi"
+import { formatLongDate, todayIso } from "@/session/periodUtils"
+import type { GroupTab, ReportPick } from "@/navigation"
+import { useTeacherSession } from "@/session/TeacherSessionContext"
+import type { DisciplinaryReport, Enrollment } from "@/types/schemas"
 
-export type { GroupTab }
+export type { GroupTab, ReportPick }
 
 export interface GroupScreenProps {
   onSelectStudent: (id: string) => void
   onGoToRollCall: () => void
   onOpenBulletin: (studentId?: string) => void
-  onOpenIndicatorsReport: (studentId: string, studentName: string) => void
-  onOpenSchoolRecord: (studentId: string, studentName: string) => void
+  onOpenIndicatorsReport: (studentId: string) => void
+  onOpenSchoolRecord: (studentId: string) => void
   tab?: GroupTab
   onTabChange?: (tab: GroupTab) => void
+  pick?: ReportPick | null
+  onPickChange?: (pick: ReportPick | null) => void
   initialTab?: GroupTab
 }
 
@@ -52,7 +51,9 @@ export function GroupScreen({
   onOpenSchoolRecord,
   tab: tabProp,
   onTabChange,
-  initialTab = 'rollCall',
+  pick,
+  onPickChange,
+  initialTab = "rollCall",
 }: GroupScreenProps) {
   const session = useTeacherSession()
   const director = session.gradeDirectors[0]
@@ -72,15 +73,15 @@ export function GroupScreen({
   const enrollments = useMemo(
     () =>
       [...(enrollmentsQuery.data ?? [])].sort((a, b) =>
-        a.student_name.localeCompare(b.student_name, 'es'),
+        a.student_name.localeCompare(b.student_name, "es"),
       ),
     [enrollmentsQuery.data],
   )
   const students = rosterQuery.data?.students ?? []
   const todayCounts = {
-    PRESENT: students.filter((s) => s.status === 'PRESENT').length,
-    EXCUSED: students.filter((s) => s.status === 'EXCUSED').length,
-    UNEXCUSED: students.filter((s) => s.status === 'UNEXCUSED').length,
+    PRESENT: students.filter((s) => s.status === "PRESENT").length,
+    EXCUSED: students.filter((s) => s.status === "EXCUSED").length,
+    UNEXCUSED: students.filter((s) => s.status === "UNEXCUSED").length,
   }
   const alreadyCalled = students.some((s) => s.status != null)
   const period = session.periods.find((p) => p.id === session.selectedPeriodId)
@@ -92,36 +93,34 @@ export function GroupScreen({
           <div className="flex items-center gap-2 mb-0.5">
             <Pill color="blue">Director</Pill>
             <h1 className="text-base font-bold text-slate-900">
-              Mi grupo{director ? ` · ${director.group_name}` : ''}
+              Mi grupo{director ? ` · ${director.group_name}` : ""}
             </h1>
           </div>
           <p className="text-xs text-slate-500">
-            {director?.campus_name ?? 'Sede'}
-            {director ? ` · ${director.academic_year_year}` : ''}
+            {director?.campus_name ?? "Sede"}
+            {director ? ` · ${director.academic_year_year}` : ""}
             {enrollments.length > 0
               ? ` · ${enrollments.length} estudiantes`
               : students.length > 0
                 ? ` · ${students.length} estudiantes`
-                : ''}
+                : ""}
           </p>
         </div>
         <div className="flex border-t border-slate-100 overflow-x-auto">
-          {(
-            [
-              { id: 'rollCall', label: 'Llamado' },
-              { id: 'ranking', label: 'Ranking' },
-              { id: 'disciplinary', label: 'Convivencia' },
-              { id: 'reports', label: 'Informes' },
-            ] as const
-          ).map((t) => (
+          {([
+            { id: "rollCall", label: "Llamado" },
+            { id: "ranking", label: "Ranking" },
+            { id: "disciplinary", label: "Convivencia" },
+            { id: "reports", label: "Informes" },
+          ] as const).map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
               className={`px-4 py-2.5 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors ${
                 tab === t.id
-                  ? 'border-[#1E3A5F] text-[#1E3A5F]'
-                  : 'border-transparent text-slate-500'
+                  ? "border-[#1E3A5F] text-[#1E3A5F]"
+                  : "border-transparent text-slate-500"
               }`}
             >
               {t.label}
@@ -131,7 +130,7 @@ export function GroupScreen({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {tab === 'rollCall' && (
+        {tab === "rollCall" && (
           <RollCallTab
             date={date}
             alreadyCalled={alreadyCalled}
@@ -142,7 +141,7 @@ export function GroupScreen({
             onGoToRollCall={onGoToRollCall}
           />
         )}
-        {tab === 'ranking' && (
+        {tab === "ranking" && (
           <RankingTab
             groupId={director?.group ?? null}
             periodId={session.selectedPeriodId}
@@ -150,7 +149,7 @@ export function GroupScreen({
             onSelectStudent={onSelectStudent}
           />
         )}
-        {tab === 'disciplinary' && (
+        {tab === "disciplinary" && (
           <DisciplinaryTab
             enrollments={enrollments}
             enrollmentsLoading={enrollmentsQuery.isLoading}
@@ -159,12 +158,14 @@ export function GroupScreen({
             teacherId={session.teacher?.id}
           />
         )}
-        {tab === 'reports' && (
+        {tab === "reports" && (
           <ReportsTab
             enrollments={enrollments}
             periodName={period?.name}
             year={session.academicYear?.year}
             groupName={director?.group_name}
+            pick={pick ?? null}
+            onPickChange={onPickChange}
             onOpenBulletin={onOpenBulletin}
             onOpenIndicatorsReport={onOpenIndicatorsReport}
             onOpenSchoolRecord={onOpenSchoolRecord}
@@ -214,13 +215,15 @@ function RollCallTab({
       </button>
       <Card className="p-4">
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-          {alreadyCalled ? `Lista de hoy — ${formatLongDate(date)}` : 'Lista de hoy'}
+          {alreadyCalled
+            ? `Lista de hoy — ${formatLongDate(date)}`
+            : "Lista de hoy"}
         </p>
         {rosterLoading ? (
           <p className="text-sm text-slate-400 text-center py-3">Cargando…</p>
         ) : rosterFailed ? (
           <p className="text-sm text-red-600 text-center py-2">
-            {getErrorMessage(rosterError, 'No se pudo cargar el roster.')}
+            {getErrorMessage(rosterError, "No se pudo cargar el roster.")}
           </p>
         ) : !alreadyCalled ? (
           <p className="text-sm text-slate-400 text-center py-2">
@@ -273,14 +276,16 @@ function RankingTab({
   return (
     <div className="p-4 space-y-1">
       <p className="text-xs text-slate-400 mb-2">
-        Promedio del {periodName ?? 'periodo'} · Todas las asignaturas
+        Promedio del {periodName ?? "periodo"} · Todas las asignaturas
       </p>
       {query.isLoading && (
-        <p className="text-sm text-slate-400 text-center py-4">Cargando ranking…</p>
+        <p className="text-sm text-slate-400 text-center py-4">
+          Cargando ranking…
+        </p>
       )}
       {query.isError && (
         <p className="text-sm text-red-600 text-center py-2">
-          {getErrorMessage(query.error, 'No se pudo cargar el ranking.')}
+          {getErrorMessage(query.error, "No se pudo cargar el ranking.")}
         </p>
       )}
       {!query.isLoading && !query.isError && rows.length === 0 && (
@@ -302,12 +307,12 @@ function RankingTab({
             <span
               className={`font-mono text-sm font-bold w-6 text-center ${
                 place === 1
-                  ? 'text-amber-500'
+                  ? "text-amber-500"
                   : place === 2
-                    ? 'text-slate-400'
+                    ? "text-slate-400"
                     : place === 3
-                      ? 'text-amber-700'
-                      : 'text-slate-400'
+                      ? "text-amber-700"
+                      : "text-slate-400"
               }`}
             >
               {place}
@@ -331,10 +336,10 @@ function RankingTab({
 function formatReportDate(iso: string): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return iso
-  return date.toLocaleDateString('es-CO', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+  return date.toLocaleDateString("es-CO", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
   })
 }
 
@@ -362,10 +367,10 @@ function DisciplinaryTab({
   const patchMutation = usePatchDisciplinaryReportMutation()
 
   const [composing, setComposing] = useState(false)
-  const [studentId, setStudentId] = useState('')
-  const [text, setText] = useState('')
+  const [studentId, setStudentId] = useState("")
+  const [text, setText] = useState("")
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [formError, setFormError] = useState('')
+  const [formError, setFormError] = useState("")
   const [writeFailed, setWriteFailed] = useState(false)
 
   const reports = useMemo(() => {
@@ -381,9 +386,9 @@ function DisciplinaryTab({
   const resetForm = () => {
     setComposing(false)
     setEditingId(null)
-    setStudentId('')
-    setText('')
-    setFormError('')
+    setStudentId("")
+    setText("")
+    setFormError("")
     setWriteFailed(false)
   }
 
@@ -391,8 +396,8 @@ function DisciplinaryTab({
     setComposing(true)
     setEditingId(row.id)
     setStudentId(row.student)
-    setText(row.report_text ?? '')
-    setFormError('')
+    setText(row.report_text ?? "")
+    setFormError("")
     setWriteFailed(false)
   }
 
@@ -400,10 +405,10 @@ function DisciplinaryTab({
     if (!periodId) return
     if (!studentId || !text.trim()) {
       setWriteFailed(false)
-      setFormError('Elige un estudiante y escribe el reporte.')
+      setFormError("Elige un estudiante y escribe el reporte.")
       return
     }
-    setFormError('')
+    setFormError("")
     setWriteFailed(false)
     try {
       if (editingId) {
@@ -422,7 +427,7 @@ function DisciplinaryTab({
       resetForm()
     } catch (err) {
       setWriteFailed(true)
-      setFormError(getErrorMessage(err, 'No se pudo guardar el reporte.'))
+      setFormError(getErrorMessage(err, "No se pudo guardar el reporte."))
     }
   }
 
@@ -436,9 +441,9 @@ function DisciplinaryTab({
           onClick={() => {
             setComposing(true)
             setEditingId(null)
-            setStudentId('')
-            setText('')
-            setFormError('')
+            setStudentId("")
+            setText("")
+            setFormError("")
           }}
           className="w-full bg-white rounded-xl border border-slate-200 flex items-center px-4 py-3 gap-3 hover:border-slate-300 transition-colors"
         >
@@ -446,9 +451,13 @@ function DisciplinaryTab({
             <IconPencil size={16} />
           </div>
           <div className="flex-1 text-left">
-            <p className="text-sm font-semibold text-slate-900">Nuevo reporte</p>
+            <p className="text-sm font-semibold text-slate-900">
+              Nuevo reporte
+            </p>
             <p className="text-xs text-slate-500">
-              {periodName ? `Bitácora · ${periodName}` : 'Seleccionar estudiante y redactar'}
+              {periodName
+                ? `Bitácora · ${periodName}`
+                : "Seleccionar estudiante y redactar"}
             </p>
           </div>
           <IconChevronRight size={16} />
@@ -458,7 +467,7 @@ function DisciplinaryTab({
       {composing && (
         <Card className="p-4 space-y-3">
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            {editingId ? 'Editar reporte' : 'Nuevo reporte'}
+            {editingId ? "Editar reporte" : "Nuevo reporte"}
           </p>
           <select
             value={studentId}
@@ -501,18 +510,23 @@ function DisciplinaryTab({
               disabled={busy || !periodId}
               className="flex-1 h-10 rounded-xl bg-[#1E3A5F] text-white text-sm font-semibold disabled:opacity-50"
             >
-              {busy ? 'Guardando…' : 'Guardar'}
+              {busy ? "Guardando…" : "Guardar"}
             </button>
           </div>
         </Card>
       )}
 
       {enrollmentsLoading || reportsQuery.isLoading ? (
-        <p className="text-sm text-slate-400 text-center py-4">Cargando bitácora…</p>
+        <p className="text-sm text-slate-400 text-center py-4">
+          Cargando bitácora…
+        </p>
       ) : reportsQuery.isError ? (
         <div className="px-1 py-2">
           <WriteError
-            message={getErrorMessage(reportsQuery.error, 'No se pudieron cargar los reportes.')}
+            message={getErrorMessage(
+              reportsQuery.error,
+              "No se pudieron cargar los reportes.",
+            )}
             onRetry={() => void reportsQuery.refetch()}
           />
         </div>
@@ -537,12 +551,13 @@ function DisciplinaryTab({
                       {row.student_name}
                     </p>
                     <p className="text-[10px] text-slate-400">
-                      {row.created_by_name || 'Docente'} · {formatReportDate(row.created_at)}
+                      {row.created_by_name || "Docente"} ·{" "}
+                      {formatReportDate(row.created_at)}
                     </p>
                   </div>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap">
-                  {row.report_text?.trim() || 'Sin texto.'}
+                  {row.report_text?.trim() || "Sin texto."}
                 </p>
               </Card>
             </button>
@@ -565,6 +580,8 @@ function ReportsTab({
   periodName,
   year,
   groupName,
+  pick,
+  onPickChange,
   onOpenBulletin,
   onOpenIndicatorsReport,
   onOpenSchoolRecord,
@@ -573,42 +590,46 @@ function ReportsTab({
   periodName?: string
   year?: number
   groupName?: string
+  pick: ReportPick | null
+  onPickChange?: (pick: ReportPick | null) => void
   onOpenBulletin: (studentId?: string) => void
-  onOpenIndicatorsReport: (studentId: string, studentName: string) => void
-  onOpenSchoolRecord: (studentId: string, studentName: string) => void
+  onOpenIndicatorsReport: (studentId: string) => void
+  onOpenSchoolRecord: (studentId: string) => void
 }) {
-  const [mode, setMode] = useState<'menu' | 'indicators' | 'record' | 'student-bulletin'>(
-    'menu',
-  )
+  const [pickState, setPickState] = useState<ReportPick | null>(pick)
+  const mode = onPickChange ? pick : pickState
+  const setMode = onPickChange ?? setPickState
 
-  if (mode !== 'menu') {
+  if (mode) {
     const title =
-      mode === 'indicators'
-        ? 'Informe de indicadores'
-        : mode === 'record'
-          ? 'Registro escolar'
-          : 'Boletín de un estudiante'
+      mode === "indicators"
+        ? "Informe de indicadores"
+        : mode === "record"
+          ? "Registro escolar"
+          : "Boletín de un estudiante"
     const onPick =
-      mode === 'indicators'
+      mode === "indicators"
         ? onOpenIndicatorsReport
-        : mode === 'record'
+        : mode === "record"
           ? onOpenSchoolRecord
           : (id: string) => onOpenBulletin(id)
     return (
       <div className="p-4 space-y-2">
         <button
           type="button"
-          onClick={() => setMode('menu')}
+          onClick={() => setMode(null)}
           className="text-xs font-semibold text-blue-600 hover:underline"
         >
           ← Volver a informes
         </button>
-        <p className="text-xs text-slate-400 mb-2">{title} · Elige un estudiante</p>
+        <p className="text-xs text-slate-400 mb-2">
+          {title} · Elige un estudiante
+        </p>
         {enrollments.map((e) => (
           <button
             key={e.id}
             type="button"
-            onClick={() => onPick(e.student, e.student_name)}
+            onClick={() => onPick(e.student)}
             className="w-full text-left bg-white rounded-xl border border-slate-200 flex items-center px-3.5 py-3 gap-3 hover:border-slate-300"
           >
             <Avatar name={e.student_name} size="sm" />
@@ -639,56 +660,64 @@ function ReportsTab({
             <IconDocument size={18} />
           </div>
           <div className="flex-1 text-left">
-            <p className="text-sm font-semibold text-slate-900">Boletín del grupo</p>
+            <p className="text-sm font-semibold text-slate-900">
+              Boletín del grupo
+            </p>
             <p className="text-xs text-slate-500">
-              PDF · {groupName ?? 'Grupo'}
-              {periodName ? ` · ${periodName}` : ''}
+              PDF · {groupName ?? "Grupo"}
+              {periodName ? ` · ${periodName}` : ""}
             </p>
           </div>
           <IconChevronRight size={16} />
         </button>
         <button
           type="button"
-          onClick={() => setMode('student-bulletin')}
+          onClick={() => setMode("bulletin")}
           className="w-full flex items-center px-4 py-3.5 gap-3 hover:bg-slate-50 transition-colors"
         >
           <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-blue-50 text-blue-600">
             <IconDocument size={18} />
           </div>
           <div className="flex-1 text-left">
-            <p className="text-sm font-semibold text-slate-900">Boletín de un estudiante</p>
+            <p className="text-sm font-semibold text-slate-900">
+              Boletín de un estudiante
+            </p>
             <p className="text-xs text-slate-500">PDF individual</p>
           </div>
           <IconChevronRight size={16} />
         </button>
         <button
           type="button"
-          onClick={() => setMode('indicators')}
+          onClick={() => setMode("indicators")}
           className="w-full flex items-center px-4 py-3.5 gap-3 hover:bg-slate-50 transition-colors"
         >
           <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-emerald-50 text-emerald-600">
             <IconDocument size={18} />
           </div>
           <div className="flex-1 text-left">
-            <p className="text-sm font-semibold text-slate-900">Informe de indicadores</p>
+            <p className="text-sm font-semibold text-slate-900">
+              Informe de indicadores
+            </p>
             <p className="text-xs text-slate-500">
-              Por estudiante{periodName ? ` · ${periodName}` : ''}
+              Por estudiante{periodName ? ` · ${periodName}` : ""}
             </p>
           </div>
           <IconChevronRight size={16} />
         </button>
         <button
           type="button"
-          onClick={() => setMode('record')}
+          onClick={() => setMode("record")}
           className="w-full flex items-center px-4 py-3.5 gap-3 hover:bg-slate-50 transition-colors"
         >
           <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-amber-50 text-amber-600">
             <IconDocument size={18} />
           </div>
           <div className="flex-1 text-left">
-            <p className="text-sm font-semibold text-slate-900">Registro escolar</p>
+            <p className="text-sm font-semibold text-slate-900">
+              Registro escolar
+            </p>
             <p className="text-xs text-slate-500">
-              Anual{year ? ` · ${year}` : ''}
+              Anual{year ? ` · ${year}` : ""}
             </p>
           </div>
           <IconChevronRight size={16} />
