@@ -42,18 +42,25 @@ export function useAttendancesQuery(params: AttendanceListParams | null) {
   })
 }
 
-export function summarizeAttendances(rows: Attendance[]) {
+export function summarizeAttendances(
+  rows: Attendance[],
+  rosterCount = 0,
+) {
   let excused = 0
   let unexcused = 0
-  let withoutAbsences = 0
   const withAbsences: Attendance[] = []
+  const withAbsenceStudentIds = new Set<string>()
   for (const row of rows) {
     const ce = row.excused_absences ?? 0
     const se = row.unexcused_absences ?? 0
     excused += ce
     unexcused += se
-    if (ce === 0 && se === 0) withoutAbsences += 1
-    else withAbsences.push(row)
+    if (ce > 0 || se > 0) {
+      withAbsences.push(row)
+      withAbsenceStudentIds.add(row.student)
+    }
   }
+  // Group-level Attendance rows only exist for students with absences.
+  const withoutAbsences = Math.max(0, rosterCount - withAbsenceStudentIds.size)
   return { excused, unexcused, withoutAbsences, withAbsences }
 }

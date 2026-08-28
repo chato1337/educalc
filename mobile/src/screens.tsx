@@ -7,6 +7,7 @@ import {
   summarizeAttendances,
   useAttendancesQuery,
 } from "@/features/attendance/attendancesApi"
+import { useActiveEnrollmentsQuery } from "@/features/students/enrollmentsApi"
 import { formatLongDate, todayIso } from "@/session/periodUtils"
 import {
   IconCalendar,
@@ -760,8 +761,16 @@ function AttendanceSection({
         }
       : null,
   )
+  const enrollmentsQuery = useActiveEnrollmentsQuery(
+    course.groupId && session.academicYear
+      ? { group: course.groupId, academic_year: session.academicYear.id }
+      : null,
+  )
   const rows = attendancesQuery.data ?? []
-  const summary = summarizeAttendances(rows)
+  const summary = summarizeAttendances(rows, enrollmentsQuery.data?.length ?? 0)
+  const summaryLoading =
+    attendancesQuery.isLoading || enrollmentsQuery.isLoading
+  const summaryError = attendancesQuery.error ?? enrollmentsQuery.error
 
   return (
     <div className="p-4 space-y-4">
@@ -787,16 +796,13 @@ function AttendanceSection({
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
           Acumulado {period?.shortName ?? "del periodo"}
         </p>
-        {attendancesQuery.isLoading ? (
+        {summaryLoading ? (
           <p className="text-sm text-slate-400 text-center py-4">
             Cargando acumulado…
           </p>
-        ) : attendancesQuery.isError ? (
+        ) : summaryError ? (
           <p className="text-sm text-red-600 text-center py-2">
-            {getErrorMessage(
-              attendancesQuery.error,
-              "No se pudo cargar el acumulado.",
-            )}
+            {getErrorMessage(summaryError, "No se pudo cargar el acumulado.")}
           </p>
         ) : (
           <div className="grid grid-cols-3 gap-3 text-center">
