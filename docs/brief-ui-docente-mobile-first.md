@@ -531,7 +531,7 @@ Pantalla de revisión: estudiante, sugerida, oficial, nivel (chip de color por B
 1. Más / Curso → Recuperaciones, o deep-link desde nota BJ.
 2. Lista `eligible`.
 3. Captura: `recovery_grade` + `description` (evidencia: “taller de recuperación 14-ago”).
-4. Confirmar: “La definitiva pasará de X a Y. La nota del periodo (numérica) no cambia.”
+4. Confirmar: “La definitiva pasará de X a Y. La nota del periodo (numérica) no cambia.” En el boletín, **ese periodo** muestra Y.
 5. Historial visible (reintentos).
 
 **Tablet:** lista de elegibles a la izquierda; formulario + historial a la derecha. Confirmar en el detalle, no en un modal que tape la nota original.

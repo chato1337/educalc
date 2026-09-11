@@ -302,7 +302,7 @@ Calificación numérica de un estudiante en una asignatura por periodo.
 | `academic_period` | FK → AcademicPeriod | Periodo | Sí |
 | `numerical_grade` | decimal | Calificación numérica (0-5) | Sí |
 | `performance_level` | FK → GradingScale | Nivel de desempeño (derivado) | No |
-| `definitive_grade` | decimal | Calificación definitiva anual (para último periodo) | No |
+| `definitive_grade` | decimal | Nota definitiva **del periodo** (recuperación u override). El boletín la usa en esa columna de periodo si existe | No |
 | `created_at` | datetime | Fecha de creación | Sí |
 | `updated_at` | datetime | Última actualización | Sí |
 

@@ -210,25 +210,27 @@ def _parse_uuid_list(raw: str | None) -> list[UUID] | None:
     return out or None
 
 
+def _effective_period_grade(grade: Grade) -> Decimal:
+    """Grade shown for a period: recovery (``definitive_grade``) if set, else official."""
+    if grade.definitive_grade is not None:
+        return grade.definitive_grade
+    return grade.numerical_grade
+
+
 def _year_definitive_grade(
     grades_for_assignment: list[Grade], period_order: list[UUID]
 ) -> Decimal | None:
-    """Prefer the last selected period's definitive_grade; else average numerical grades."""
+    """Average of each selected period's effective grade (recovery if set, else numerical)."""
     by_period = {g.academic_period_id: g for g in grades_for_assignment}
-    last_def: Decimal | None = None
-    nums: list[Decimal] = []
+    values: list[Decimal] = []
     for pid in period_order:
         g = by_period.get(pid)
         if not g:
             continue
-        nums.append(g.numerical_grade)
-        if g.definitive_grade is not None:
-            last_def = g.definitive_grade
-    if last_def is not None:
-        return last_def
-    if not nums:
+        values.append(_effective_period_grade(g))
+    if not values:
         return None
-    return sum(nums) / len(nums)
+    return sum(values) / len(values)
 
 
 def build_bulletin_context(
@@ -325,10 +327,11 @@ def build_bulletin_context(
         for p in periods:
             match = next((x for x in glist if x.academic_period_id == p.id), None)
             if match:
+                shown = _effective_period_grade(match)
                 period_cells.append(
                     {
-                        "value": _fmt_num(match.numerical_grade),
-                        "css": _css_for_score(match.numerical_grade, scales),
+                        "value": _fmt_num(shown),
+                        "css": _css_for_score(shown, scales),
                     }
                 )
             else:

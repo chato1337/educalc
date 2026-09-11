@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.test import APIClient, APITestCase
 
+from .bulletin_service import build_bulletin_context
 from .models import (
     AcademicArea,
     AcademicPeriod,
@@ -265,3 +266,147 @@ class GradeRecoveryApiTests(APITestCase):
         self.assertEqual(r_hidden.status_code, 200)
         ids_hidden = {row["id"] for row in r_hidden.data["results"]}
         self.assertNotIn(str(self.grade_bajo.id), ids_hidden)
+
+
+class BulletinPeriodRecoveryTests(APITestCase):
+    """Boletín: cada periodo usa definitive_grade si hay recuperación."""
+
+    def setUp(self):
+        self.inst = Institution.objects.create(name="IE Bol Rec", dane_code="DANE996002")
+        GradingScale.objects.create(
+            institution=self.inst,
+            code="BJ",
+            name="Bajo",
+            min_score=Decimal("0.00"),
+            max_score=Decimal("2.99"),
+        )
+        GradingScale.objects.create(
+            institution=self.inst,
+            code="BS",
+            name="Básico",
+            min_score=Decimal("3.00"),
+            max_score=Decimal("3.99"),
+        )
+        GradingScale.objects.create(
+            institution=self.inst,
+            code="AL",
+            name="Alto",
+            min_score=Decimal("4.00"),
+            max_score=Decimal("4.59"),
+        )
+        campus = Campus.objects.create(institution=self.inst, name="Sede Bol")
+        self.ay = AcademicYear.objects.create(institution=self.inst, year=2026)
+        self.p1 = AcademicPeriod.objects.create(
+            academic_year=self.ay, number=1, name="P1"
+        )
+        self.p2 = AcademicPeriod.objects.create(
+            academic_year=self.ay, number=2, name="P2"
+        )
+        gl = GradeLevel.objects.create(
+            institution=self.inst, name="SEXTO", level_order=6
+        )
+        self.group = Group.objects.create(
+            grade_level=gl,
+            academic_year=self.ay,
+            campus=campus,
+            name="601",
+        )
+        area = AcademicArea.objects.create(institution=self.inst, name="Matemáticas")
+        teacher = Teacher.objects.create(
+            document_number="BOLT1",
+            first_name="Ana",
+            first_last_name="Bol",
+            full_name="Ana Bol",
+        )
+        subject = Subject.objects.create(
+            academic_area=area,
+            institution=self.inst,
+            name="Matemáticas",
+        )
+        self.ca = CourseAssignment.objects.create(
+            subject=subject,
+            teacher=teacher,
+            group=self.group,
+            academic_year=self.ay,
+        )
+        self.student = Student.objects.create(
+            document_number="BOLS1",
+            first_name="Pedro",
+            first_last_name="Bajo",
+            full_name="Pedro Bajo",
+        )
+        Enrollment.objects.create(
+            student=self.student,
+            group=self.group,
+            academic_year=self.ay,
+            status="active",
+        )
+        self.grade_p1 = Grade.objects.create(
+            student=self.student,
+            course_assignment=self.ca,
+            academic_period=self.p1,
+            numerical_grade=Decimal("2.50"),
+        )
+        Grade.objects.create(
+            student=self.student,
+            course_assignment=self.ca,
+            academic_period=self.p2,
+            numerical_grade=Decimal("4.00"),
+        )
+
+    def _row(self, ctx):
+        self.assertEqual(len(ctx["grade_rows"]), 1)
+        return ctx["grade_rows"][0]
+
+    def test_bulletin_period_cell_uses_recovery_when_present(self):
+        self.grade_p1.definitive_grade = Decimal("3.00")
+        self.grade_p1.save(update_fields=["definitive_grade"])
+
+        ctx = build_bulletin_context(
+            student=self.student,
+            academic_year=self.ay,
+            period_ids=[self.p1.id, self.p2.id],
+        )
+        row = self._row(ctx)
+        self.assertEqual(row["period_cells"][0]["value"], "3.00")
+        self.assertEqual(row["period_cells"][0]["css"], "nota-bas")
+        self.assertEqual(row["period_cells"][1]["value"], "4.00")
+        self.assertEqual(row["period_cells"][1]["css"], "nota-alto")
+
+    def test_bulletin_period_cell_keeps_numerical_without_recovery(self):
+        ctx = build_bulletin_context(
+            student=self.student,
+            academic_year=self.ay,
+            period_ids=[self.p1.id, self.p2.id],
+        )
+        row = self._row(ctx)
+        self.assertEqual(row["period_cells"][0]["value"], "2.50")
+        self.assertEqual(row["period_cells"][0]["css"], "nota-baj")
+        self.assertEqual(row["period_cells"][1]["value"], "4.00")
+
+    def test_bulletin_year_def_averages_effective_period_grades(self):
+        self.grade_p1.definitive_grade = Decimal("3.00")
+        self.grade_p1.save(update_fields=["definitive_grade"])
+
+        ctx = build_bulletin_context(
+            student=self.student,
+            academic_year=self.ay,
+            period_ids=[self.p1.id, self.p2.id],
+        )
+        row = self._row(ctx)
+        # (3.00 recuperado + 4.00 numérico) / 2
+        self.assertEqual(row["def_value"], "3.50")
+
+    def test_bulletin_single_period_def_is_the_recovered_grade(self):
+        self.grade_p1.definitive_grade = Decimal("3.00")
+        self.grade_p1.save(update_fields=["definitive_grade"])
+
+        ctx = build_bulletin_context(
+            student=self.student,
+            academic_year=self.ay,
+            period_ids=[self.p1.id],
+        )
+        row = self._row(ctx)
+        self.assertEqual(len(row["period_cells"]), 1)
+        self.assertEqual(row["period_cells"][0]["value"], "3.00")
+        self.assertEqual(row["def_value"], "3.00")
