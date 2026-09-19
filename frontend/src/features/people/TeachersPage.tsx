@@ -48,7 +48,7 @@ import type { Teacher } from '@/types/schemas'
 
 const schema = z.object({
   document_type: z.string().max(80).optional(),
-  document_number: z.string().max(20).optional(),
+  document_number: z.string().trim().min(1).max(20),
   first_name: z.string().trim().min(1).max(100),
   second_name: z.string().max(100).optional(),
   first_last_name: z.string().trim().min(1).max(100),
@@ -83,7 +83,7 @@ const teacherSortHandlers = createServerSortHandlers({
 function toApiBody(v: FormValues) {
   return {
     document_type: v.document_type || undefined,
-    document_number: v.document_number || undefined,
+    document_number: v.document_number,
     first_name: v.first_name,
     second_name: v.second_name || undefined,
     first_last_name: v.first_last_name,
@@ -93,6 +93,12 @@ function toApiBody(v: FormValues) {
     phone: v.phone || undefined,
     specialty: v.specialty || undefined,
   }
+}
+
+type CreatedLogin = {
+  username: string
+  password: string
+  fullName: string
 }
 
 export function TeachersPage() {
@@ -109,6 +115,7 @@ export function TeachersPage() {
   const [editing, setEditing] = useState<Teacher | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Teacher | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
+  const [createdLogin, setCreatedLogin] = useState<CreatedLogin | null>(null)
 
   const listParams = {
     search: appliedSearch || undefined,
@@ -144,11 +151,19 @@ export function TeachersPage() {
   const documentTypeValue = form.watch('document_type')
 
   const createMutation = useMutation({
-    mutationFn: (body: ReturnType<typeof toApiBody>) =>
-      apiClient.post<Teacher>('/api/teachers/', body),
-    onSuccess: () => {
+    mutationFn: async (body: ReturnType<typeof toApiBody>) => {
+      const { data } = await apiClient.post<Teacher>('/api/teachers/', body)
+      return data
+    },
+    onSuccess: (teacher) => {
       void queryClient.invalidateQueries({ queryKey: ['teachers'] })
+      void queryClient.invalidateQueries({ queryKey: ['users'] })
       closeDialog()
+      setCreatedLogin({
+        username: teacher.username ?? '',
+        password: teacher.document_number ?? '',
+        fullName: teacher.full_name,
+      })
     },
     onError: (e) => setFormError(getErrorMessage(e)),
   })
@@ -212,6 +227,15 @@ export function TeachersPage() {
         flex: 1,
         minWidth: 180,
         sortable: true,
+      },
+      {
+        field: 'username',
+        headerName: t('teachers.username'),
+        minWidth: 140,
+        flex: 0.7,
+        sortable: false,
+        valueFormatter: (value: string | null | undefined) =>
+          value == null || value === '' ? '-' : String(value),
       },
       {
         field: 'document',
@@ -417,13 +441,26 @@ export function TeachersPage() {
               registerProps={form.register('document_type')}
               currentValue={documentTypeValue}
             />
-            <TextField label={t('teachers.documentNumber')} {...form.register('document_number')} fullWidth />
+            <TextField
+              label={t('teachers.documentNumber')}
+              {...form.register('document_number')}
+              required
+              error={!!form.formState.errors.document_number}
+              helperText={
+                form.formState.errors.document_number?.message ??
+                t('teachers.documentNumberHelp')
+              }
+              fullWidth
+            />
             <TextField
               label={t('teachers.firstName')}
               {...form.register('first_name')}
               required
               error={!!form.formState.errors.first_name}
-              helperText={form.formState.errors.first_name?.message}
+              helperText={
+                form.formState.errors.first_name?.message ??
+                t('teachers.usernameHelp')
+              }
               fullWidth
             />
             <TextField label={t('teachers.secondName')} {...form.register('second_name')} fullWidth />
@@ -481,6 +518,30 @@ export function TeachersPage() {
           >
             {t('common.delete')}
           </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={!!createdLogin} onClose={() => setCreatedLogin(null)}>
+        <DialogTitle>{t('teachers.createdLoginTitle')}</DialogTitle>
+        <DialogContent className="flex flex-col gap-2 pt-1">
+          <Typography variant="body2">
+            {t('teachers.createdLoginIntro', { name: createdLogin?.fullName ?? '' })}
+          </Typography>
+          <TextField
+            label={t('teachers.username')}
+            value={createdLogin?.username ?? ''}
+            slotProps={{ input: { readOnly: true } }}
+            fullWidth
+          />
+          <TextField
+            label={t('teachers.initialPassword')}
+            value={createdLogin?.password ?? ''}
+            slotProps={{ input: { readOnly: true } }}
+            helperText={t('teachers.initialPasswordHelp')}
+            fullWidth
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreatedLogin(null)}>{t('common.close')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

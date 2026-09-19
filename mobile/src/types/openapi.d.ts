@@ -3009,7 +3009,7 @@ export interface paths {
         };
         /**
          * List Teachers
-         * @description Teacher/faculty information Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. Available exact-match filters via query params: document_type, document_number, email, specialty. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Teacher/faculty information. POST create also provisions a login user (username nombre.apellido, initial password = document_number), matching POST /api/teachers/bulk-load-users/. Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email, user_profile__user__username. Available exact-match filters via query params: document_type, document_number, email, specialty. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["teachers_list"];
         put?: never;
@@ -3170,6 +3170,26 @@ export interface paths {
         head?: never;
         /** Partial update Users */
         patch: operations["users_partial_update"];
+        trace?: never;
+    };
+    "/api/users/available/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List auth users available to assign a profile
+         * @description Django auth users that do not yet have a UserProfile. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         */
+        get: operations["users_available_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
 }
@@ -3468,6 +3488,17 @@ export interface components {
             academic_period: string;
             unexcused_absences?: number;
             excused_absences?: number;
+        };
+        /** @description Auth user without a UserProfile, for the assign-user picklist. */
+        AvailableUser: {
+            readonly id: number;
+            /** @description Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
+            readonly username: string;
+            /**
+             * Email address
+             * Format: email
+             */
+            readonly email: string;
         };
         /** @enum {unknown} */
         BlankEnum: "";
@@ -4197,6 +4228,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Attendance"][];
+        };
+        PaginatedAvailableUserList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=400&limit=100
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?offset=200&limit=100
+             */
+            previous?: string | null;
+            results: components["schemas"]["AvailableUser"][];
         };
         PaginatedCampusList: {
             /** @example 123 */
@@ -5475,6 +5521,7 @@ export interface components {
             email?: string;
             phone?: string;
             specialty?: string;
+            readonly username: string | null;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -11576,7 +11623,7 @@ export interface operations {
                 offset?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
-                /** @description Search text across: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. */
+                /** @description Search text across: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email, user_profile__user__username. */
                 search?: string;
                 /** @description Filter by exact value of `specialty`. */
                 specialty?: string;
@@ -11953,6 +12000,45 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserProfile"];
+                };
+            };
+        };
+    };
+    users_available_list: {
+        parameters: {
+            query?: {
+                institution?: string;
+                institution__dane_code?: string;
+                /** @description Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500. */
+                limit?: number;
+                /** @description Number of items to skip from the beginning of the filtered, ordered queryset. */
+                offset?: number;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /**
+                 * @description * `ADMIN` - Administrator
+                 *     * `COORDINATOR` - Coordinator
+                 *     * `TEACHER` - Teacher
+                 *     * `PARENT` - Parent
+                 */
+                role?: "ADMIN" | "COORDINATOR" | "PARENT" | "TEACHER";
+                /** @description A search term. */
+                search?: string;
+                user__email?: string;
+                user__username?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAvailableUserList"];
                 };
             };
         };

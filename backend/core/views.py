@@ -1,4 +1,5 @@
 """API ViewSets with OpenAPI documentation and role-based queryset scoping."""
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from typing import List, Optional
 from django.db.models import Q
@@ -143,6 +144,7 @@ from .serializers import (
     StudentTransferSerializer,
     SubjectSerializer,
     TeacherSerializer,
+    AvailableUserSerializer,
     UserProfileSerializer,
 )
 
@@ -657,7 +659,9 @@ class StudentViewSet(StudentRoleScopeMixin, viewsets.ModelViewSet):
 
 @schema_viewset(
     ["Teachers"],
-    "Teacher/faculty information",
+    "Teacher/faculty information. POST create also provisions a login user "
+    "(username nombre.apellido, initial password = document_number), matching "
+    "POST /api/teachers/bulk-load-users/.",
     search_fields=[
         "document_number",
         "full_name",
@@ -666,12 +670,13 @@ class StudentViewSet(StudentRoleScopeMixin, viewsets.ModelViewSet):
         "first_last_name",
         "second_last_name",
         "email",
+        "user_profile__user__username",
     ],
     filter_fields=["document_type", "document_number", "email", "specialty"],
 )
 class TeacherViewSet(TeacherRoleScopeMixin, viewsets.ModelViewSet):
     filterset_fields = ["document_type", "document_number", "email", "specialty"]
-    queryset = Teacher.objects.all()
+    queryset = Teacher.objects.select_related("user_profile__user").all()
     serializer_class = TeacherSerializer
     permission_classes = [IsAuthenticated]
     search_fields = [
@@ -682,6 +687,7 @@ class TeacherViewSet(TeacherRoleScopeMixin, viewsets.ModelViewSet):
         "first_last_name",
         "second_last_name",
         "email",
+        "user_profile__user__username",
     ]
 
     @bulk_csv_load_schema(
@@ -2069,3 +2075,33 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         "parent__full_name",
         "institution__name",
     ]
+
+    @extend_schema(
+        summary="List auth users available to assign a profile",
+        tags=["Users"],
+        methods=["GET"],
+        description=(
+            "Django auth users that do not yet have a UserProfile. "
+            + OPENAPI_LIST_PAGINATION_DESCRIPTION
+        ),
+        parameters=list(_openapi_limit_offset_parameters()),
+        responses={200: AvailableUserSerializer(many=True)},
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="available",
+        serializer_class=AvailableUserSerializer,
+    )
+    def available(self, request):
+        qs = (
+            get_user_model()
+            .objects.filter(profile__isnull=True)
+            .order_by("username")
+            .only("id", "username", "email")
+        )
+        page = self.paginate_queryset(qs)
+        serializer = AvailableUserSerializer(page if page is not None else qs, many=True)
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)

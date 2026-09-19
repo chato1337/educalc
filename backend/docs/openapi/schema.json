@@ -12595,7 +12595,7 @@
         "/api/teachers/": {
             "get": {
                 "operationId": "teachers_list",
-                "description": "Teacher/faculty information Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email. Available exact-match filters via query params: document_type, document_number, email, specialty. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "description": "Teacher/faculty information. POST create also provisions a login user (username nombre.apellido, initial password = document_number), matching POST /api/teachers/bulk-load-users/. Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email, user_profile__user__username. Available exact-match filters via query params: document_type, document_number, email, specialty. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Teachers",
                 "parameters": [
                     {
@@ -12653,7 +12653,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "description": "Search text across: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email."
+                        "description": "Search text across: document_number, full_name, first_name, second_name, first_last_name, second_last_name, email, user_profile__user__username."
                     },
                     {
                         "in": "query",
@@ -13373,6 +13373,115 @@
                 "responses": {
                     "204": {
                         "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/users/available/": {
+            "get": {
+                "operationId": "users_available_list",
+                "description": "Django auth users that do not yet have a UserProfile. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "summary": "List auth users available to assign a profile",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "institution",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "institution__dane_code",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum number of items in the `results` array for this page. If omitted, defaults to 20. Cannot exceed 500."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Number of items to skip from the beginning of the filtered, ordered queryset."
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "role",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ADMIN",
+                                "COORDINATOR",
+                                "PARENT",
+                                "TEACHER"
+                            ]
+                        },
+                        "description": "* `ADMIN` - Administrator\n* `COORDINATOR` - Coordinator\n* `TEACHER` - Teacher\n* `PARENT` - Parent"
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "user__email",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "user__username",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedAvailableUserList"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 }
             }
@@ -14306,6 +14415,32 @@
                 "required": [
                     "academic_period",
                     "student"
+                ]
+            },
+            "AvailableUser": {
+                "type": "object",
+                "description": "Auth user without a UserProfile, for the assign-user picklist.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "username": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "readOnly": true,
+                        "title": "Email address"
+                    }
+                },
+                "required": [
+                    "email",
+                    "id",
+                    "username"
                 ]
             },
             "BlankEnum": {
@@ -16514,6 +16649,37 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/Attendance"
+                        }
+                    }
+                }
+            },
+            "PaginatedAvailableUserList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AvailableUser"
                         }
                     }
                 }
@@ -19659,6 +19825,11 @@
                         "type": "string",
                         "maxLength": 100
                     },
+                    "username": {
+                        "type": "string",
+                        "nullable": true,
+                        "readOnly": true
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time",
@@ -19676,7 +19847,8 @@
                     "first_name",
                     "full_name",
                     "id",
-                    "updated_at"
+                    "updated_at",
+                    "username"
                 ]
             },
             "TeacherRequest": {

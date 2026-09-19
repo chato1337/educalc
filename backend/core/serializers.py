@@ -1,5 +1,6 @@
 """Serializers for core API. All entities use snake_case fields per plan conventions."""
-from drf_spectacular.utils import extend_schema_serializer
+from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema_field, extend_schema_serializer
 from rest_framework import serializers
 
 from .indicator_utils import resolve_indicator_outcome
@@ -179,6 +180,8 @@ class BulkLoadStudentsSerializer(serializers.Serializer):
 
 
 class TeacherSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+
     class Meta:
         model = Teacher
         fields = [
@@ -193,9 +196,45 @@ class TeacherSerializer(serializers.ModelSerializer):
             "email",
             "phone",
             "specialty",
+            "username",
             "created_at",
             "updated_at",
         ]
+        read_only_fields = ["username"]
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_username(self, obj):
+        if not hasattr(obj, "user_profile") or not obj.user_profile:
+            return None
+        return obj.user_profile.user.username
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if self.instance is None:
+            doc = (attrs.get("document_number") or "").strip()
+            if not doc:
+                raise serializers.ValidationError(
+                    {
+                        "document_number": (
+                            "El número de documento es obligatorio. "
+                            "Será la contraseña inicial de acceso."
+                        )
+                    }
+                )
+            attrs["document_number"] = doc
+        return attrs
+
+    def create(self, validated_data):
+        from django.db import transaction
+
+        from .bulk_load_extended import ensure_teacher_login_user
+
+        with transaction.atomic():
+            teacher = super().create(validated_data)
+            ensure_teacher_login_user(teacher)
+            return Teacher.objects.select_related("user_profile__user").get(
+                pk=teacher.pk
+            )
 
 
 class ParentSerializer(serializers.ModelSerializer):
@@ -999,6 +1038,15 @@ class StudentTransferErrorSerializer(serializers.Serializer):
             "``institution_mismatch`` (sedes de distinta institución)."
         ),
     )
+
+
+class AvailableUserSerializer(serializers.ModelSerializer):
+    """Auth user without a UserProfile, for the assign-user picklist."""
+
+    class Meta:
+        model = get_user_model()
+        fields = ["id", "username", "email"]
+        read_only_fields = fields
 
 
 class UserProfileSerializer(serializers.ModelSerializer):

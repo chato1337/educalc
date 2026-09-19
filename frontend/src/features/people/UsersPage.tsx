@@ -47,8 +47,14 @@ import {
   useMuiDataGridLocaleText,
 } from '@/hooks/useMuiDataGridLocaleText'
 import { createServerSortHandlers } from '@/lib/dataGridServerSort'
-import type { Parent, RoleEnum, Teacher, UserProfile } from '@/types/schemas'
-import type { Institution } from '@/types/schemas'
+import type {
+  AvailableUser,
+  Institution,
+  Parent,
+  RoleEnum,
+  Teacher,
+  UserProfile,
+} from '@/types/schemas'
 
 const roleOptions: RoleEnum[] = [
   'ADMIN',
@@ -92,6 +98,10 @@ const userSortHandlers = createServerSortHandlers({
   role: 'role',
 })
 
+function userOptionLabel(u: AvailableUser) {
+  return u.email ? `${u.username} (${u.email})` : u.username
+}
+
 export function UsersPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -119,6 +129,24 @@ export function UsersPage() {
     queryFn: async () => fetchReferenceListResults<Parent>('/api/parents/'),
     enabled: dialogOpen,
   })
+  const { data: availableUsers = [] } = useQuery({
+    queryKey: ['users', 'available'],
+    queryFn: async () =>
+      fetchReferenceListResults<AvailableUser>('/api/users/available/'),
+    enabled: dialogOpen && !editing,
+  })
+
+  const userOptions = useMemo(() => {
+    const byId = new Map(availableUsers.map((u) => [u.id, u]))
+    if (editing && !byId.has(editing.user)) {
+      byId.set(editing.user, {
+        id: editing.user,
+        username: editing.username,
+        email: editing.email,
+      })
+    }
+    return [...byId.values()]
+  }, [availableUsers, editing])
 
   const listParams = {
     role: roleFilter || undefined,
@@ -458,14 +486,30 @@ export function UsersPage() {
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogContent className="flex flex-col gap-2 pt-1">
             {formError ? <Alert severity="error">{formError}</Alert> : null}
-            <TextField
-              label={t('users.djangoPk')}
-              type="number"
-              {...form.register('user', { valueAsNumber: true })}
-              disabled={!!editing}
-              required={!editing}
-              fullWidth
-              helperText={t('users.djangoPkHelp')}
+            <Controller
+              name="user"
+              control={form.control}
+              render={({ field }) => (
+                <Autocomplete
+                  options={userOptions}
+                  getOptionLabel={userOptionLabel}
+                  value={
+                    userOptions.find((u) => u.id === field.value) ?? null
+                  }
+                  onChange={(_, v) => field.onChange(v?.id ?? 0)}
+                  disabled={!!editing}
+                  noOptionsText={t('users.noAvailableUsers')}
+                  isOptionEqualToValue={(a, b) => a.id === b.id}
+                  renderInput={(params: AutocompleteRenderInputParams) => (
+                    <TextField
+                      {...params}
+                      label={t('users.djangoPk')}
+                      required={!editing}
+                      helperText={t('users.djangoPkHelp')}
+                    />
+                  )}
+                />
+              )}
             />
             <FormControl fullWidth>
               <InputLabel>{t('users.role')}</InputLabel>

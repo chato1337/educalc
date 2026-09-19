@@ -261,6 +261,63 @@ def _next_available_username(base_username):
     return username
 
 
+def ensure_teacher_login_user(teacher, first_name=None, first_last_name=None):
+    """Create or update the Django user and TEACHER profile for a Teacher.
+
+    Same rules as CSV bulk-load-users:
+    username ``nombre.apellido`` (ASCII lowercase); password = document number.
+    """
+    doc = clean_str(teacher.document_number)
+    if not doc:
+        raise ValueError("Teacher document_number is required to create a login user.")
+
+    base_username = _build_teacher_username(
+        first_name or teacher.first_name,
+        first_last_name or teacher.first_last_name,
+        doc,
+    )
+    existing_user = None
+    if hasattr(teacher, "user_profile") and teacher.user_profile:
+        existing_user = teacher.user_profile.user
+
+    created = False
+    updated = False
+    if existing_user:
+        if existing_user.username != base_username and not User.objects.filter(
+            username=base_username
+        ).exclude(pk=existing_user.pk).exists():
+            existing_user.username = base_username
+        if teacher.email and existing_user.email != teacher.email:
+            existing_user.email = teacher.email
+        existing_user.set_password(doc)
+        existing_user.save()
+        user = existing_user
+        updated = True
+    else:
+        username = _next_available_username(base_username)
+        user = User.objects.create_user(
+            username=username,
+            password=doc,
+            email=teacher.email or "",
+        )
+        created = True
+
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    profile_linked = False
+    if profile.teacher_id != teacher.id or profile.role != "TEACHER":
+        profile.teacher = teacher
+        profile.role = "TEACHER"
+        profile.save()
+        profile_linked = True
+
+    return {
+        "user": user,
+        "created": created,
+        "updated": updated,
+        "profile_linked": profile_linked,
+    }
+
+
 def bulk_load_academic_areas(csv_file):
     col = row_col
     stats = _empty_stats(
@@ -490,41 +547,16 @@ def bulk_load_teacher_users(csv_file):
                 stats["rows_skipped"] += 1
                 continue
 
-            base_username = _build_teacher_username(n1 or teacher.first_name, a1 or teacher.first_last_name, doc)
-            existing_user = None
-            if hasattr(teacher, "user_profile") and teacher.user_profile:
-                existing_user = teacher.user_profile.user
-
-            if existing_user:
-                changed = False
-                if existing_user.username != base_username and not User.objects.filter(
-                    username=base_username
-                ).exclude(pk=existing_user.pk).exists():
-                    existing_user.username = base_username
-                    changed = True
-                if teacher.email and existing_user.email != teacher.email:
-                    existing_user.email = teacher.email
-                    changed = True
-                existing_user.set_password(doc)
-                changed = True
-                if changed:
-                    existing_user.save()
-                user = existing_user
-                stats["users_updated"] += 1
-            else:
-                username = _next_available_username(base_username)
-                user = User.objects.create_user(
-                    username=username,
-                    password=doc,
-                    email=teacher.email or "",
-                )
+            result = ensure_teacher_login_user(
+                teacher,
+                first_name=n1 or teacher.first_name,
+                first_last_name=a1 or teacher.first_last_name,
+            )
+            if result["created"]:
                 stats["users_created"] += 1
-
-            profile, _ = UserProfile.objects.get_or_create(user=user)
-            if profile.teacher_id != teacher.id or profile.role != "TEACHER":
-                profile.teacher = teacher
-                profile.role = "TEACHER"
-                profile.save()
+            if result["updated"]:
+                stats["users_updated"] += 1
+            if result["profile_linked"]:
                 stats["profile_linked"] += 1
 
             stats["rows_processed"] += 1
