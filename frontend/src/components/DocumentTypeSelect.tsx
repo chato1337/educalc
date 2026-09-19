@@ -2,7 +2,10 @@ import { MenuItem, TextField, type TextFieldProps } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import type { UseFormRegisterReturn } from 'react-hook-form'
 
-import { BULK_STUDENT_DOCUMENT_TYPE_OPTIONS } from '@/constants/documentTypes'
+import {
+  BULK_STUDENT_DOCUMENT_TYPE_OPTIONS,
+  resolveDocumentTypeSelectValue,
+} from '@/constants/documentTypes'
 
 type Props = {
   registerProps: UseFormRegisterReturn<'document_type'>
@@ -20,10 +23,11 @@ export function DocumentTypeSelect({
   size,
 }: Props) {
   const { t } = useTranslation()
+  const selectValue = resolveDocumentTypeSelectValue(currentValue)
   const legacy =
-    currentValue.trim() &&
-    !BULK_STUDENT_DOCUMENT_TYPE_OPTIONS.some((o) => o.value === currentValue)
-      ? currentValue
+    selectValue &&
+    !BULK_STUDENT_DOCUMENT_TYPE_OPTIONS.some((o) => o.value === selectValue)
+      ? selectValue
       : null
 
   return (
@@ -38,6 +42,7 @@ export function DocumentTypeSelect({
       size={size}
       slotProps={{ select: { displayEmpty: true } }}
       {...registerProps}
+      value={selectValue}
     >
       <MenuItem value="">
         <em>{t('documentTypeSelect.unspecified')}</em>

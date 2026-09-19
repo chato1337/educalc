@@ -44,6 +44,7 @@ import {
   useMuiDataGridLocaleText,
 } from '@/hooks/useMuiDataGridLocaleText'
 import { createServerSortHandlers } from '@/lib/dataGridServerSort'
+import { resolveDocumentTypeSelectValue } from '@/constants/documentTypes'
 import type { Teacher } from '@/types/schemas'
 
 const schema = z.object({
@@ -203,7 +204,7 @@ export function TeachersPage() {
       setEditing(row)
       setFormError(null)
       form.reset({
-        document_type: row.document_type ?? '',
+        document_type: resolveDocumentTypeSelectValue(row.document_type),
         document_number: row.document_number ?? '',
         first_name: row.first_name,
         second_name: row.second_name ?? '',

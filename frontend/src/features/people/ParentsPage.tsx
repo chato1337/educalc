@@ -43,6 +43,7 @@ import {
   dataGridDefaultSx,
   useMuiDataGridLocaleText,
 } from '@/hooks/useMuiDataGridLocaleText'
+import { resolveDocumentTypeSelectValue } from '@/constants/documentTypes'
 import { createServerSortHandlers } from '@/lib/dataGridServerSort'
 import type { Parent } from '@/types/schemas'
 
@@ -188,7 +189,7 @@ export function ParentsPage() {
       setEditing(row)
       setFormError(null)
       form.reset({
-        document_type: row.document_type ?? '',
+        document_type: resolveDocumentTypeSelectValue(row.document_type),
         document_number: row.document_number ?? '',
         first_name: row.first_name,
         second_name: row.second_name ?? '',

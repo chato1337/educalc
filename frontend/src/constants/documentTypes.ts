@@ -17,3 +17,19 @@ export const BULK_STUDENT_DOCUMENT_TYPE_OPTIONS: readonly {
   },
   { value: 'TI:TARJETA DE IDENTIDAD', label: 'TI:TARJETA DE IDENTIDAD' },
 ] as const
+
+/** Maps stored short codes (CC, TI, …) to the catalog value used by the select. */
+export function resolveDocumentTypeSelectValue(
+  raw: string | null | undefined,
+): string {
+  const trimmed = (raw ?? '').trim()
+  if (!trimmed) return ''
+  if (BULK_STUDENT_DOCUMENT_TYPE_OPTIONS.some((o) => o.value === trimmed)) {
+    return trimmed
+  }
+  const code = trimmed.split(':')[0].trim().toUpperCase()
+  const match = BULK_STUDENT_DOCUMENT_TYPE_OPTIONS.find(
+    (o) => o.value.split(':')[0].trim().toUpperCase() === code,
+  )
+  return match?.value ?? trimmed
+}

@@ -12,6 +12,7 @@ import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
 import { DocumentTypeSelect } from '@/components/DocumentTypeSelect'
 import { PageHeader } from '@/components/PageHeader'
+import { resolveDocumentTypeSelectValue } from '@/constants/documentTypes'
 import type { Student } from '@/types/schemas'
 
 const schema = z.object({
@@ -80,7 +81,7 @@ function toBody(v: FormValues) {
 
 function studentToForm(s: Student): FormValues {
   return {
-    document_type: s.document_type ?? '',
+    document_type: resolveDocumentTypeSelectValue(s.document_type),
     document_number: s.document_number ?? '',
     first_name: s.first_name,
     second_name: s.second_name ?? '',
