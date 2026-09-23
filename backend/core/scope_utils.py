@@ -64,11 +64,32 @@ def teacher_enrollment_scope_filter(teacher):
 
 
 def teacher_student_ids(teacher):
+    """Students with an active enrollment in a group this teacher teaches."""
     return (
-        Enrollment.objects.filter(teacher_enrollment_scope_filter(teacher))
+        Enrollment.objects.filter(
+            teacher_enrollment_scope_filter(teacher),
+            status="active",
+        )
         .values_list("student_id", flat=True)
         .distinct()
     )
+
+
+def exclude_withdrawn_only_students(queryset: QuerySet) -> QuerySet:
+    """Omit students whose enrollments are all withdrawn.
+
+    A student with no enrollment stays visible (not enrolled yet). A student
+    with an active or graduated enrollment stays visible even if another
+    enrollment was withdrawn, for example after a transfer.
+    """
+    non_withdrawn = Enrollment.objects.filter(student_id=OuterRef("pk")).exclude(
+        status="withdrawn"
+    )
+    any_enrollment = Enrollment.objects.filter(student_id=OuterRef("pk"))
+    return queryset.alias(
+        has_enrollment=Exists(any_enrollment),
+        has_non_withdrawn_enrollment=Exists(non_withdrawn),
+    ).exclude(has_enrollment=True, has_non_withdrawn_enrollment=False)
 
 
 def parent_student_ids_qs(parent_id):

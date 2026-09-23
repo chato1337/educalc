@@ -7,6 +7,7 @@ from rest_framework.test import APIClient, APITestCase
 
 from .models import (
     AcademicArea,
+    AcademicPeriod,
     AcademicYear,
     Campus,
     CourseAssignment,
@@ -15,6 +16,7 @@ from .models import (
     GradeLevel,
     Group,
     Institution,
+    PerformanceSummary,
     Student,
     Subject,
     Teacher,
@@ -181,3 +183,161 @@ class CoreApiAdminScopeTests(APITestCase):
         ids = {row["id"] for row in r.data["results"]}
         self.assertIn(str(self.student1.id), ids)
         self.assertIn(str(self.student2.id), ids)
+
+
+class WithdrawnEnrollmentListingTests(APITestCase):
+    """Withdrawn students stay out of active rosters and directories."""
+
+    def setUp(self):
+        self.client = APIClient()
+        User = get_user_model()
+        self.admin = User.objects.create_user(username="wd_admin", password="x")
+        UserProfile.objects.filter(user=self.admin).update(role="ADMIN")
+        self.admin = User.objects.select_related("profile").get(pk=self.admin.pk)
+
+        self.inst = Institution.objects.create(name="IE Retiro", dane_code="DANE995003")
+        campus = Campus.objects.create(institution=self.inst, name="Sede")
+        self.ay = AcademicYear.objects.create(institution=self.inst, year=2026)
+        level = GradeLevel.objects.create(institution=self.inst, name="SEPTIMO", level_order=7)
+        self.group = Group.objects.create(
+            grade_level=level, academic_year=self.ay, campus=campus, name="701"
+        )
+        other_group = Group.objects.create(
+            grade_level=level, academic_year=self.ay, campus=campus, name="702"
+        )
+        self.period = AcademicPeriod.objects.create(
+            academic_year=self.ay, number=1, name="P1"
+        )
+        area = AcademicArea.objects.create(institution=self.inst, name="Ciencias")
+        subject = Subject.objects.create(
+            academic_area=area, institution=self.inst, name="Ciencias"
+        )
+        self.teacher = Teacher.objects.create(
+            document_number="TWD",
+            first_name="Profe",
+            first_last_name="Grupo",
+            full_name="Profe Grupo",
+        )
+        CourseAssignment.objects.create(
+            subject=subject, teacher=self.teacher, group=self.group, academic_year=self.ay
+        )
+        self.teacher_user = User.objects.create_user(username="wd_teacher", password="x")
+        UserProfile.objects.filter(user=self.teacher_user).update(
+            role="TEACHER", teacher_id=self.teacher.id, institution_id=self.inst.id
+        )
+        self.teacher_user = User.objects.select_related("profile").get(
+            pk=self.teacher_user.pk
+        )
+
+        self.active = self._student("ACT1", "Ana Activa")
+        self.withdrawn = self._student("RET1", "Rosa Retirada")
+        self.transferred = self._student("TRA1", "Tomas Traslado")
+        self.unenrolled = self._student("NEW1", "Nora Nueva")
+        self.graduated = self._student("GRA1", "Gala Graduada")
+
+        Enrollment.objects.create(
+            student=self.active, group=self.group, academic_year=self.ay, status="active"
+        )
+        Enrollment.objects.create(
+            student=self.withdrawn,
+            group=self.group,
+            academic_year=self.ay,
+            status="withdrawn",
+        )
+        Enrollment.objects.create(
+            student=self.transferred,
+            group=self.group,
+            academic_year=self.ay,
+            status="withdrawn",
+        )
+        Enrollment.objects.create(
+            student=self.transferred,
+            group=other_group,
+            academic_year=self.ay,
+            status="active",
+        )
+        Enrollment.objects.create(
+            student=self.graduated,
+            group=self.group,
+            academic_year=self.ay,
+            status="graduated",
+        )
+        PerformanceSummary.objects.create(
+            student=self.withdrawn,
+            group=self.group,
+            academic_period=self.period,
+            period_average=Decimal("3.50"),
+            rank=1,
+        )
+        PerformanceSummary.objects.create(
+            student=self.active,
+            group=self.group,
+            academic_period=self.period,
+            period_average=Decimal("4.50"),
+            rank=2,
+        )
+
+    def _student(self, document, full_name):
+        first, last = full_name.split(" ", 1)
+        return Student.objects.create(
+            document_number=document,
+            first_name=first,
+            first_last_name=last,
+            full_name=full_name,
+        )
+
+    def _ids(self, response):
+        self.assertEqual(response.status_code, 200)
+        return {row["id"] for row in response.data["results"]}
+
+    def test_student_list_hides_withdrawn_only_students(self):
+        self.client.force_authenticate(user=self.admin)
+        ids = self._ids(self.client.get(reverse("student-list")))
+        self.assertIn(str(self.active.id), ids)
+        self.assertIn(str(self.transferred.id), ids)
+        self.assertIn(str(self.unenrolled.id), ids)
+        self.assertIn(str(self.graduated.id), ids)
+        self.assertNotIn(str(self.withdrawn.id), ids)
+
+    def test_withdrawn_student_profile_remains_readable(self):
+        self.client.force_authenticate(user=self.admin)
+        url = reverse("student-detail", kwargs={"pk": self.withdrawn.id})
+        self.assertEqual(self.client.get(url).status_code, 200)
+
+    def test_teacher_roster_skips_withdrawn_and_transferred_out(self):
+        self.client.force_authenticate(user=self.teacher_user)
+        ids = self._ids(self.client.get(reverse("student-list")))
+        self.assertEqual(ids, {str(self.active.id)})
+
+    def test_enrollment_list_omits_withdrawn_unless_requested(self):
+        self.client.force_authenticate(user=self.admin)
+        listed = self._ids(self.client.get(reverse("enrollment-list")))
+        withdrawn_ids = set(
+            Enrollment.objects.filter(status="withdrawn").values_list("id", flat=True)
+        )
+        self.assertTrue(withdrawn_ids)
+        self.assertTrue(listed.isdisjoint({str(pk) for pk in withdrawn_ids}))
+
+        only_withdrawn = self._ids(
+            self.client.get(reverse("enrollment-list"), {"status": "withdrawn"})
+        )
+        self.assertEqual(only_withdrawn, {str(pk) for pk in withdrawn_ids})
+
+        history = self.client.get(
+            reverse("enrollment-list"), {"student": str(self.transferred.id)}
+        )
+        self.assertEqual(history.status_code, 200)
+        statuses = {row["status"] for row in history.data["results"]}
+        self.assertEqual(statuses, {"withdrawn", "active"})
+
+    def test_group_rankings_skip_withdrawn_students(self):
+        self.client.force_authenticate(user=self.admin)
+        url = reverse("group-students-rankings", kwargs={"pk": self.group.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        names = [
+            row["student_name"]
+            for period in response.data["rankings_by_period"]
+            for row in period["rankings"]
+        ]
+        self.assertEqual(names, ["Ana Activa"])

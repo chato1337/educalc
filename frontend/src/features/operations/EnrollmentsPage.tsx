@@ -81,7 +81,7 @@ export function EnrollmentsPage() {
   const [searchInput, setSearchInput] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
   const [filterYearId, setFilterYearId] = useState<string | null>(null)
-  const [filterStatus, setFilterStatus] = useState<string>('')
+  const [filterStatus, setFilterStatus] = useState<string>('active')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Enrollment | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Enrollment | null>(null)

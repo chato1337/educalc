@@ -107,6 +107,7 @@ from .scope_mixins import (
     TeacherRoleScopeMixin,
 )
 from .scope_utils import (
+    exclude_withdrawn_only_students,
     get_user_profile,
     teacher_can_access_course_assignment,
     user_can_access_student,
@@ -396,7 +397,7 @@ class GradingScaleViewSet(InstitutionFkRoleScopeMixin, viewsets.ModelViewSet):
 
 @schema_viewset(
     ["Students"],
-    "Student data",
+    "Student data. The list omits students whose enrollments are all withdrawn.",
     search_fields=[
         "document_number",
         "full_name",
@@ -420,6 +421,12 @@ class StudentViewSet(StudentRoleScopeMixin, viewsets.ModelViewSet):
         "first_last_name",
         "second_last_name",
     ]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if getattr(self, "action", None) == "list":
+            return exclude_withdrawn_only_students(qs)
+        return qs
 
     @bulk_csv_load_schema(
         summary="Bulk load students from CSV",
@@ -826,7 +833,8 @@ class GroupViewSet(GroupRoleScopeMixin, viewsets.ModelViewSet):
     @extend_schema(
         summary="Students rankings by period",
         description="Rankings of students in this group by academic period. "
-        "Uses PerformanceSummary when available. Optional: filter by period_id.",
+        "Uses PerformanceSummary when available and includes only students with an "
+        "active enrollment in the group. Optional: filter by period_id.",
         tags=["Groups"],
         parameters=[
             OpenApiParameter(name="period_id", type=str, location="query", required=False),
@@ -836,9 +844,12 @@ class GroupViewSet(GroupRoleScopeMixin, viewsets.ModelViewSet):
     def students_rankings(self, request, pk=None):
         group = self.get_object()
         period_id = request.query_params.get("period_id")
-        summaries = PerformanceSummary.objects.filter(group=group).select_related(
-            "student", "academic_period"
-        ).order_by("academic_period__number")
+        active_student_ids = Enrollment.objects.filter(
+            group=group, status="active"
+        ).values("student_id")
+        summaries = PerformanceSummary.objects.filter(
+            group=group, student_id__in=active_student_ids
+        ).select_related("student", "academic_period").order_by("academic_period__number")
         if period_id:
             summaries = summaries.filter(academic_period_id=period_id)
         by_period = {}
@@ -1132,7 +1143,9 @@ class GradeDirectorViewSet(GradeDirectorRoleScopeMixin, viewsets.ModelViewSet):
 
 @schema_viewset(
     ["Enrollments"],
-    "Student-group enrollment for an academic year",
+    "Student-group enrollment for an academic year. "
+    "List results omit withdrawn enrollments unless `status=withdrawn` is set, "
+    "or the query is limited to one `student`.",
     search_fields=[
         "student__document_number",
         "student__full_name",
@@ -1174,6 +1187,15 @@ class EnrollmentViewSet(EnrollmentRoleScopeMixin, viewsets.ModelViewSet):
         "=academic_year__year",
         "status",
     ]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if getattr(self, "action", None) != "list":
+            return qs
+        params = self.request.query_params
+        if params.get("status") or params.get("student"):
+            return qs
+        return qs.exclude(status="withdrawn")
 
 
 @schema_viewset(
@@ -1779,7 +1801,7 @@ class AcademicIndicatorViewSet(CourseAssignmentFkRoleScopeMixin, viewsets.ModelV
     @bulk_csv_load_schema(
         summary="Bulk load academic indicators from CSV",
         description=(
-            "Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE), GRADO, "
+            "Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE, NUCLEO), GRADO, "
             "LOGRO_POSITIVO, LOGRO_NEGATIVO, PERIODO_NUM opcional (1–4; omitir = plantilla genérica); "
             "upsert en catálogo área+grado+periodo. "
             "(2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, "

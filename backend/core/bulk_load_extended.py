@@ -65,8 +65,12 @@ def _fold_upper_name(value: str) -> str:
 
 def _resolve_academic_area_for_catalog(institution, area_label: str):
     target = _fold_upper_name(area_label)
-    for aa in AcademicArea.objects.filter(institution=institution).only("id", "name"):
+    for aa in AcademicArea.objects.filter(institution=institution).only(
+        "id", "name", "code"
+    ):
         if _fold_upper_name(aa.name) == target:
+            return aa
+        if aa.code and _fold_upper_name(aa.code) == target:
             return aa
     return None
 
@@ -83,15 +87,8 @@ def _resolve_grade_level_for_catalog(institution, grado_raw) -> GradeLevel | Non
     ).first()
 
 
-def _bulk_indicator_row_is_catalog_template(row, col) -> bool:
-    """AREA_ACADEMICA + GRADO + logros por DANE (plantillas), sin DOC_ESTUDIANTE."""
-    if clean_str(col(row, ["DOC_ESTUDIANTE", "doc_estudiante"])):
-        return False
-    if not clean_str(col(row, ["DANE_COD", "dane_cod"])):
-        return False
-    if parse_int(col(row, ["GRADO", "grado"])) is None:
-        return False
-    area_academica = clean_str(
+def _indicator_area_label(row, col) -> str:
+    return clean_str(
         col(
             row,
             [
@@ -99,14 +96,60 @@ def _bulk_indicator_row_is_catalog_template(row, col) -> bool:
                 "area_academica",
                 "AREA_NOMBRE",
                 "area_nombre",
+                "NUCLEO",
+                "nucleo",
             ],
         )
     )
-    if not area_academica:
-        return False
+
+
+def _catalog_template_skip_reason(row, col) -> str | None:
+    """Why the row is not a catalog template. None means it is one."""
+    doc = clean_str(col(row, ["DOC_ESTUDIANTE", "doc_estudiante"]))
+    if doc:
+        return f"tiene DOC_ESTUDIANTE={doc!r}"
+    if not clean_str(col(row, ["DANE_COD", "dane_cod"])):
+        return "falta DANE_COD"
+    grado_raw = col(row, ["GRADO", "grado"])
+    if parse_int(grado_raw) is None:
+        return f"GRADO no es un entero (valor={grado_raw!r})"
+    if not _indicator_area_label(row, col):
+        return "falta AREA_ACADEMICA, AREA_NOMBRE o NUCLEO"
     pos = clean_str(col(row, ["LOGRO_POSITIVO", "logro_positivo"]))
     neg = clean_str(col(row, ["LOGRO_NEGATIVO", "logro_negativo"]))
-    return bool(pos or neg)
+    if not pos and not neg:
+        return "faltan LOGRO_POSITIVO y LOGRO_NEGATIVO"
+    return None
+
+
+def _bulk_indicator_row_is_catalog_template(row, col) -> bool:
+    """AREA_ACADEMICA + GRADO + logros por DANE (plantillas), sin DOC_ESTUDIANTE."""
+    return _catalog_template_skip_reason(row, col) is None
+
+
+def _skip_academic_indicator_row(stats, row_num, message, *, detail=""):
+    if detail:
+        logger.warning(
+            "bulk_load_academic_indicators row %s: %s | %s",
+            row_num,
+            message,
+            detail,
+        )
+    else:
+        logger.warning(
+            "bulk_load_academic_indicators row %s: %s", row_num, message
+        )
+    stats["errors"].append({"row": row_num, "error": message})
+    stats["rows_skipped"] += 1
+
+
+def _log_recorded_indicator_skip(stats, row_num):
+    """Log a skip whose message was already appended to stats['errors']."""
+    message = stats["errors"][-1]["error"] if stats["errors"] else "fila omitida"
+    logger.warning(
+        "bulk_load_academic_indicators row %s: %s", row_num, message
+    )
+    stats["rows_skipped"] += 1
 
 
 def _upsert_indicator_catalog(
@@ -153,65 +196,81 @@ def _upsert_indicator_catalog(
 def _bulk_load_indicator_catalog_row(row, col, row_num, stats) -> None:
     """Upsert AcademicIndicatorCatalog from DANE_COD, AREA_ACADEMICA, GRADO, logros."""
     dane = clean_str(col(row, ["DANE_COD", "dane_cod"]))
-    area_academica = clean_str(
-        col(
-            row,
-            [
-                "AREA_ACADEMICA",
-                "area_academica",
-                "AREA_NOMBRE",
-                "area_nombre",
-            ],
-        )
-    )
+    area_academica = _indicator_area_label(row, col)
     grado_raw = col(row, ["GRADO", "grado"])
     pos = clean_str(col(row, ["LOGRO_POSITIVO", "logro_positivo"]))
     neg = clean_str(col(row, ["LOGRO_NEGATIVO", "logro_negativo"]))
     if not pos or not neg:
-        stats["errors"].append(
-            {
-                "row": row_num,
-                "error": "LOGRO_POSITIVO y LOGRO_NEGATIVO son obligatorios en filas de plantilla.",
-            }
+        missing_logros = []
+        if not pos:
+            missing_logros.append("LOGRO_POSITIVO")
+        if not neg:
+            missing_logros.append("LOGRO_NEGATIVO")
+        _skip_academic_indicator_row(
+            stats,
+            row_num,
+            "Plantilla de catálogo omitida: "
+            + " y ".join(missing_logros)
+            + " son obligatorios.",
+            detail=(
+                f"LOGRO_POSITIVO={pos!r} LOGRO_NEGATIVO={neg!r} "
+                f"keys_fila={list(row.keys()) if row else []}"
+            ),
         )
-        stats["rows_skipped"] += 1
         return
     institution = get_institution_by_dane(dane)
     if not institution:
-        stats["errors"].append(
-            {"row": row_num, "error": f"Institution not found DANE={dane}"}
+        _skip_academic_indicator_row(
+            stats,
+            row_num,
+            f"Plantilla de catálogo omitida: no hay institución con DANE_COD={dane!r}.",
+            detail=f"DANE_COD={dane!r}",
         )
-        stats["rows_skipped"] += 1
         return
     aa = _resolve_academic_area_for_catalog(institution, area_academica)
     if not aa:
-        stats["errors"].append(
-            {
-                "row": row_num,
-                "error": f"AcademicArea not found for AREA_ACADEMICA={area_academica!r}",
-            }
+        existing_areas = list(
+            AcademicArea.objects.filter(institution=institution).values_list(
+                "name", flat=True
+            )
         )
-        stats["rows_skipped"] += 1
+        _skip_academic_indicator_row(
+            stats,
+            row_num,
+            "Plantilla de catálogo omitida: no hay área académica "
+            f"(AREA_ACADEMICA, AREA_NOMBRE o NUCLEO)={area_academica!r} "
+            f"en {institution.name!r}.",
+            detail=(
+                f"area_buscada={area_academica!r} "
+                f"area_normalizada={_fold_upper_name(area_academica)!r} "
+                f"areas_existentes={existing_areas!r}"
+            ),
+        )
         return
     gl = _resolve_grade_level_for_catalog(institution, grado_raw)
     if not gl:
-        stats["errors"].append(
-            {
-                "row": row_num,
-                "error": f"GradeLevel not found for GRADO={grado_raw!r} (level_order o nombre)",
-            }
+        existing_grades = list(
+            GradeLevel.objects.filter(institution=institution).values_list(
+                "level_order", "name"
+            )
         )
-        stats["rows_skipped"] += 1
+        _skip_academic_indicator_row(
+            stats,
+            row_num,
+            "Plantilla de catálogo omitida: no hay grado "
+            f"GRADO={grado_raw!r} (level_order o nombre) en {institution.name!r}.",
+            detail=f"GRADO={grado_raw!r} grados_existentes={existing_grades!r}",
+        )
         return
     period_number = parse_int(col(row, ["PERIODO_NUM", "periodo_num"]))
     if period_number is not None and not 1 <= period_number <= 4:
-        stats["errors"].append(
-            {
-                "row": row_num,
-                "error": "PERIODO_NUM debe estar entre 1 y 4 en filas de plantilla.",
-            }
+        _skip_academic_indicator_row(
+            stats,
+            row_num,
+            "Plantilla de catálogo omitida: PERIODO_NUM debe estar entre 1 y 4 "
+            f"(valor={period_number!r}).",
+            detail=f"PERIODO_NUM={period_number!r}",
         )
-        stats["rows_skipped"] += 1
         return
     _, created = _upsert_indicator_catalog(
         academic_area=aa,
@@ -1155,30 +1214,101 @@ def bulk_load_academic_indicators(csv_file):
             ano = parse_int(col(row, ["ANO", "ano"]))
             pnum = parse_int(col(row, ["PERIODO_NUM", "periodo_num"]))
             desc = clean_str(col(row, ["DESCRIPCION", "descripcion"]))
-            if not sdoc or not dane or ano is None or pnum is None or not desc:
-                stats["rows_skipped"] += 1
+            missing = []
+            if not sdoc:
+                missing.append("DOC_ESTUDIANTE")
+            if not dane:
+                missing.append("DANE_COD")
+            if ano is None:
+                missing.append("ANO")
+            if pnum is None:
+                missing.append("PERIODO_NUM")
+            if not desc:
+                missing.append("DESCRIPCION")
+            if missing:
+                catalog_reason = _catalog_template_skip_reason(row, col)
+                _skip_academic_indicator_row(
+                    stats,
+                    row_num,
+                    "Fila omitida: faltan "
+                    + ", ".join(missing)
+                    + f". Tampoco es plantilla de catálogo porque {catalog_reason}.",
+                    detail=(
+                        f"DOC_ESTUDIANTE={sdoc!r} DANE_COD={dane!r} ANO={ano!r} "
+                        f"PERIODO_NUM={pnum!r} DESCRIPCION={desc!r} "
+                        f"AREA={_indicator_area_label(row, col)!r} "
+                        f"GRADO={col(row, ['GRADO', 'grado'])!r} "
+                        f"LOGRO_POSITIVO={clean_str(col(row, ['LOGRO_POSITIVO', 'logro_positivo']))!r} "
+                        f"LOGRO_NEGATIVO={clean_str(col(row, ['LOGRO_NEGATIVO', 'logro_negativo']))!r} "
+                        f"keys_fila={list(row.keys()) if row else []}"
+                    ),
+                )
                 continue
             student = Student.objects.filter(document_number=sdoc).first()
             if not student:
-                stats["errors"].append(
-                    {"row": row_num, "error": f"Student not found DOC={sdoc}"}
+                _skip_academic_indicator_row(
+                    stats,
+                    row_num,
+                    f"Fila omitida: no hay estudiante con DOC_ESTUDIANTE={sdoc!r}.",
                 )
-                stats["rows_skipped"] += 1
                 continue
             institution = get_institution_by_dane(dane)
             if not institution:
-                stats["errors"].append(
-                    {"row": row_num, "error": f"Institution not found DANE={dane}"}
+                _skip_academic_indicator_row(
+                    stats,
+                    row_num,
+                    f"Fila omitida: no hay institución con DANE_COD={dane!r}.",
                 )
-                stats["rows_skipped"] += 1
                 continue
+            errors_before = len(stats["errors"])
             ap = _resolve_period(institution, ano, pnum, row_num, stats)
             if not ap:
-                stats["rows_skipped"] += 1
+                if len(stats["errors"]) > errors_before:
+                    _log_recorded_indicator_skip(stats, row_num)
+                else:
+                    _skip_academic_indicator_row(
+                        stats,
+                        row_num,
+                        "Fila omitida: no se resolvió el periodo "
+                        f"ANO={ano!r} PERIODO_NUM={pnum!r}.",
+                    )
                 continue
+            errors_before = len(stats["errors"])
             resolved = _resolve_course_assignment(row, col, row_num, stats)
             if not resolved:
-                stats["rows_skipped"] += 1
+                if len(stats["errors"]) > errors_before:
+                    _log_recorded_indicator_skip(stats, row_num)
+                else:
+                    sede = clean_str(col(row, ["SEDE", "sede"]))
+                    grado = clean_str(col(row, ["GRADO", "grado"]))
+                    grupo = clean_str(col(row, ["GRUPO", "grupo"]))
+                    subj_name = clean_str(
+                        col(row, ["ASIGNATURA_NOMBRE", "asignatura_nombre"])
+                    )
+                    missing_ca = [
+                        name
+                        for name, present in (
+                            ("DANE_COD", dane),
+                            ("ANO", ano is not None),
+                            ("SEDE", sede),
+                            ("GRADO", grado),
+                            ("GRUPO", grupo),
+                            ("ASIGNATURA_NOMBRE", subj_name),
+                        )
+                        if not present
+                    ]
+                    _skip_academic_indicator_row(
+                        stats,
+                        row_num,
+                        "Fila omitida: faltan datos de asignación de curso: "
+                        + ", ".join(missing_ca or ["contexto de curso"])
+                        + ".",
+                        detail=(
+                            f"SEDE={sede!r} GRADO={grado!r} GRUPO={grupo!r} "
+                            f"ASIGNATURA_NOMBRE={subj_name!r} "
+                            f"keys_fila={list(row.keys()) if row else []}"
+                        ),
+                    )
                 continue
             ca, _, _, _ = resolved
             ngrade = parse_decimal(col(row, ["NOTA", "nota"]))
@@ -1214,7 +1344,25 @@ def bulk_load_academic_indicators(csv_file):
             stats["created"] += 1
             stats["rows_processed"] += 1
         except Exception as e:
+            logger.exception(
+                "bulk_load_academic_indicators row %s: error inesperado", row_num
+            )
             stats["errors"].append({"row": row_num, "error": str(e)})
+    summary = (
+        "bulk_load_academic_indicators finished rows_processed=%s rows_skipped=%s "
+        "created=%s updated=%s errors=%s"
+    )
+    summary_args = (
+        stats["rows_processed"],
+        stats["rows_skipped"],
+        stats["created"],
+        stats["updated"],
+        len(stats["errors"]),
+    )
+    if stats["rows_skipped"] or stats["errors"]:
+        logger.warning(summary, *summary_args)
+    else:
+        logger.info(summary, *summary_args)
     return stats
 
 

@@ -76,6 +76,22 @@ class BulkLoadIndicatorCatalogPeriodTests(TestCase):
         p1.refresh_from_db()
         self.assertEqual(p1.achievement_basic_or_above, "Logro P1 actualizado")
 
+    def test_catalog_template_accepts_nucleo_column(self):
+        header = "DANE_COD,NUCLEO,GRADO,PERIODO_NUM,LOGRO_POSITIVO,LOGRO_NEGATIVO\n"
+        row = (
+            f"{self.inst.dane_code},Matemáticas,6,3,"
+            "Logro nucleo positivo,Logro nucleo negativo\n"
+        )
+        stats = bulk_load_academic_indicators(self._csv_bytes(header + row))
+        self.assertEqual(stats["rows_skipped"], 0, stats["errors"])
+        self.assertEqual(stats["created"], 1)
+        catalog = AcademicIndicatorCatalog.objects.get(
+            academic_area=self.area,
+            grade_level=self.gl,
+            period_number=3,
+        )
+        self.assertEqual(catalog.achievement_basic_or_above, "Logro nucleo positivo")
+
     def test_catalog_template_without_period_is_generic(self):
         header = "DANE_COD,AREA_ACADEMICA,GRADO,LOGRO_POSITIVO,LOGRO_NEGATIVO\n"
         row = f"{self.inst.dane_code},Matemáticas,6,Gen positivo,Gen negativo\n"
