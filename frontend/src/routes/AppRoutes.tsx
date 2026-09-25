@@ -43,6 +43,7 @@ import {
   PerformanceSummariesPage,
   RollCallPage,
   SchoolRecordsPage,
+  ActivityGradeGridPage,
   StudentActivityScoresPage,
   StudentDetailPage,
   StudentFormPage,
@@ -144,6 +145,7 @@ export function AppRoutes() {
               path="suggested-grades"
               element={<SuggestedGradesPage />}
             />
+            <Route path="grade-grid" element={<ActivityGradeGridPage />} />
           </Route>
           <Route
             path="grading-schemes"

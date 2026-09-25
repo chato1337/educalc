@@ -167,6 +167,12 @@ export const SuggestedGradesPage = lazy(() =>
   ),
 )
 
+export const ActivityGradeGridPage = lazy(() =>
+  import('@/features/operations/activityGrading/ActivityGradeGridPage').then(
+    (m) => ({ default: m.ActivityGradeGridPage }),
+  ),
+)
+
 export const GradingScalesPage = lazy(() =>
   import('@/features/operations/GradingScalesPage').then((m) => ({
     default: m.GradingScalesPage,

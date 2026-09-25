@@ -127,7 +127,7 @@
     "nameDesc": "Nombre (Z-A)",
     "documentAsc": "Documento (asc)",
     "documentDesc": "Documento (desc)",
-    "globalSearchHint": "Búsqueda global: documento, nombre completo, nombres y apellidos. No incluye estudiantes cuya única matrícula está retirada.",
+    "globalSearchHint": "Búsqueda global: documento, nombre completo, nombres y apellidos.",
     "name": "Nombre",
     "document": "Documento",
     "documentType": "Tipo doc.",
@@ -430,6 +430,15 @@
     "submit": "Guardar recuperación",
     "hideRecovered": "Ocultar estudiantes con recuperación ya registrada"
   },
+  "grading": {
+    "weightRange": {
+      "hint": "Arrastra los divisores para repartir el 100%.",
+      "saving": "Guardando…",
+      "releaseToSave": "Soltar para guardar",
+      "handle": "Divisor entre {{left}} y {{right}}",
+      "segment": "segmento"
+    }
+  },
   "gradingSchemes": {
     "title": "Calificaciones por actividades",
     "subtitle": "Esquemas ponderados por asignación y periodo. Las notas por actividad sugieren la nota oficial en Grade.",
@@ -558,7 +567,37 @@
     "nav": {
       "schemes": "Esquemas de evaluación",
       "activityScores": "Notas por actividad",
-      "suggestedGrades": "Nota sugerida"
+      "suggestedGrades": "Nota sugerida",
+      "gradeGrid": "Malla de calificación de actividades"
+    },
+    "gradeGrid": {
+      "title": "Malla de calificación de actividades",
+      "selectSchemeHint": "Selecciona un esquema de evaluación para calificar al grupo en la malla.",
+      "def": "def",
+      "actions": "Acciones",
+      "emptyStudents": "No hay estudiantes matriculados en este grupo.",
+      "invalidWeights": "Los pesos del esquema no suman 100%. La columna def queda en 0 y no se puede aplicar la sugerencia.",
+      "openWeights": "Repartir pesos de los segmentos",
+      "addActivity": "Agregar actividad",
+      "openDetail": "Ver detalle del estudiante",
+      "applyRow": "Aplicar la nota sugerida de esta fila",
+      "applyRowDisabled": "Completa todas las actividades de la fila para aplicar la sugerencia.",
+      "weightsTitle": "Pesos de {{name}}",
+      "weightsTitlePlain": "Pesos del componente",
+      "catalogWeight": "Peso de catálogo: {{weight}}%. No se puede modificar desde aquí.",
+      "singleWeight": "Peso del segmento",
+      "singleWeightHint": "Baja el peso para liberar resto. Cada segmento queda en 5% como mínimo.",
+      "splitHint": "Arrastra el divisor hacia la izquierda. Al soltar, se pide el nombre del segmento nuevo.",
+      "splitNew": "Nuevo",
+      "splitNameTitle": "Nombre del segmento nuevo",
+      "splitNameHint": "«{{currentName}}» queda en {{current}}% y el segmento nuevo en {{next}}%.",
+      "freeWeightHint": "Para agregar un segmento hay que liberar al menos 5%.",
+      "releaseSegment": "Segmento a reducir",
+      "releaseWeight": "Nuevo peso",
+      "releaseAction": "Liberar peso",
+      "releaseMinimum": "El resto libre debe quedar en al menos 5% y cada segmento en 5% o más.",
+      "detailTitle": "Detalle de {{name}}",
+      "bulkConfirm": "Se aplicará la nota sugerida a {{count}} estudiante(s) del grupo. La nota definitiva no cambia."
     },
     "schemesTitle": "Esquemas de evaluación",
     "activityScoresTitle": "Notas por actividad",

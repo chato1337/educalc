@@ -4,7 +4,8 @@
 **Documento:** Especificación de implementación (prompt refinado)  
 **Referencia:** `backend/core/models.py`, Decreto 1290 de 2009 (Colombia)  
 **Fecha:** Junio 2025 (backend) · actualizado Junio 2026 (frontend + refactor catálogo por asignatura + nivel de desempeño al aplicar sugerencia)  
-**Estado:** Backend Fases 1–2 completadas · Frontend integrado · **Refactor componentes/segmentos/notas pendientes** — ver [Ajustes de arquitectura (Jun 2026)](#ajustes-de-arquitectura-jun-2026)
+**Estado:** Backend Fases 1–2 completadas · Frontend integrado · **Refactor componentes/segmentos/notas pendientes** — ver [Ajustes de arquitectura (Jun 2026)](#ajustes-de-arquitectura-jun-2026)  
+**Plan siguiente:** [plan-malla-calificacion-actividades.md](./plan-malla-calificacion-actividades.md) — grilla única para calificar el grupo, sin cambios de API.
 
 ---
 

@@ -290,14 +290,27 @@ class WithdrawnEnrollmentListingTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         return {row["id"] for row in response.data["results"]}
 
-    def test_student_list_hides_withdrawn_only_students(self):
+    def test_admin_student_list_includes_withdrawn_students(self):
         self.client.force_authenticate(user=self.admin)
         ids = self._ids(self.client.get(reverse("student-list")))
         self.assertIn(str(self.active.id), ids)
         self.assertIn(str(self.transferred.id), ids)
         self.assertIn(str(self.unenrolled.id), ids)
         self.assertIn(str(self.graduated.id), ids)
-        self.assertNotIn(str(self.withdrawn.id), ids)
+        self.assertIn(str(self.withdrawn.id), ids)
+
+    def test_coordinator_student_list_includes_withdrawn_students(self):
+        User = get_user_model()
+        coordinator = User.objects.create_user(username="wd_coord", password="x")
+        UserProfile.objects.filter(user=coordinator).update(
+            role="COORDINATOR",
+            institution_id=self.inst.id,
+        )
+        coordinator = User.objects.select_related("profile").get(pk=coordinator.pk)
+        self.client.force_authenticate(user=coordinator)
+        ids = self._ids(self.client.get(reverse("student-list")))
+        self.assertIn(str(self.withdrawn.id), ids)
+        self.assertIn(str(self.active.id), ids)
 
     def test_withdrawn_student_profile_remains_readable(self):
         self.client.force_authenticate(user=self.admin)

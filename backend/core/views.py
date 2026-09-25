@@ -397,7 +397,8 @@ class GradingScaleViewSet(InstitutionFkRoleScopeMixin, viewsets.ModelViewSet):
 
 @schema_viewset(
     ["Students"],
-    "Student data. The list omits students whose enrollments are all withdrawn.",
+    "Student data. For teachers and parents, the list omits students whose "
+    "enrollments are all withdrawn. Administrators and coordinators still see them.",
     search_fields=[
         "document_number",
         "full_name",
@@ -424,9 +425,12 @@ class StudentViewSet(StudentRoleScopeMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        if getattr(self, "action", None) == "list":
-            return exclude_withdrawn_only_students(qs)
-        return qs
+        if getattr(self, "action", None) != "list":
+            return qs
+        profile = get_user_profile(getattr(self.request, "user", None))
+        if profile and profile.role in ("ADMIN", "COORDINATOR"):
+            return qs
+        return exclude_withdrawn_only_students(qs)
 
     @bulk_csv_load_schema(
         summary="Bulk load students from CSV",

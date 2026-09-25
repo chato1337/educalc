@@ -67,9 +67,10 @@ export function PlanningActivityDialog({
 }: PlanningActivityDialogProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const resolvedSegmentId = segmentId || editing?.segment
   const showSegmentPicker =
     !editing && Boolean(segments?.length) && !segmentId
-  const hasSegments = Boolean(segmentId || segments?.length)
+  const hasSegments = Boolean(resolvedSegmentId || segments?.length)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema) as Resolver<FormValues>,
@@ -91,7 +92,7 @@ export function PlanningActivityDialog({
       activity_date: editing?.activity_date ?? defaultDate ?? todayIsoDate(),
       max_score: editing?.max_score ?? '5.00',
       sort_order: editing?.sort_order ?? 0,
-      segment: segmentId ?? segments?.[0]?.id ?? '',
+      segment: segmentId ?? editing?.segment ?? segments?.[0]?.id ?? '',
     })
   }, [open, editing, defaultDate, nameSuggestion, segmentId, segments, form])
 

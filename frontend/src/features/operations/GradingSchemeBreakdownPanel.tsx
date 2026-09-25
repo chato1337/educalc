@@ -151,17 +151,27 @@ function canApplySuggestion(
   )
 }
 
-function BreakdownTree({ breakdown }: { breakdown: GradeBreakdown }) {
+export function BreakdownTree({
+  breakdown,
+  headlineGrade,
+}: {
+  breakdown: GradeBreakdown
+  /** When set, replaces the API suggested grade in the headline. */
+  headlineGrade?: string | null
+}) {
   const { t } = useTranslation()
+  const headline =
+    headlineGrade !== undefined
+      ? headlineGrade != null && headlineGrade !== ''
+        ? headlineGrade
+        : '—'
+      : breakdown.suggested_grade != null && breakdown.suggested_grade !== ''
+        ? breakdown.suggested_grade
+        : '—'
   return (
     <Stack spacing={2}>
       <Typography variant="subtitle1">
-        {t('gradingSchemes.suggestedGrade')}:{' '}
-        <strong>
-          {breakdown.suggested_grade != null && breakdown.suggested_grade !== ''
-            ? breakdown.suggested_grade
-            : '—'}
-        </strong>
+        {t('gradingSchemes.suggestedGrade')}: <strong>{headline}</strong>
       </Typography>
       {breakdown.components.map((component) => (
         <Paper key={component.component_id} variant="outlined" sx={{ p: 2 }}>

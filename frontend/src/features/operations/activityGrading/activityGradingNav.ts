@@ -1,6 +1,7 @@
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined'
 import GradingOutlinedIcon from '@mui/icons-material/GradingOutlined'
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined'
+import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined'
 import type { SvgIconComponent } from '@mui/icons-material'
 
 export const ACTIVITY_GRADING_BASE = '/activity-grading'
@@ -28,6 +29,11 @@ export const activityGradingNavItems: ActivityGradingNavItem[] = [
     path: `${ACTIVITY_GRADING_BASE}/suggested-grades`,
     icon: InsightsOutlinedIcon,
   },
+  {
+    labelKey: 'activityGrading.nav.gradeGrid',
+    path: `${ACTIVITY_GRADING_BASE}/grade-grid`,
+    icon: TableChartOutlinedIcon,
+  },
 ]
 
 export function isActivityGradingPath(pathname: string): boolean {
@@ -45,6 +51,9 @@ export function activityGradingTabValue(pathname: string): string {
   }
   if (normalized.startsWith(`${ACTIVITY_GRADING_BASE}/suggested-grades`)) {
     return `${ACTIVITY_GRADING_BASE}/suggested-grades`
+  }
+  if (normalized.startsWith(`${ACTIVITY_GRADING_BASE}/grade-grid`)) {
+    return `${ACTIVITY_GRADING_BASE}/grade-grid`
   }
   return `${ACTIVITY_GRADING_BASE}/schemes`
 }

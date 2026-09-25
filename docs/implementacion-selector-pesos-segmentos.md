@@ -3,7 +3,7 @@
 **Proyecto:** eduCalc  
 **Fecha:** Agosto 2026  
 **Estado:** Implementado en mobile · Pendiente de portar al admin (`frontend/`)  
-**Relacionado con:** [modulo-gestion-calificaciones-por-actividades.md](./modulo-gestion-calificaciones-por-actividades.md), [modulo-planeacion-actividades.md](./modulo-planeacion-actividades.md)
+**Relacionado con:** [modulo-gestion-calificaciones-por-actividades.md](./modulo-gestion-calificaciones-por-actividades.md), [modulo-planeacion-actividades.md](./modulo-planeacion-actividades.md), [plan-malla-calificacion-actividades.md](./plan-malla-calificacion-actividades.md)
 
 Este documento describe el range con varios selectores (divisores arrastrables) para que se pueda **reutilizar la misma lógica** en el admin sin redescubrir el modelo, las trampas de persistencia ni el contrato de API.
 

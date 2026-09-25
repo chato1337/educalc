@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import {
+  ACTIVITY_GRADING_BASE,
   activityGradingNavItems,
   activityGradingTabValue,
 } from '@/features/operations/activityGrading/activityGradingNav'
@@ -12,9 +13,16 @@ export function ActivityGradingLayout() {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const tabValue = activityGradingTabValue(pathname)
+  const fullWidth = pathname.startsWith(`${ACTIVITY_GRADING_BASE}/grade-grid`)
 
   return (
-    <Box className="p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4">
+    <Box
+      className={
+        fullWidth
+          ? 'p-4 md:p-6 w-full flex flex-col gap-4'
+          : 'p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4'
+      }
+    >
       <PageHeader
         title={t('activityGrading.moduleTitle')}
         subtitle={t('activityGrading.moduleSubtitle')}
