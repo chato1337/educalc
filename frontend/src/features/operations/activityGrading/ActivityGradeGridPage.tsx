@@ -43,6 +43,7 @@ import { useTranslation } from 'react-i18next'
 import { apiClient } from '@/api/client'
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
+import { useAcademicYearsQuery } from '@/features/academic-structure/academicQueries'
 import { todayIsoDate } from '@/features/operations/activityPlanning/activityPlanningUtils'
 import { usePlanningSchemeSelection } from '@/features/operations/activityPlanning/planningQueries'
 import { PlanningActivityDialog } from '@/features/operations/activityPlanning/PlanningActivityDialog'
@@ -69,9 +70,12 @@ import {
   type StudentActivityScore,
   type SubjectComponent,
 } from '@/features/operations/gradingApi'
-import { fetchAllEnrollments } from '@/features/operations/operationsQueries'
+import {
+  fetchAllEnrollments,
+  useAcademicPeriodsForYear,
+} from '@/features/operations/operationsQueries'
 import { useUiStore } from '@/stores/uiStore'
-import type { Enrollment } from '@/types/schemas'
+import type { AcademicPeriod, Enrollment } from '@/types/schemas'
 
 ModuleRegistry.registerModules([AllCommunityModule])
 
@@ -136,6 +140,23 @@ type GridActions = {
 type GridContext = {
   actions: { current: GridActions }
   model: { current: GradeModel }
+}
+
+function periodCoversToday(period: AcademicPeriod, today: string): boolean {
+  const start = period.start_date?.slice(0, 10)
+  const end = period.end_date?.slice(0, 10)
+  if (!start || !end) return false
+  return start <= today && today <= end
+}
+
+function currentAcademicPeriod(periods: AcademicPeriod[], today: string): AcademicPeriod | null {
+  const current = periods.filter((period) => periodCoversToday(period, today))
+  current.sort((a, b) => b.number - a.number)
+  return current[0] ?? null
+}
+
+function formatPeriodLabel(period: AcademicPeriod): string {
+  return `${period.academic_year_year} · ${period.name}`
 }
 
 function labelWidth(label: string): number {
@@ -678,6 +699,42 @@ export function ActivityGradeGridPage() {
   const selectedInstitutionId = useUiStore((s) => s.selectedInstitutionId)
   const { schemeId, setSchemeId, schemes, schemesLoading, selectedScheme } =
     usePlanningSchemeSelection(selectedInstitutionId)
+  const yearsQuery = useAcademicYearsQuery(selectedInstitutionId)
+  const activeYear = useMemo(
+    () => (yearsQuery.data ?? []).find((year) => year.is_active) ?? null,
+    [yearsQuery.data],
+  )
+  const periodsQuery = useAcademicPeriodsForYear(activeYear?.id ?? null)
+  const currentPeriod = useMemo(
+    () => currentAcademicPeriod(periodsQuery.data ?? [], todayIsoDate()),
+    [periodsQuery.data],
+  )
+  const periodSchemes = useMemo(
+    () =>
+      currentPeriod
+        ? schemes.filter((scheme) => scheme.academic_period === currentPeriod.id)
+        : [],
+    [schemes, currentPeriod],
+  )
+  const schemeInPeriod =
+    selectedScheme && currentPeriod && selectedScheme.academic_period === currentPeriod.id
+      ? selectedScheme
+      : null
+
+  useEffect(() => {
+    if (!selectedInstitutionId || yearsQuery.isLoading || periodsQuery.isLoading) return
+    if (!selectedScheme) return
+    if (!currentPeriod || selectedScheme.academic_period !== currentPeriod.id) {
+      setSchemeId(null)
+    }
+  }, [
+    selectedInstitutionId,
+    yearsQuery.isLoading,
+    periodsQuery.isLoading,
+    selectedScheme,
+    currentPeriod,
+    setSchemeId,
+  ])
   const gridRef = useRef<AgGridReact<GradeRow>>(null)
   const revertingRef = useRef(false)
   const refreshTimerRef = useRef<number | null>(null)
@@ -1141,26 +1198,7 @@ export function ActivityGradeGridPage() {
 
   return (
     <Box className="flex flex-col gap-4">
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        spacing={1}
-        alignItems={{ sm: 'center' }}
-        justifyContent="space-between"
-      >
-        <Typography variant="h6">{t('activityGrading.gradeGrid.title')}</Typography>
-        <Button
-          variant="contained"
-          color="secondary"
-          startIcon={<GroupsIcon />}
-          disabled={!canApplyGroup || applyBulkMutation.isPending || !scheme}
-          onClick={() => {
-            setApplyMessage(null)
-            setBulkOpen(true)
-          }}
-        >
-          {t('gradingSchemes.applySuggestionBulk')}
-        </Button>
-      </Stack>
+      <Typography variant="h6">{t('activityGrading.gradeGrid.title')}</Typography>
 
       {!selectedInstitutionId ? (
         <Alert severity="info">{t('gradingSchemes.selectInstitution')}</Alert>
@@ -1174,24 +1212,90 @@ export function ActivityGradeGridPage() {
         <Alert severity="warning">{t('activityGrading.gradeGrid.invalidWeights')}</Alert>
       ) : null}
 
-      {selectedInstitutionId ? (
-        <Autocomplete
-          options={schemes}
-          loading={schemesLoading}
-          sx={{ maxWidth: 720 }}
-          getOptionKey={(option: GradingScheme) => option.id}
-          getOptionLabel={formatGradingSchemeOptionLabel}
-          value={selectedScheme}
-          onChange={(_, value) => setSchemeId(value?.id ?? null)}
-          renderInput={(params: AutocompleteRenderInputParams) => (
-            <TextField
-              {...params}
-              label={t('activityGrading.schemeFilter')}
-              required
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        spacing={2}
+        alignItems={{ md: 'center' }}
+      >
+        {selectedInstitutionId ? (
+          <>
+            <Autocomplete
+              options={currentPeriod ? [currentPeriod] : []}
+              value={currentPeriod}
+              readOnly
+              forcePopupIcon={false}
+              disableClearable={Boolean(currentPeriod)}
+              loading={yearsQuery.isLoading || periodsQuery.isLoading}
+              sx={{ width: { xs: '100%', md: 240 }, flexShrink: 0 }}
+              getOptionKey={(option: AcademicPeriod) => option.id}
+              getOptionLabel={formatPeriodLabel}
+              renderInput={(params: AutocompleteRenderInputParams) => (
+                <TextField
+                  {...params}
+                  label={t('gradingSchemes.period')}
+                  helperText={
+                    !yearsQuery.isLoading && !periodsQuery.isLoading && !currentPeriod
+                      ? t('activityGrading.gradeGrid.noCurrentPeriod')
+                      : undefined
+                  }
+                />
+              )}
             />
-          )}
-        />
-      ) : null}
+            <Autocomplete
+              options={periodSchemes}
+              loading={schemesLoading}
+              sx={{ flex: 1, minWidth: 0, maxWidth: { md: 720 } }}
+              getOptionKey={(option: GradingScheme) => option.id}
+              getOptionLabel={formatGradingSchemeOptionLabel}
+              value={schemeInPeriod}
+              onChange={(_, value) => setSchemeId(value?.id ?? null)}
+              renderInput={(params: AutocompleteRenderInputParams) => (
+                <TextField
+                  {...params}
+                  label={t('activityGrading.schemeFilter')}
+                  required
+                />
+              )}
+            />
+          </>
+        ) : null}
+        <Button
+          variant="contained"
+          color="secondary"
+          startIcon={<GroupsIcon />}
+          disabled={!canApplyGroup || applyBulkMutation.isPending || !scheme}
+          onClick={() => {
+            setApplyMessage(null)
+            setBulkOpen(true)
+          }}
+          sx={
+            Boolean(scheme) && canApplyGroup && !applyBulkMutation.isPending
+              ? {
+                  flexShrink: 0,
+                  ml: { md: 'auto' },
+                  color: '#FFFFFF',
+                  backgroundColor: '#1D4ED8',
+                  '@keyframes gradeGridApplyReady': {
+                    '0%, 100%': { backgroundColor: '#1D4ED8' },
+                    '50%': { backgroundColor: '#2563EB' },
+                  },
+                  animation: 'gradeGridApplyReady 2.8s ease-in-out infinite',
+                  '&:hover': {
+                    animation: 'none',
+                    backgroundColor: '#1E40AF',
+                    color: '#FFFFFF',
+                  },
+                  '@media (prefers-reduced-motion: reduce)': {
+                    animation: 'none',
+                    backgroundColor: '#1D4ED8',
+                  },
+                }
+              : { flexShrink: 0, ml: { md: 'auto' } }
+          }
+        >
+          {t('gradingSchemes.applySuggestionBulk')}
+        </Button>
+      </Stack>
 
       {selectedInstitutionId && !schemeId ? (
         <Alert severity="info">{t('activityGrading.gradeGrid.selectSchemeHint')}</Alert>

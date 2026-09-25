@@ -573,6 +573,7 @@
     "gradeGrid": {
       "title": "Malla de calificación de actividades",
       "selectSchemeHint": "Selecciona un esquema de evaluación para calificar al grupo en la malla.",
+      "noCurrentPeriod": "No hay un periodo vigente en la fecha de hoy.",
       "def": "def",
       "actions": "Acciones",
       "emptyStudents": "No hay estudiantes matriculados en este grupo.",
