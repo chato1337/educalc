@@ -1293,7 +1293,7 @@ export function ActivityGradeGridPage() {
               : { flexShrink: 0, ml: { md: 'auto' } }
           }
         >
-          {t('gradingSchemes.applySuggestionBulk')}
+          {t('activityGrading.gradeGrid.applyGroup')}
         </Button>
       </Stack>
 

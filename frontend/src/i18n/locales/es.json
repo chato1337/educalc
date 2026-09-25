@@ -598,7 +598,8 @@
       "releaseAction": "Liberar peso",
       "releaseMinimum": "El resto libre debe quedar en al menos 5% y cada segmento en 5% o más.",
       "detailTitle": "Detalle de {{name}}",
-      "bulkConfirm": "Se aplicará la nota sugerida a {{count}} estudiante(s) del grupo. La nota definitiva no cambia."
+      "applyGroup": "Aplicar notas nota sugerida a todo el grupo",
+      "bulkConfirm": "Se aplicará la nota sugerida a {{count}} estudiante(s) del grupo. La nota definitiva no cambia. Esta será la nota que aparece en el boletín académico."
     },
     "schemesTitle": "Esquemas de evaluación",
     "activityScoresTitle": "Notas por actividad",
