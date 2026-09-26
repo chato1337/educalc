@@ -45,7 +45,13 @@ User = get_user_model()
 class InstitutionAdmin(admin.ModelAdmin):
     list_display = ("name", "dane_code", "nit", "created_at")
     search_fields = ("name", "dane_code")
-    readonly_fields = ("id", "created_at", "updated_at")
+    readonly_fields = (
+        "id",
+        "created_at",
+        "updated_at",
+        "bulletin_logo_left_url",
+        "bulletin_logo_right_url",
+    )
 
 
 @admin.register(Campus)

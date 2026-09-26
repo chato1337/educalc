@@ -322,7 +322,7 @@ export interface paths {
         put?: never;
         /**
          * Bulk load academic indicators from CSV
-         * @description Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO, PERIODO_NUM opcional (1–4; omitir = plantilla genérica); upsert en catálogo área+grado+periodo. (2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION, NOTA (opcional), NIVEL_DESEMPENO_TEXTO (opcional).
+         * @description Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE, NUCLEO), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO, PERIODO_NUM opcional (1–4; omitir = plantilla genérica); upsert en catálogo área+grado+periodo. (2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION, NOTA (opcional), NIVEL_DESEMPENO_TEXTO (opcional).
          */
         post: operations["academic_indicators_bulk_load_create"];
         delete?: never;
@@ -1149,7 +1149,7 @@ export interface paths {
         };
         /**
          * List Enrollments
-         * @description Student-group enrollment for an academic year Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, =academic_year__year, status. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_year, academic_year__year, status. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Student-group enrollment for an academic year. List results omit withdrawn enrollments unless `status=withdrawn` is set, or the query is limited to one `student`. Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, =academic_year__year, status. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_year, academic_year__year, status. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["enrollments_list"];
         put?: never;
@@ -2038,7 +2038,7 @@ export interface paths {
         };
         /**
          * Students rankings by period
-         * @description Rankings of students in this group by academic period. Uses PerformanceSummary when available. Optional: filter by period_id.
+         * @description Rankings of students in this group by academic period. Uses PerformanceSummary when available and includes only students with an active enrollment in the group. Optional: filter by period_id.
          */
         get: operations["groups_students_rankings_retrieve"];
         put?: never;
@@ -2138,6 +2138,46 @@ export interface paths {
          *     Subclass and override filter_queryset_by_role() or the role-specific methods.
          */
         patch: operations["institutions_partial_update"];
+        trace?: never;
+    };
+    "/api/institutions/{id}/bulletin-logo-left/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload the left bulletin crest
+         * @description Multipart field `file`. Replaces the previous left crest. ADMIN or COORDINATOR of this institution. Missing file or unsupported type returns 400 and keeps the stored URL. A failed upload returns 500 and does not write the new URL.
+         */
+        post: operations["institutions_bulletin_logo_left_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/institutions/{id}/bulletin-logo-right/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload the right bulletin crest
+         * @description Multipart field `file`. Replaces the previous right crest. ADMIN or COORDINATOR of this institution. Missing file or unsupported type returns 400 and keeps the stored URL. A failed upload returns 500 and does not write the new URL.
+         */
+        post: operations["institutions_bulletin_logo_right_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/parents/": {
@@ -2682,7 +2722,7 @@ export interface paths {
         };
         /**
          * List Students
-         * @description Student data Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name. Available exact-match filters via query params: document_type, document_number, gender, sisben, stratum. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Student data. For teachers and parents, the list omits students whose enrollments are all withdrawn. Administrators and coordinators still see them. Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name. Available exact-match filters via query params: document_type, document_number, gender, sisben, stratum. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["students_list"];
         put?: never;
@@ -3543,6 +3583,14 @@ export interface components {
              */
             file: string;
         };
+        /** @description Multipart image for a bulletin crest. Field name is ``file``. */
+        BulletinLogoUploadRequest: {
+            /**
+             * Format: binary
+             * @description image/jpeg, image/jpg, image/png, image/gif or image/webp
+             */
+            file: string;
+        };
         Campus: {
             /** Format: uuid */
             readonly id: string;
@@ -4082,6 +4130,16 @@ export interface components {
             legal_reference?: string;
             dane_code: string;
             nit?: string;
+            /**
+             * Format: uri
+             * @description Public URL of the crest on the left of the student bulletin.
+             */
+            readonly bulletin_logo_left_url: string;
+            /**
+             * Format: uri
+             * @description Public URL of the crest on the right of the student bulletin.
+             */
+            readonly bulletin_logo_right_url: string;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -9964,6 +10022,58 @@ export interface operations {
                 "application/json": components["schemas"]["PatchedInstitutionRequest"];
                 "application/x-www-form-urlencoded": components["schemas"]["PatchedInstitutionRequest"];
                 "multipart/form-data": components["schemas"]["PatchedInstitutionRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Institution"];
+                };
+            };
+        };
+    };
+    institutions_bulletin_logo_left_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Institution. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulletinLogoUploadRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Institution"];
+                };
+            };
+        };
+    };
+    institutions_bulletin_logo_right_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Institution. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulletinLogoUploadRequest"];
             };
         };
         responses: {

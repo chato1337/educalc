@@ -36,6 +36,7 @@ import {
   GradingScalesPage,
   GroupRankingsPage,
   GroupsPage,
+  BulletinLogosPage,
   InstitutionsPage,
   FaceAuthCallbackPage,
   LoginPage,
@@ -89,6 +90,7 @@ export function AppRoutes() {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="institutions" element={<InstitutionsPage />} />
+          <Route path="bulletin-logos" element={<BulletinLogosPage />} />
           <Route path="campuses" element={<CampusesPage />} />
           <Route
             path="students/bulk-load"

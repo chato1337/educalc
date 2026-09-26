@@ -14,6 +14,8 @@ python-dotenv = "*"
 django-cors-headers = "*"
 dotenv = "*"
 weasyprint = "*"
+boto3 = "*"
+pillow = "*"
 
 [dev-packages]
 

@@ -23,6 +23,12 @@ export const InstitutionsPage = lazy(() =>
   })),
 )
 
+export const BulletinLogosPage = lazy(() =>
+  import('@/features/institutions/BulletinLogosPage').then((m) => ({
+    default: m.BulletinLogosPage,
+  })),
+)
+
 export const CampusesPage = lazy(() =>
   import('@/features/campuses/CampusesPage').then((m) => ({
     default: m.CampusesPage,

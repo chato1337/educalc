@@ -33,6 +33,18 @@ class Institution(TimeStampedModel):
     legal_reference = models.CharField(max_length=255, blank=True)
     dane_code = models.CharField(max_length=20, unique=True)
     nit = models.CharField(max_length=20, blank=True)
+    bulletin_logo_left_url = models.URLField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Public URL of the crest on the left of the student bulletin.",
+    )
+    bulletin_logo_right_url = models.URLField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Public URL of the crest on the right of the student bulletin.",
+    )
 
     class Meta:
         ordering = ["name"]

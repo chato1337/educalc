@@ -792,6 +792,23 @@
     "deleteDialog": "Eliminar institución",
     "deletePrompt": "¿Eliminar «{{name}}»? Esta acción no se puede deshacer."
   },
+  "bulletinLogos": {
+    "title": "Configuraciones de la institución",
+    "subtitle": "Imágenes del encabezado del boletín de calificaciones. Se optimizan y se guardan como URL pública.",
+    "selectInstitution": "Selecciona una institución en la barra superior para administrar sus escudos.",
+    "institutionLine": "Institución: {{name}}",
+    "leftTitle": "Escudo izquierdo",
+    "leftHelp": "Aparece a la izquierda del nombre en el boletín del estudiante.",
+    "rightTitle": "Escudo derecho",
+    "rightHelp": "Aparece a la derecha del nombre en el boletín del estudiante.",
+    "empty": "Aún no hay imagen. El boletín se imprime sin este escudo.",
+    "upload": "Subir imagen",
+    "replace": "Reemplazar imagen",
+    "uploading": "Subiendo…",
+    "saved": "Escudo actualizado. Los próximos boletines usarán esta imagen.",
+    "unsupportedType": "Usa una imagen JPG, PNG, GIF o WebP.",
+    "uploadFailed": "No se pudo subir la imagen."
+  },
   "academicPeriods": {
     "title": "Periodos académicos",
     "subtitle": "Filtra por año lectivo según la institución seleccionada en la barra.",
@@ -874,6 +891,7 @@
     "home": "Inicio",
     "institutionSection": "Institución",
     "institutions": "Instituciones",
+    "bulletinLogos": "Configuraciones de la institución",
     "campuses": "Sedes (campus)",
     "academicStructureSection": "Estructura académica",
     "academicYears": "Años lectivos",

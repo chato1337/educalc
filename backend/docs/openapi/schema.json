@@ -1478,7 +1478,7 @@
         "/api/academic-indicators/bulk-load/": {
             "post": {
                 "operationId": "academic_indicators_bulk_load_create",
-                "description": "Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO, PERIODO_NUM opcional (1–4; omitir = plantilla genérica); upsert en catálogo área+grado+periodo. (2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION, NOTA (opcional), NIVEL_DESEMPENO_TEXTO (opcional).",
+                "description": "Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE, NUCLEO), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO, PERIODO_NUM opcional (1–4; omitir = plantilla genérica); upsert en catálogo área+grado+periodo. (2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION, NOTA (opcional), NIVEL_DESEMPENO_TEXTO (opcional).",
                 "summary": "Bulk load academic indicators from CSV",
                 "tags": [
                     "Academic Indicators"
@@ -4925,7 +4925,7 @@
         "/api/enrollments/": {
             "get": {
                 "operationId": "enrollments_list",
-                "description": "Student-group enrollment for an academic year Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, =academic_year__year, status. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_year, academic_year__year, status. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "description": "Student-group enrollment for an academic year. List results omit withdrawn enrollments unless `status=withdrawn` is set, or the query is limited to one `student`. Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, =academic_year__year, status. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_year, academic_year__year, status. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Enrollments",
                 "parameters": [
                     {
@@ -8795,7 +8795,7 @@
         "/api/groups/{id}/students-rankings/": {
             "get": {
                 "operationId": "groups_students_rankings_retrieve",
-                "description": "Rankings of students in this group by academic period. Uses PerformanceSummary when available. Optional: filter by period_id.",
+                "description": "Rankings of students in this group by academic period. Uses PerformanceSummary when available and includes only students with an active enrollment in the group. Optional: filter by period_id.",
                 "summary": "Students rankings by period",
                 "parameters": [
                     {
@@ -9168,6 +9168,110 @@
                 "responses": {
                     "204": {
                         "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/institutions/{id}/bulletin-logo-left/": {
+            "post": {
+                "operationId": "institutions_bulletin_logo_left_create",
+                "description": "Multipart field `file`. Replaces the previous left crest. ADMIN or COORDINATOR of this institution. Missing file or unsupported type returns 400 and keeps the stored URL. A failed upload returns 500 and does not write the new URL.",
+                "summary": "Upload the left bulletin crest",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Institution.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Institutions"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulletinLogoUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Institution"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/institutions/{id}/bulletin-logo-right/": {
+            "post": {
+                "operationId": "institutions_bulletin_logo_right_create",
+                "description": "Multipart field `file`. Replaces the previous right crest. ADMIN or COORDINATOR of this institution. Missing file or unsupported type returns 400 and keeps the stored URL. A failed upload returns 500 and does not write the new URL.",
+                "summary": "Upload the right bulletin crest",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this Institution.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Institutions"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulletinLogoUploadRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Institution"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 }
             }
@@ -11296,7 +11400,7 @@
         "/api/students/": {
             "get": {
                 "operationId": "students_list",
-                "description": "Student data Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name. Available exact-match filters via query params: document_type, document_number, gender, sisben, stratum. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
+                "description": "Student data. For teachers and parents, the list omits students whose enrollments are all withdrawn. Administrators and coordinators still see them. Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name. Available exact-match filters via query params: document_type, document_number, gender, sisben, stratum. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.",
                 "summary": "List Students",
                 "parameters": [
                     {
@@ -14560,6 +14664,20 @@
                     "file"
                 ]
             },
+            "BulletinLogoUploadRequest": {
+                "type": "object",
+                "description": "Multipart image for a bulletin crest. Field name is ``file``.",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "format": "binary",
+                        "description": "image/jpeg, image/jpg, image/png, image/gif or image/webp"
+                    }
+                },
+                "required": [
+                    "file"
+                ]
+            },
             "Campus": {
                 "type": "object",
                 "properties": {
@@ -16316,6 +16434,18 @@
                         "type": "string",
                         "maxLength": 20
                     },
+                    "bulletin_logo_left_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Public URL of the crest on the left of the student bulletin."
+                    },
+                    "bulletin_logo_right_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "readOnly": true,
+                        "description": "Public URL of the crest on the right of the student bulletin."
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time",
@@ -16328,6 +16458,8 @@
                     }
                 },
                 "required": [
+                    "bulletin_logo_left_url",
+                    "bulletin_logo_right_url",
                     "created_at",
                     "dane_code",
                     "id",

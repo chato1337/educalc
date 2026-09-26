@@ -75,6 +75,7 @@ from .grading_openapi import grade_suggested_schema
 from .openapi_utils import bulk_csv_load_schema, openapi_error_response
 from .pagination import StandardLimitOffsetPagination
 from .permissions import IsAdminUser, IsBulkLoadStaff, IsCoordinator, IsTeacher
+from .services.file_utils import upload_for_resource
 from .recovery_openapi import grade_recovery_create_schema, grade_recovery_eligible_schema
 from .recovery_utils import (
     exclude_grades_with_recovery,
@@ -115,6 +116,7 @@ from .scope_utils import (
 from .serializers import (
     BulkLoadFileSerializer,
     BulkLoadStudentsSerializer,
+    BulletinLogoUploadSerializer,
     AcademicAreaSerializer,
     AcademicIndicatorCatalogSerializer,
     AcademicIndicatorSerializer,
@@ -290,6 +292,63 @@ class InstitutionViewSet(InstitutionRoleScopeMixin, viewsets.ModelViewSet):
     serializer_class = InstitutionSerializer
     permission_classes = [IsAuthenticated]
     filterset_fields = ["dane_code", "nit", "name"]
+
+    def _upload_bulletin_logo(self, request, url_field: str):
+        institution = self.get_object()
+        upload_for_resource(
+            institution,
+            request.FILES.get("file"),
+            folder="bulletin-logos",
+            url_field=url_field,
+        )
+        institution.refresh_from_db()
+        return Response(self.get_serializer(institution).data)
+
+    @extend_schema(
+        summary="Upload the left bulletin crest",
+        description=(
+            "Multipart field `file`. Replaces the previous left crest. "
+            "ADMIN or COORDINATOR of this institution. "
+            "Missing file or unsupported type returns 400 and keeps the stored URL. "
+            "A failed upload returns 500 and does not write the new URL."
+        ),
+        tags=["Institutions"],
+        methods=["POST"],
+        request={"multipart/form-data": BulletinLogoUploadSerializer},
+        responses={200: InstitutionSerializer},
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="bulletin-logo-left",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsCoordinator],
+    )
+    def bulletin_logo_left(self, request, pk=None):
+        return self._upload_bulletin_logo(request, "bulletin_logo_left_url")
+
+    @extend_schema(
+        summary="Upload the right bulletin crest",
+        description=(
+            "Multipart field `file`. Replaces the previous right crest. "
+            "ADMIN or COORDINATOR of this institution. "
+            "Missing file or unsupported type returns 400 and keeps the stored URL. "
+            "A failed upload returns 500 and does not write the new URL."
+        ),
+        tags=["Institutions"],
+        methods=["POST"],
+        request={"multipart/form-data": BulletinLogoUploadSerializer},
+        responses={200: InstitutionSerializer},
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="bulletin-logo-right",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsCoordinator],
+    )
+    def bulletin_logo_right(self, request, pk=None):
+        return self._upload_bulletin_logo(request, "bulletin_logo_right_url")
 
 
 @schema_viewset(

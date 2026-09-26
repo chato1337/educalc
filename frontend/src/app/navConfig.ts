@@ -21,6 +21,7 @@ import {
   Replay,
   Report,
   School,
+  Shield,
   Subject,
   SwapHoriz,
   TableChart,
@@ -75,6 +76,12 @@ export const navSections: NavSection[] = [
         path: '/institutions',
         icon: School,
         rolesAllowed: ADMIN_ONLY,
+      },
+      {
+        labelKey: 'nav.bulletinLogos',
+        path: '/bulletin-logos',
+        icon: Shield,
+        rolesAllowed: ADMIN_COORDINATOR,
       },
       {
         labelKey: 'nav.campuses',

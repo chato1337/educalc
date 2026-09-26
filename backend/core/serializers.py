@@ -43,9 +43,21 @@ class InstitutionSerializer(serializers.ModelSerializer):
             "legal_reference",
             "dane_code",
             "nit",
+            "bulletin_logo_left_url",
+            "bulletin_logo_right_url",
             "created_at",
             "updated_at",
         ]
+        read_only_fields = ["bulletin_logo_left_url", "bulletin_logo_right_url"]
+
+
+@extend_schema_serializer(component_name="BulletinLogoUpload")
+class BulletinLogoUploadSerializer(serializers.Serializer):
+    """Multipart image for a bulletin crest. Field name is ``file``."""
+
+    file = serializers.FileField(
+        help_text="image/jpeg, image/jpg, image/png, image/gif or image/webp"
+    )
 
 
 class CampusSerializer(serializers.ModelSerializer):

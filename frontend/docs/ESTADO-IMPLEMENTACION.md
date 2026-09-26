@@ -31,6 +31,7 @@ Documento para **retomar el trabajo sin contexto previo**. Complementa el plan e
 | **12 — Code splitting** | Hecho | `lazyPages.ts` + `Suspense` (`AdminLayout`, `LoginRoute` en `AppRoutes`). |
 | **13 — Hidratación auth** | Hecho | `useAuthStoreHydrated` (`useSyncExternalStore`) en `ProtectedRoute` y `LoginPage`; coexiste con `onRehydrateStorage` en `authStore` (`syncInstitutionFromUser`). |
 | **14 — Menú y rutas por rol** | Hecho | Ver párrafo «Última revisión». Incluye pulido UI: sin permiso → `AccessDeniedContent`; rol legible en barra; estado activo en drawer. |
+| **Configuraciones de la institución** | Hecho | `/bulletin-logos` (`BulletinLogosPage`): ADMIN y COORDINATOR suben el escudo izquierdo y el derecho de la institución seleccionada. El boletín usa esas URLs. |
 
 ---
 
