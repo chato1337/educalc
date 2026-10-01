@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode, type Ref } from 'react'
 
 import { getErrorMessage } from '@/api/errors'
 import { queryKeys } from '@/api/queryKeys'
@@ -19,6 +19,7 @@ import {
   parseMaxScore,
   serializeScore,
 } from '@/features/grading/activityStatus'
+import { GradeGridMatrix } from '@/features/grading/GradeGridMatrix'
 import {
   displayDef,
   isRowComplete,
@@ -181,19 +182,31 @@ function GridHeader({
   )
 }
 
+const GRID_LAYOUT_CSS = `
+.grade-grid-root { container-type: inline-size; }
+.grade-grid-root .grade-grid-matrix { display: none; }
+@container (min-width: 560px) {
+  .grade-grid-root .grade-grid-list { display: none; }
+  .grade-grid-root .grade-grid-matrix { display: block; }
+}
+`
+
 function Shell({
   title,
   subtitle,
   onBack,
+  rootRef,
   children,
 }: {
   title: string
   subtitle?: string
   onBack: () => void
+  rootRef?: Ref<HTMLDivElement>
   children: ReactNode
 }) {
   return (
-    <div className="flex flex-col h-full bg-[#F1F5F9]">
+    <div ref={rootRef} className="grade-grid-root flex flex-col h-full bg-[#F1F5F9]">
+      <style>{GRID_LAYOUT_CSS}</style>
       <GridHeader title={title} subtitle={subtitle} onBack={onBack} />
       {children}
     </div>
@@ -262,6 +275,20 @@ export function GradeGridScreen({
   const [savingKey, setSavingKey] = useState<string | null>(null)
   const queueRef = useRef<SaveJob[]>([])
   const runningRef = useRef(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const wideRef = useRef(false)
+
+  useLayoutEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+    const update = () => {
+      wideRef.current = el.clientWidth >= 560
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    return () => observer.disconnect()
+  })
 
   const readCell = (sid: string, aid: string): CellValue => {
     const key = cellKey(sid, aid)
@@ -392,6 +419,11 @@ export function GradeGridScreen({
       return
     }
     const studentIndex = enrollments.findIndex((row) => row.student === sid)
+    const nextStudent = enrollments[studentIndex + 1]
+    if (wideRef.current && nextStudent && ordered[0]) {
+      onFocus({ student: nextStudent.student, activity: ordered[0].id })
+      return
+    }
     for (let i = studentIndex + 1; i < enrollments.length; i += 1) {
       const nextStudent = enrollments[i]!
       const pending = firstPending(nextStudent.student)
@@ -546,6 +578,7 @@ export function GradeGridScreen({
           : courseSubtitle
       }
       onBack={handleBack}
+      rootRef={rootRef}
     >
       {!weightsValid && (
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-3">
@@ -559,12 +592,15 @@ export function GradeGridScreen({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto">
-        {!focused && enrollments.length === 0 && (
-          <p className="text-sm text-slate-400 text-center py-12 px-6">
-            No hay matrículas activas en este grupo.
-          </p>
-        )}
+      {enrollments.length === 0 && (
+        <p className="text-sm text-slate-400 text-center py-12 px-6">
+          No hay matrículas activas en este grupo.
+        </p>
+      )}
+
+      {enrollments.length > 0 && (
+      <>
+      <div className="grade-grid-list flex-1 min-h-0 overflow-y-auto">
         {!focused &&
           enrollments.map((row) => {
             const scores = rowScores(row.student)
@@ -704,6 +740,22 @@ export function GradeGridScreen({
             )
           })}
       </div>
+      <GradeGridMatrix
+        enrollments={enrollments}
+        activities={ordered}
+        components={bundle.components}
+        segments={bundle.segments}
+        structure={structure}
+        scoresFor={rowScores}
+        scoreOf={(sid, aid) => asScore(visibleCell(sid, aid).score)}
+        openStudentId={focused?.student}
+        openActivityId={openActivity?.id}
+        savingKey={savingKey}
+        errors={errors}
+        onOpenCell={(sid, aid) => onFocus({ student: sid, activity: aid })}
+      />
+      </>
+      )}
 
       {focused && openActivity && (
         <div className="bg-white border-t border-slate-200">

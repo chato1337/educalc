@@ -3,7 +3,7 @@
 **Proyecto:** eduCalc  
 **Documento:** Plan de implementación por fases (solo `mobile/`)  
 **Fecha:** Septiembre 2026  
-**Estado:** Fase 4 pendiente  
+**Estado:** Fase 5 pendiente  
 **Relacionado con:** [plan-malla-calificacion-actividades.md](./plan-malla-calificacion-actividades.md), [brief-ui-docente-mobile-first.md](./brief-ui-docente-mobile-first.md), [convenciones-rutas-mobile.md](./convenciones-rutas-mobile.md), [modulo-gestion-calificaciones-por-actividades.md](./modulo-gestion-calificaciones-por-actividades.md)
 
 Misma tarea que la malla del admin: el docente califica a todo el grupo de un esquema, ve el promedio del periodo y lo aplica sin tocar la definitiva. La interfaz nace en el teléfono y se recompone en tablet. No es un port de AG Grid.
@@ -44,7 +44,7 @@ flowchart LR
 | 1 | `gradeGridMath.ts`: `def`, fila completa, malla completa | Hecha |
 | 2 | Ruta `/courses/:courseId/grade-grid`, página y botón de entrada | Hecha |
 | 3 | Lista estrecha, teclado, guardado de celda y `def` visible | Hecha |
-| 4 | Matriz cuando el detalle mide ≥ 560 px | Pendiente |
+| 4 | Matriz cuando el detalle mide ≥ 560 px | Hecha |
 | 5 | Alta y edición de actividades, reparto de pesos | Pendiente |
 | 6 | Detalle del estudiante, aplicar fila y aplicar grupo | Pendiente |
 | 7 | `tsc` y checklist en 390, 768 y 1194 px | Pendiente |
@@ -370,7 +370,7 @@ Reglas de esas funciones:
 
 ### Fase 4 — Matriz ancha
 
-**Estado:** Pendiente  
+**Estado:** Hecha  
 **Objetivo:** con el detalle a 560 px o más, la misma malla se ve como matriz táctil.  
 **Empieza cuando:** la fase 3 está Hecha.  
 **Al terminar:** rotar (o ensanchar) no cambia la URL ni la celda abierta. Por debajo de 560 px sigue la lista de la fase 3.
@@ -401,11 +401,11 @@ Reglas de esas funciones:
 
 **Criterio de hecho**
 
-- [ ] A ~390 px y con la ventana a 768 px (detalle ~336 px) se ve la lista.
-- [ ] Con la ventana a ~1194 px (detalle ~762 px) se ve la matriz: al hacer scroll horizontal, nombre y `def` no se mueven.
-- [ ] Tocar una celda, aceptar y recargar deja la nota y, si el query sigue, el teclado en esa celda.
-- [ ] Pasar de estrecho a ancho con `?student=&activity=` no pierde el foco.
-- [ ] `bunx tsc --noEmit` pasa.
+- [x] A ~390 px y con la ventana a 768 px (detalle ~336 px) se ve la lista.
+- [x] Con la ventana a ~1194 px (detalle ~762 px) se ve la matriz: al hacer scroll horizontal, nombre y `def` no se mueven.
+- [x] Tocar una celda, aceptar y recargar deja la nota y, si el query sigue, el teclado en esa celda.
+- [x] Pasar de estrecho a ancho con `?student=&activity=` no pierde el foco.
+- [x] `bunx tsc --noEmit` pasa.
 
 **Deja listo:** los dos layouts leen el mismo foco. La fase 5 engancha acciones en los encabezados de ambos.
 
@@ -570,6 +570,12 @@ Formato:
 - Decisiones que no estaban en el plan:
 - Siguiente:
 ```
+
+### 2026-09-30 — Fase 4 — Hecha
+- Hecho: la raíz de la malla es un container query. Por debajo de 560 px sigue la lista. Desde 560 px se ve `GradeGridMatrix`: nombre fijo a la izquierda, actividades con scroll horizontal, `def` fijo a la derecha, encabezados de componente y segmento. El toque abre el mismo teclado. Aceptar en la matriz, al final de la fila, pasa a la primera actividad del siguiente estudiante. El foco sigue en el query. `bunx tsc --noEmit` pasa.
+- Pendiente dentro de la fase: el scroll con un grupo real queda en la fase 7. El corte se comprobó por el CSS (`@container (min-width: 560px)`), no con `useBreakpoint`.
+- Decisiones que no estaban en el plan: el avance al aceptar depende del ancho del contenedor. En la lista sigue yendo al primer pendiente del siguiente; en la matriz, a la primera actividad. Un `ResizeObserver` sobre el mismo contenedor elige esa regla, para que coincida con el CSS. El nombre de la actividad es una tercera fila del encabezado, recortada, con el nombre completo en `title`.
+- Siguiente: Fase 5, alta y edición de actividades y reparto de pesos.
 
 ### 2026-09-30 — Fase 3 — Hecha
 - Hecho: en cualquier ancho la malla es lista. Toque abre la ficha (`?student=`). Toque en la actividad abre `ScoreKeypad` (`?activity=`). Aceptar encola un POST o PATCH y avanza; al final de la fila salta al primer pendiente del siguiente. Vacío con nota previa manda `score: null`; vacío sin registro no crea nada. `def` sale de `displayDef`. Pesos inválidos muestran alerta y dejan `def` en `0`. Un estudiante que no está en el bundle deja la lista. `bunx tsc --noEmit` pasa.
