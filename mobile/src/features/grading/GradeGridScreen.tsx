@@ -24,6 +24,7 @@ import {
 import { GradeGridMatrix } from '@/features/grading/GradeGridMatrix'
 import {
   displayDef,
+  everySegmentHasActivity,
   isGridComplete,
   isRowComplete,
   type GradeGridStructure,
@@ -63,6 +64,8 @@ export interface GradeGridProps {
   onFocus: (focus: GradeGridFocus) => void
   onBack: () => void
   onGoToPlan: () => void
+  /** Dentro de la pestaña Actividades: sin encabezado propio, ocupa el panel. */
+  embedded?: boolean
 }
 
 const SEGMENT_TONES = [
@@ -218,18 +221,20 @@ function Shell({
   subtitle,
   onBack,
   rootRef,
+  embedded,
   children,
 }: {
   title: string
   subtitle?: string
   onBack: () => void
   rootRef?: Ref<HTMLDivElement>
+  embedded?: boolean
   children: ReactNode
 }) {
   return (
-    <div ref={rootRef} className="grade-grid-root flex flex-col h-full bg-[#F1F5F9]">
+    <div ref={rootRef} className="grade-grid-root flex flex-col h-full min-h-0 bg-[#F1F5F9]">
       <style>{GRID_LAYOUT_CSS}</style>
-      <GridHeader title={title} subtitle={subtitle} onBack={onBack} />
+      {!embedded && <GridHeader title={title} subtitle={subtitle} onBack={onBack} />}
       {children}
     </div>
   )
@@ -243,6 +248,7 @@ export function GradeGridScreen({
   onFocus,
   onBack,
   onGoToPlan,
+  embedded = false,
 }: GradeGridProps) {
   const course = useSessionCourse(courseId)
   const session = useTeacherSession()
@@ -531,7 +537,7 @@ export function GradeGridScreen({
 
   if (!course) {
     return (
-      <Shell title="Calificar el grupo" onBack={onBack}>
+      <Shell title="Calificar el grupo" onBack={onBack} embedded={embedded}>
         <EmptyState
           icon={<IconBook size={24} />}
           title="Curso no encontrado"
@@ -543,7 +549,7 @@ export function GradeGridScreen({
 
   if (!periodId) {
     return (
-      <Shell title={title} subtitle={courseSubtitle} onBack={onBack}>
+      <Shell title={title} subtitle={courseSubtitle} onBack={onBack} embedded={embedded}>
         <EmptyState
           icon={<IconClipboard size={22} />}
           title="No hay periodos para este año"
@@ -555,7 +561,7 @@ export function GradeGridScreen({
 
   if (bundleQuery.isLoading) {
     return (
-      <Shell title={title} subtitle={courseSubtitle} onBack={onBack}>
+      <Shell title={title} subtitle={courseSubtitle} onBack={onBack} embedded={embedded}>
         <p className="text-sm text-slate-400 text-center py-12">Cargando malla…</p>
       </Shell>
     )
@@ -563,7 +569,7 @@ export function GradeGridScreen({
 
   if (bundleQuery.isError) {
     return (
-      <Shell title={title} subtitle={courseSubtitle} onBack={onBack}>
+      <Shell title={title} subtitle={courseSubtitle} onBack={onBack} embedded={embedded}>
         <div className="px-6 py-12">
           <WriteError
             message={getErrorMessage(bundleQuery.error, 'No se pudo cargar el esquema.')}
@@ -576,7 +582,7 @@ export function GradeGridScreen({
 
   if (!bundle?.scheme) {
     return (
-      <Shell title={title} subtitle={courseSubtitle} onBack={onBack}>
+      <Shell title={title} subtitle={courseSubtitle} onBack={onBack} embedded={embedded}>
         <div className="p-4 space-y-3">
           <EmptyState
             icon={<IconClipboard size={22} />}
@@ -668,6 +674,7 @@ export function GradeGridScreen({
       }
       onBack={handleBack}
       rootRef={rootRef}
+      embedded={embedded}
     >
       {!weightsValid && (
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-3">
@@ -694,6 +701,7 @@ export function GradeGridScreen({
         <button
           type="button"
           disabled={
+            !everySegmentHasActivity(structure) ||
             !isGridComplete(
               activityIds,
               enrollments.map((row) => rowScores(row.student)),

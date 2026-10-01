@@ -114,6 +114,13 @@ export function CourseDetailPage() {
   const { go, replace, back } = useAppNav()
   const isTablet = useBreakpoint()
   const section = parseCourseSection(searchParams.get("section"))
+  const gradeGridStudentId =
+    section === "activities"
+      ? parseOptionalUuid(searchParams.get("student"))
+      : undefined
+  const gradeGridActivityId = gradeGridStudentId
+    ? parseOptionalUuid(searchParams.get("activity"))
+    : undefined
   return (
     <CourseDetailScreen
       courseId={courseId}
@@ -122,13 +129,20 @@ export function CourseDetailPage() {
         replace(routes.course(courseId, { section: next }))
       }
       onGoToRollCall={() => go(routes.rollCall(courseId))}
-      onGoToGradeActivity={(activityId) =>
-        go(routes.gradeActivity(courseId, activityId))
-      }
       onGoToPeriodGrades={() => go(routes.periodGrades(courseId))}
       onGoToRecoveries={() => go(routes.recoveries(courseId))}
       onGoToPlan={() => go(routes.schemePlan(courseId))}
-      onGoToGradeGrid={() => go(routes.gradeGrid(courseId))}
+      gradeGridStudentId={gradeGridStudentId}
+      gradeGridActivityId={gradeGridActivityId}
+      onGradeGridFocus={(focus) =>
+        replace(
+          routes.course(courseId, {
+            section: "activities",
+            student: focus.student,
+            activity: focus.activity,
+          }),
+        )
+      }
       onSelectStudent={(studentId) =>
         go(routes.courseStudent(courseId, studentId))
       }

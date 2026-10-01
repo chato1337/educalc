@@ -162,6 +162,7 @@ export function GradeGridWeightSheet({
       WEIGHT_SUM_TOLERANCE
   const canAdd = remaining + 1e-9 >= SEGMENT_WEIGHT_MIN
   const [error, setError] = useState('')
+  const [customName, setCustomName] = useState('')
   const [takeRest, setTakeRest] = useState(false)
   const [singleDraft, setSingleDraft] = useState(single?.weight_percent ?? '100.00')
   const [releaseId, setReleaseId] = useState(componentSegments[0]?.id ?? '')
@@ -219,6 +220,10 @@ export function GradeGridWeightSheet({
       setError('El segmento necesita un nombre.')
       return
     }
+    if (existingNames.has(trimmed.toLowerCase())) {
+      setError('Ya hay un segmento con ese nombre.')
+      return
+    }
     const weight = takeRest
       ? remaining
       : Math.min(
@@ -239,6 +244,7 @@ export function GradeGridWeightSheet({
         sort_order: componentSegments.length,
       })
       setTakeRest(false)
+      setCustomName('')
     } catch (err) {
       setError(getErrorMessage(err, 'No se pudo crear el segmento.'))
     }
@@ -332,6 +338,41 @@ export function GradeGridWeightSheet({
           </button>
         </div>
       )}
+
+      {componentSegments.map((segment) => (
+        <label key={segment.id} className="block space-y-1">
+          <span className="text-[11px] font-semibold text-slate-500">
+            Nombre · {segment.weight_percent}%
+          </span>
+          <input
+            value={segment.name}
+            readOnly
+            aria-readonly="true"
+            className="w-full h-11 px-3 rounded-lg border border-slate-200 text-sm bg-slate-50 text-slate-700"
+          />
+        </label>
+      ))}
+
+      <div className="flex gap-2">
+        <input
+          value={customName}
+          disabled={!canAdd || busy}
+          onChange={(event) => setCustomName(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') void addSegment(customName)
+          }}
+          placeholder="Nombre del segmento"
+          className="min-w-0 flex-1 h-11 px-3 rounded-lg border border-slate-200 text-sm bg-white disabled:opacity-40"
+        />
+        <button
+          type="button"
+          disabled={!canAdd || busy || !customName.trim()}
+          onClick={() => void addSegment(customName)}
+          className="min-h-11 shrink-0 rounded-xl bg-[#1E3A5F] px-3 text-sm font-semibold text-white disabled:opacity-40"
+        >
+          Crear
+        </button>
+      </div>
 
       <div className="flex flex-wrap gap-1.5">
         {SEGMENT_TEMPLATES.map((template) => {

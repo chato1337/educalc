@@ -27,13 +27,21 @@ type ComponentColumn = {
   colSpan: number
 }
 
+function columnSpan(column: SegmentColumn): number {
+  return Math.max(column.activities.length, 1)
+}
+
 function columnGroups(
   components: SubjectComponent[],
   segments: ComponentSegment[],
   activities: EnrichedActivity[],
 ): ComponentColumn[] {
-  const componentById = new Map(components.map((component) => [component.id, component]))
-  const segmentById = new Map(segments.map((segment) => [segment.id, segment]))
+  const activitiesBySegment = new Map<string, EnrichedActivity[]>()
+  for (const activity of activities) {
+    const list = activitiesBySegment.get(activity.segment) ?? []
+    list.push(activity)
+    activitiesBySegment.set(activity.segment, list)
+  }
   const toneBySegment = new Map<string, string>()
   ;[...segments]
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
@@ -41,31 +49,50 @@ function columnGroups(
       toneBySegment.set(segment.id, SEGMENT_TONES[index % SEGMENT_TONES.length]!)
     })
 
-  const groups: ComponentColumn[] = []
-  for (const activity of activities) {
-    const segment = segmentById.get(activity.segment)
-    const component = segment
-      ? componentById.get(segment.subject_component)
-      : undefined
-    if (!segment || !component) continue
-    let group = groups[groups.length - 1]
-    if (!group || group.component.id !== component.id) {
-      group = { component, segments: [], colSpan: 0 }
-      groups.push(group)
-    }
-    let column = group.segments[group.segments.length - 1]
-    if (!column || column.segment.id !== segment.id) {
-      column = {
-        segment,
-        activities: [],
-        tone: toneBySegment.get(segment.id) ?? SEGMENT_TONES[0]!,
+  return [...components]
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    .map((component) => {
+      const componentSegments = segments
+        .filter((segment) => segment.subject_component === component.id)
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+        .map((segment) => ({
+          segment,
+          activities: activitiesBySegment.get(segment.id) ?? [],
+          tone: toneBySegment.get(segment.id) ?? SEGMENT_TONES[0]!,
+        }))
+      return {
+        component,
+        segments: componentSegments,
+        colSpan: componentSegments.reduce((sum, column) => sum + columnSpan(column), 0),
       }
-      group.segments.push(column)
-    }
-    column.activities.push(activity)
-    group.colSpan += 1
-  }
-  return groups
+    })
+    .filter((group) => group.segments.length > 0)
+}
+
+type MatrixColumn =
+  | { key: string; kind: 'activity'; activity: EnrichedActivity; tone: string }
+  | { key: string; kind: 'empty'; segment: ComponentSegment; tone: string }
+
+function matrixColumns(groups: ComponentColumn[]): MatrixColumn[] {
+  return groups.flatMap((group) =>
+    group.segments.flatMap((column) =>
+      column.activities.length > 0
+        ? column.activities.map((activity) => ({
+            key: activity.id,
+            kind: 'activity' as const,
+            activity,
+            tone: column.tone,
+          }))
+        : [
+            {
+              key: `empty:${column.segment.id}`,
+              kind: 'empty' as const,
+              segment: column.segment,
+              tone: column.tone,
+            },
+          ],
+    ),
+  )
 }
 
 function cellKey(studentId: string, activityId: string): string {
@@ -112,17 +139,19 @@ export function GradeGridMatrix({
   applyDisabled: (studentId: string) => boolean
 }) {
   const groups = columnGroups(components, segments, activities)
-  const columns = groups.flatMap((group) =>
-    group.segments.flatMap((column) => column.activities),
-  )
+  const columns = matrixColumns(groups)
   const stickyName =
     'sticky left-0 bg-white border-r border-slate-200 shadow-[4px_0_8px_-6px_rgba(15,23,42,0.35)]'
   const stickyDef =
     'sticky right-0 bg-white border-l border-slate-200 shadow-[-4px_0_8px_-6px_rgba(15,23,42,0.35)]'
 
+  const nameWidth = 200
+  const defWidth = 156
+  const tableMinWidth = nameWidth + defWidth + columns.length * 72
+
   return (
-    <div className="grade-grid-matrix min-h-0 flex-1 overflow-auto">
-      {columns.length === 0 && (
+    <div className="grade-grid-matrix min-h-0 w-full flex-1 overflow-auto bg-white">
+      {groups.length === 0 && (
         <div className="flex flex-wrap gap-2 border-b border-slate-200 bg-white px-3 py-2">
           {components
             .slice()
@@ -139,7 +168,17 @@ export function GradeGridMatrix({
             ))}
         </div>
       )}
-      <table className="border-separate border-spacing-0 text-left">
+      <table
+        className="w-full border-separate border-spacing-0 text-left"
+        style={{ minWidth: tableMinWidth, tableLayout: 'fixed' }}
+      >
+        <colgroup>
+          <col style={{ width: nameWidth }} />
+          {columns.map((column) => (
+            <col key={column.key} />
+          ))}
+          <col style={{ width: defWidth }} />
+        </colgroup>
         <thead className="sticky top-0 z-30">
           <tr>
             <th
@@ -183,7 +222,7 @@ export function GradeGridMatrix({
               group.segments.map((column) => (
                 <th
                   key={column.segment.id}
-                  colSpan={column.activities.length}
+                  colSpan={columnSpan(column)}
                   className={`border-b border-r border-slate-200 px-2 py-1 text-[10px] font-semibold ${column.tone}`}
                 >
                   <span className="flex items-center justify-between gap-1">
@@ -207,23 +246,28 @@ export function GradeGridMatrix({
             )}
           </tr>
           <tr>
-            {groups.flatMap((group) =>
-              group.segments.flatMap((column) =>
-                column.activities.map((activity) => (
-                  <th
-                    key={activity.id}
-                    className={`min-w-[72px] w-[72px] max-w-[72px] border-b border-r border-slate-200 p-0 text-[10px] font-medium ${column.tone}`}
+            {columns.map((column) =>
+              column.kind === 'activity' ? (
+                <th
+                  key={column.key}
+                  className={`border-b border-r border-slate-200 p-0 text-[10px] font-medium ${column.tone}`}
+                >
+                  <button
+                    type="button"
+                    title={column.activity.name}
+                    onClick={() => onEditActivity(column.activity)}
+                    className="block h-11 w-full truncate px-1 text-left"
                   >
-                    <button
-                      type="button"
-                      title={activity.name}
-                      onClick={() => onEditActivity(activity)}
-                      className="block h-11 w-full truncate px-1 text-left"
-                    >
-                      {activity.name}
-                    </button>
-                  </th>
-                )),
+                    {column.activity.name}
+                  </button>
+                </th>
+              ) : (
+                <th
+                  key={column.key}
+                  className={`border-b border-r border-slate-200 px-1 text-[10px] font-medium text-slate-400 ${column.tone}`}
+                >
+                  Sin actividades
+                </th>
               ),
             )}
           </tr>
@@ -235,26 +279,37 @@ export function GradeGridMatrix({
                 scope="row"
                 className={`${stickyName} z-20 min-h-11 px-3 py-1.5 text-left font-normal`}
               >
-                <p className="max-w-[160px] truncate text-sm font-medium text-slate-900">
+                <p className="truncate text-sm font-medium text-slate-900">
                   {row.student_name}
                 </p>
-                <p className="max-w-[160px] truncate font-mono text-[10px] text-slate-400">
+                <p className="truncate font-mono text-[10px] text-slate-400">
                   {row.student_document_number}
                 </p>
               </th>
-              {columns.map((activity) => {
+              {columns.map((column) => {
+                if (column.kind === 'empty') {
+                  return (
+                    <td
+                      key={column.key}
+                      className="h-11 border-b border-r border-slate-100 text-center text-sm text-slate-300"
+                    >
+                      —
+                    </td>
+                  )
+                }
+                const activity = column.activity
                 const key = cellKey(row.student, activity.id)
                 const score = scoreOf(row.student, activity.id)
                 const open =
                   openStudentId === row.student && openActivityId === activity.id
                 const error = errors[key]
                 return (
-                  <td key={activity.id} className="h-11 min-w-[72px] border-b border-r border-slate-100 p-0">
+                  <td key={column.key} className="h-11 border-b border-r border-slate-100 p-0">
                     <button
                       type="button"
                       title={error || activity.name}
                       onClick={() => onOpenCell(row.student, activity.id)}
-                      className={`flex h-11 w-full min-w-[72px] items-center justify-center font-mono text-sm ${
+                      className={`flex h-11 w-full items-center justify-center font-mono text-sm ${
                         open
                           ? 'bg-blue-50 ring-2 ring-inset ring-blue-400'
                           : error

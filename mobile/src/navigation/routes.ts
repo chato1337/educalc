@@ -56,12 +56,17 @@ export const routes = {
   today: () => "/today",
   courses: () => "/courses",
   more: () => "/more",
-  course: (courseId: string, opts?: { section?: CourseSection }) =>
+  course: (
+    courseId: string,
+    opts?: { section?: CourseSection; student?: string; activity?: string },
+  ) =>
     `/courses/${courseId}${qs({
       section:
         opts?.section && opts.section !== "attendance"
           ? opts.section
           : undefined,
+      student: parseOptionalUuid(opts?.student),
+      activity: parseOptionalUuid(opts?.activity),
     })}`,
   rollCall: (
     courseId: string,

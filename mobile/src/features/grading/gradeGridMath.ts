@@ -133,6 +133,13 @@ export function isRowComplete(
   return activityIds.every((activityId) => hasScore(scores.get(activityId)))
 }
 
+/** Un segmento sin actividades no entra al promedio: la malla no está lista para aplicar. */
+export function everySegmentHasActivity(structure: GradeGridStructure): boolean {
+  if (structure.segments.length === 0) return false
+  const covered = new Set(structure.activities.map((activity) => activity.segmentId))
+  return structure.segments.every((segment) => covered.has(segment.id))
+}
+
 export function isGridComplete(
   activityIds: readonly string[],
   rows: ReadonlyArray<ReadonlyMap<string, string | null>>,
@@ -148,6 +155,7 @@ export function displayDef(
   scores: ReadonlyMap<string, string | null>,
 ): string {
   if (!structure.weightsValid) return '0'
+  if (!everySegmentHasActivity(structure)) return '0'
   if (!isRowComplete(activityIdsOf(structure), scores)) return '0'
   return computeSuggestedGrade(structure, scores) ?? '0'
 }

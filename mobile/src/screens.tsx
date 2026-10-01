@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import type { Course, PerformanceLevel } from "./data"
-import { ActivitiesSection } from "@/features/grading/ActivitiesSection"
+import { GradeGridScreen } from "@/features/grading/GradeGridScreen"
 import { GradesSummarySection } from "@/features/grades/GradesSummarySection"
 import { StudentsSection } from "@/features/students/StudentsSection"
 import {
@@ -626,11 +626,12 @@ interface CourseDetailProps {
   section: CourseSection
   onSectionChange: (s: CourseSection) => void
   onGoToRollCall: () => void
-  onGoToGradeActivity: (actId: string) => void
   onGoToPeriodGrades: () => void
   onGoToRecoveries: () => void
   onGoToPlan: () => void
-  onGoToGradeGrid: () => void
+  gradeGridStudentId?: string
+  gradeGridActivityId?: string
+  onGradeGridFocus: (focus: { student?: string; activity?: string }) => void
   onSelectStudent: (id: string) => void
   onBack?: () => void
 }
@@ -640,14 +641,16 @@ export function CourseDetailScreen({
   section,
   onSectionChange,
   onGoToRollCall,
-  onGoToGradeActivity,
   onGoToPeriodGrades,
   onGoToRecoveries,
   onGoToPlan,
-  onGoToGradeGrid,
+  gradeGridStudentId,
+  gradeGridActivityId,
+  onGradeGridFocus,
   onSelectStudent,
   onBack,
 }: CourseDetailProps) {
+  const session = useTeacherSession()
   const course = useSessionCourse(courseId)
   if (!course) return <CourseNotFound onBack={onBack} />
   const tabs: { id: CourseSection; label: string }[] = [
@@ -717,28 +720,34 @@ export function CourseDetailScreen({
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        {section === "attendance" && (
-          <AttendanceSection course={course} onGoToRollCall={onGoToRollCall} />
-        )}
-        {section === "activities" && (
-          <ActivitiesSection
-            course={course}
-            onGoToGradeActivity={onGoToGradeActivity}
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        {section === "activities" ? (
+          <GradeGridScreen
+            embedded
+            courseId={courseId}
+            periodId={session.selectedPeriodId ?? ""}
+            studentId={gradeGridStudentId}
+            activityId={gradeGridActivityId}
+            onFocus={onGradeGridFocus}
+            onBack={() => onGradeGridFocus({})}
             onGoToPlan={onGoToPlan}
-            onGoToGradeGrid={onGoToGradeGrid}
           />
-        )}
-        {section === "grades" && (
-          <GradesSummarySection
-            course={course}
-            onGoToPeriodGrades={onGoToPeriodGrades}
-            onGoToRecoveries={onGoToRecoveries}
-          />
-        )}
-        {section === "students" && (
-          <StudentsSection course={course} onSelectStudent={onSelectStudent} />
+        ) : (
+          <div className="flex-1 overflow-y-auto">
+            {section === "attendance" && (
+              <AttendanceSection course={course} onGoToRollCall={onGoToRollCall} />
+            )}
+            {section === "grades" && (
+              <GradesSummarySection
+                course={course}
+                onGoToPeriodGrades={onGoToPeriodGrades}
+                onGoToRecoveries={onGoToRecoveries}
+              />
+            )}
+            {section === "students" && (
+              <StudentsSection course={course} onSelectStudent={onSelectStudent} />
+            )}
+          </div>
         )}
       </div>
     </div>
