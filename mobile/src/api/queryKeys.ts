@@ -65,6 +65,8 @@ export const queryKeys = {
     ['grading-schemes', schemeId ?? '', 'validate-weights'] as const,
   gradingSchemeBulkPreview: (schemeId?: string | null) =>
     ['grading-schemes', schemeId ?? '', 'apply-suggestion-bulk-preview'] as const,
+  gradingSchemeBreakdown: (schemeId?: string | null, studentId?: string | null) =>
+    ['grading-schemes', schemeId ?? '', 'breakdown', studentId ?? ''] as const,
   gradeRecoveriesEligible: (params: Record<string, string | boolean | undefined>) =>
     ['grade-recoveries', 'eligible', params] as const,
   gradeRecoveries: (params: Record<string, string | undefined>) =>

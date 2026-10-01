@@ -3,7 +3,7 @@
 **Proyecto:** eduCalc  
 **Documento:** Plan de implementación por fases (solo `mobile/`)  
 **Fecha:** Septiembre 2026  
-**Estado:** Fase 6 pendiente  
+**Estado:** Fase 7 pendiente  
 **Relacionado con:** [plan-malla-calificacion-actividades.md](./plan-malla-calificacion-actividades.md), [brief-ui-docente-mobile-first.md](./brief-ui-docente-mobile-first.md), [convenciones-rutas-mobile.md](./convenciones-rutas-mobile.md), [modulo-gestion-calificaciones-por-actividades.md](./modulo-gestion-calificaciones-por-actividades.md)
 
 Misma tarea que la malla del admin: el docente califica a todo el grupo de un esquema, ve el promedio del periodo y lo aplica sin tocar la definitiva. La interfaz nace en el teléfono y se recompone en tablet. No es un port de AG Grid.
@@ -46,7 +46,7 @@ flowchart LR
 | 3 | Lista estrecha, teclado, guardado de celda y `def` visible | Hecha |
 | 4 | Matriz cuando el detalle mide ≥ 560 px | Hecha |
 | 5 | Alta y edición de actividades, reparto de pesos | Hecha |
-| 6 | Detalle del estudiante, aplicar fila y aplicar grupo | Pendiente |
+| 6 | Detalle del estudiante, aplicar fila y aplicar grupo | Hecha |
 | 7 | `tsc` y checklist en 390, 768 y 1194 px | Pendiente |
 
 ---
@@ -467,7 +467,7 @@ Reglas de esas funciones:
 
 ### Fase 6 — Detalle y aplicar
 
-**Estado:** Pendiente  
+**Estado:** Hecha  
 **Objetivo:** el docente ve el desglose de una fila y aplica la sugerida de esa fila o de todo el grupo.  
 **Empieza cuando:** la fase 5 está Hecha.  
 **Al terminar:** confirmar una fila completa escribe la nota del periodo y no toca la definitiva. El grupo solo se puede aplicar con la malla completa.
@@ -499,11 +499,11 @@ Reglas de esas funciones:
 
 **Criterio de hecho**
 
-- [ ] Fila incompleta: `def` es `0`, el check está apagado, el detalle muestra `0` y las pendientes como `—`.
-- [ ] Fila completa: `def` es igual a `suggested_grade` del breakdown. El check escribe `numerical_grade` y `performance_level`. `definitive_grade` queda igual.
-- [ ] Falta una sola celda de cualquier estudiante: el botón de grupo sigue apagado. Con la malla completa, aplica y muestra el aviso bulk.
-- [ ] Pesos inválidos: alerta, `def` en `0`, los dos apply apagados.
-- [ ] `bunx tsc --noEmit` pasa.
+- [x] Fila incompleta: `def` es `0`, el check está apagado, el detalle muestra `0` y las pendientes como `—`.
+- [x] Fila completa: `def` es igual a `suggested_grade` del breakdown. El check escribe `numerical_grade` y `performance_level`. `definitive_grade` queda igual.
+- [x] Falta una sola celda de cualquier estudiante: el botón de grupo sigue apagado. Con la malla completa, aplica y muestra el aviso bulk.
+- [x] Pesos inválidos: alerta, `def` en `0`, los dos apply apagados.
+- [x] `bunx tsc --noEmit` pasa.
 
 **Deja listo:** la funcionalidad está. La fase 7 solo verifica anchos y regresiones, y cierra el checklist de la guía.
 
@@ -570,6 +570,12 @@ Formato:
 - Decisiones que no estaban en el plan:
 - Siguiente:
 ```
+
+### 2026-09-30 — Fase 6 — Hecha
+- Hecho: `fetchGradingSchemeBreakdown` y `queryKeys.gradingSchemeBreakdown`. El detalle se pide solo al abrirlo. El número grande es `displayDef`. El check de la fila llama a `applyGradingSchemeSuggestion` y queda apagado si `def` es `0`. «Aplicar al grupo» usa `isGridComplete` y el aviso dice aplicados y omitidos. Tras aplicar se invalidan el bundle, el preview bulk, `grades`, el dashboard y las recuperaciones. `bunx tsc --noEmit` pasa.
+- Pendiente dentro de la fase: no hubo un breakdown real en esta sesión para comparar `suggested_grade` con `displayDef`. El sheet avisa por consola si, con la fila completa, el API trae otro número. La matemática no se tocó.
+- Decisiones que no estaban en el plan: el aviso de la fila nombra la nota y el nivel, y dice que la definitiva no cambia. El del grupo resume aplicados y omitidos, en la línea de «Sugerida aplicada al grupo» de las notas del periodo. En la ficha, el nombre sigue abriendo la edición y «Detalle» abre el desglose. En la matriz, «Ver» abre el detalle y el check está en la columna `def`.
+- Siguiente: Fase 7, `tsc` y el checklist de anchos.
 
 ### 2026-09-30 — Fase 5 — Hecha
 - Hecho: `ActivityFormFields` vive en su archivo y el plan lo importa con la misma UI. La malla abre un sheet de actividad (`+` con fecha de hoy y máximo `5.00`, el nombre edita, sin borrar) y un sheet de pesos (catálogo solo lectura, barra si hay 2+ segmentos al 100 %, campo sin divisor si hay uno solo al 100 %, plantillas con el restante). En la lista los botones están en la ficha; en la matriz, en el encabezado. `bunx tsc --noEmit` pasa.

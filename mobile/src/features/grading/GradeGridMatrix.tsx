@@ -1,3 +1,4 @@
+import { IconCheck } from '@/components'
 import { formatScoreDisplay } from '@/features/grading/activityStatus'
 import { displayDef, type GradeGridStructure } from '@/features/grading/gradeGridMath'
 import type {
@@ -87,6 +88,9 @@ export function GradeGridMatrix({
   onAddActivity,
   onEditActivity,
   onEditWeights,
+  onOpenDetail,
+  onApplyRow,
+  applyDisabled,
 }: {
   enrollments: Enrollment[]
   activities: EnrichedActivity[]
@@ -103,6 +107,9 @@ export function GradeGridMatrix({
   onAddActivity: (segmentId: string) => void
   onEditActivity: (activity: EnrichedActivity) => void
   onEditWeights: (componentId: string) => void
+  onOpenDetail: (studentId: string) => void
+  onApplyRow: (studentId: string) => void
+  applyDisabled: (studentId: string) => boolean
 }) {
   const groups = columnGroups(components, segments, activities)
   const columns = groups.flatMap((group) =>
@@ -166,7 +173,7 @@ export function GradeGridMatrix({
             ))}
             <th
               rowSpan={3}
-              className={`${stickyDef} top-0 z-40 min-w-[64px] bg-slate-50 px-2 text-center text-xs font-semibold text-slate-500`}
+              className={`${stickyDef} top-0 z-40 min-w-[112px] bg-slate-50 px-2 text-center text-xs font-semibold text-slate-500`}
             >
               def
             </th>
@@ -264,10 +271,29 @@ export function GradeGridMatrix({
                   </td>
                 )
               })}
-              <td className={`${stickyDef} z-20 h-11 px-2 text-center`}>
-                <span className="font-mono text-sm font-bold text-slate-900">
-                  {displayDef(structure, scoresFor(row.student))}
-                </span>
+              <td className={`${stickyDef} z-20 h-11 px-1 text-center`}>
+                <div className="flex items-center justify-end gap-0.5">
+                  <span className="font-mono text-sm font-bold text-slate-900">
+                    {displayDef(structure, scoresFor(row.student))}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label={`Detalle de ${row.student_name}`}
+                    onClick={() => onOpenDetail(row.student)}
+                    className="min-h-11 min-w-11 text-[11px] font-semibold text-blue-700"
+                  >
+                    Ver
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Aplicar sugerida de ${row.student_name}`}
+                    disabled={applyDisabled(row.student)}
+                    onClick={() => onApplyRow(row.student)}
+                    className="min-h-11 min-w-11 text-emerald-700 disabled:text-slate-300"
+                  >
+                    <IconCheck size={16} />
+                  </button>
+                </div>
               </td>
             </tr>
           ))}

@@ -275,6 +275,28 @@ export async function applyGradingSchemeSuggestion(
   return data
 }
 
+export async function fetchGradingSchemeBreakdown(
+  schemeId: string,
+  studentId: string,
+): Promise<GradeBreakdown> {
+  const { data } = await apiClient.get<GradeBreakdown>(
+    `/api/grading-schemes/${schemeId}/breakdown/`,
+    { params: { student: studentId } },
+  )
+  return data
+}
+
+export function useGradingSchemeBreakdownQuery(
+  schemeId: string | null | undefined,
+  studentId: string | null | undefined,
+) {
+  return useQuery({
+    queryKey: queryKeys.gradingSchemeBreakdown(schemeId, studentId),
+    queryFn: () => fetchGradingSchemeBreakdown(schemeId!, studentId!),
+    enabled: Boolean(schemeId && studentId),
+  })
+}
+
 export async function fetchSuggestedGrade(params: {
   student: string
   course_assignment: string

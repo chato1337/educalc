@@ -1,11 +1,13 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 import { getErrorMessage } from '@/api/errors'
 import { RangeField } from '@/components'
 import { ActivityFormFields } from '@/features/grading/ActivityFormFields'
+import { formatScoreDisplay } from '@/features/grading/activityStatus'
 import {
   useCreateComponentSegmentMutation,
   useCreateGradingActivityMutation,
+  useGradingSchemeBreakdownQuery,
   usePatchGradingActivityMutation,
   usePatchSegmentWeightsMutation,
   type ComponentSegment,
@@ -352,6 +354,91 @@ export function GradeGridWeightSheet({
           Sin 5% libres no se crea un segmento.
         </p>
       )}
+    </SheetFrame>
+  )
+}
+
+function sameTwoDecimals(shown: string, api: string | null | undefined): boolean {
+  if (api == null || api.trim() === '') return false
+  const parsed = Number(api.replace(',', '.'))
+  if (!Number.isFinite(parsed)) return false
+  return parsed.toFixed(2) === shown
+}
+
+export function GradeGridDetailSheet({
+  schemeId,
+  studentId,
+  studentName,
+  defText,
+  onClose,
+}: {
+  schemeId: string
+  studentId: string
+  studentName: string
+  defText: string
+  onClose: () => void
+}) {
+  const breakdownQuery = useGradingSchemeBreakdownQuery(schemeId, studentId)
+  const breakdown = breakdownQuery.data
+
+  useEffect(() => {
+    if (defText === '0' || !breakdown?.suggested_grade) return
+    if (!sameTwoDecimals(defText, breakdown.suggested_grade)) {
+      console.warn('displayDef no coincide con el breakdown', {
+        studentId,
+        displayDef: defText,
+        suggested_grade: breakdown.suggested_grade,
+      })
+    }
+  }, [breakdown?.suggested_grade, defText, studentId])
+
+  return (
+    <SheetFrame title={studentName} subtitle="Detalle del periodo" onClose={onClose}>
+      <p className="font-mono text-4xl font-bold text-slate-900">{defText}</p>
+      <p className="text-[11px] text-slate-400">
+        Promedio del periodo. No es la nota oficial hasta aplicar la fila.
+      </p>
+      {breakdownQuery.isLoading && (
+        <p className="text-sm text-slate-400">Cargando desglose…</p>
+      )}
+      {breakdownQuery.isError && (
+        <p className="text-sm text-red-600">
+          {getErrorMessage(breakdownQuery.error, 'No se pudo cargar el desglose.')}
+        </p>
+      )}
+      {breakdown?.components.map((component) => (
+        <section key={component.component_id} className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            {component.name}{' '}
+            <span className="font-mono normal-case tracking-normal text-slate-400">
+              {component.weight_percent}%
+            </span>
+          </p>
+          {component.segments.map((segment) => (
+            <div key={segment.segment_id} className="rounded-xl border border-slate-200 p-3">
+              <p className="text-sm font-semibold text-slate-800">
+                {segment.name}{' '}
+                <span className="font-mono text-[11px] font-normal text-slate-400">
+                  {segment.weight_percent}%
+                </span>
+              </p>
+              <ul className="mt-2 space-y-1">
+                {segment.activities.map((activity) => (
+                  <li
+                    key={activity.activity_id}
+                    className="flex items-center justify-between gap-2 text-sm"
+                  >
+                    <span className="truncate text-slate-700">{activity.name}</span>
+                    <span className="font-mono text-slate-900">
+                      {formatScoreDisplay(activity.score)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+      ))}
     </SheetFrame>
   )
 }

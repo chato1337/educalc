@@ -1,3 +1,4 @@
+import { useMutation } from '@tanstack/react-query'
 import { useLayoutEffect, useMemo, useRef, useState, type ReactNode, type Ref } from 'react'
 
 import { getErrorMessage } from '@/api/errors'
@@ -9,6 +10,7 @@ import {
   IconAlert,
   IconArrowLeft,
   IconBook,
+  IconCheck,
   IconClipboard,
   ScoreKeypad,
   WriteError,
@@ -21,15 +23,19 @@ import {
 } from '@/features/grading/activityStatus'
 import { GradeGridMatrix } from '@/features/grading/GradeGridMatrix'
 import {
-  GradeGridActivitySheet,
-  GradeGridWeightSheet,
-} from '@/features/grading/GradeGridSheets'
-import {
   displayDef,
+  isGridComplete,
   isRowComplete,
   type GradeGridStructure,
 } from '@/features/grading/gradeGridMath'
 import {
+  GradeGridActivitySheet,
+  GradeGridDetailSheet,
+  GradeGridWeightSheet,
+} from '@/features/grading/GradeGridSheets'
+import {
+  applyGradingSchemeSuggestion,
+  applyGradingSchemeSuggestionBulk,
   createStudentActivityScore,
   patchStudentActivityScore,
   schemeWeightsValid,
@@ -291,8 +297,70 @@ export function GradeGridScreen({
   const [sheet, setSheet] = useState<
     | { kind: 'activity'; segmentId: string; activityId?: string }
     | { kind: 'weights'; componentId: string }
+    | { kind: 'detail'; studentId: string }
     | null
   >(null)
+  const [applyMessage, setApplyMessage] = useState<{
+    tone: 'ok' | 'err'
+    text: string
+  } | null>(null)
+
+  const invalidateApplied = () => {
+    void teacherQueryClient.invalidateQueries({
+      queryKey: queryKeys.courseActivitiesBundle(courseId, periodId),
+    })
+    void teacherQueryClient.invalidateQueries({
+      queryKey: queryKeys.gradingSchemeBulkPreview(bundleQuery.data?.scheme?.id),
+    })
+    void teacherQueryClient.invalidateQueries({ queryKey: ['grades'] })
+    void teacherQueryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    void teacherQueryClient.invalidateQueries({ queryKey: ['grade-recoveries'] })
+  }
+
+  const applyRow = useMutation({
+    mutationFn: (sid: string) => {
+      const schemeId = bundleQuery.data?.scheme?.id
+      if (!schemeId) throw new Error('Sin esquema')
+      return applyGradingSchemeSuggestion(schemeId, sid)
+    },
+    onSuccess: (result) => {
+      const level = result.performance_level_name
+        ? `, nivel ${result.performance_level_name}`
+        : ''
+      setApplyMessage({
+        tone: 'ok',
+        text: `Sugerida aplicada. Nota ${result.numerical_grade}${level}. La definitiva no cambia.`,
+      })
+      invalidateApplied()
+    },
+    onError: (err) => {
+      setApplyMessage({
+        tone: 'err',
+        text: getErrorMessage(err, 'No se pudo aplicar la sugerida.'),
+      })
+    },
+  })
+
+  const applyGroup = useMutation({
+    mutationFn: () => {
+      const schemeId = bundleQuery.data?.scheme?.id
+      if (!schemeId) throw new Error('Sin esquema')
+      return applyGradingSchemeSuggestionBulk(schemeId)
+    },
+    onSuccess: (result) => {
+      setApplyMessage({
+        tone: 'ok',
+        text: `Sugerida aplicada al grupo. ${result.applied_count} aplicados, ${result.skipped_count} omitidos.`,
+      })
+      invalidateApplied()
+    },
+    onError: (err) => {
+      setApplyMessage({
+        tone: 'err',
+        text: getErrorMessage(err, 'No se pudo aplicar la sugerida al grupo.'),
+      })
+    },
+  })
   const [savingKey, setSavingKey] = useState<string | null>(null)
   const queueRef = useRef<SaveJob[]>([])
   const runningRef = useRef(false)
@@ -613,6 +681,32 @@ export function GradeGridScreen({
         </div>
       )}
 
+      <div className="flex items-center gap-2 border-b border-slate-200 bg-white px-3 py-1">
+        {applyMessage && (
+          <p
+            className={`min-w-0 flex-1 text-[11px] ${
+              applyMessage.tone === 'ok' ? 'text-emerald-800' : 'text-red-600'
+            }`}
+          >
+            {applyMessage.text}
+          </p>
+        )}
+        <button
+          type="button"
+          disabled={
+            !isGridComplete(
+              activityIds,
+              enrollments.map((row) => rowScores(row.student)),
+              weightsValid,
+            ) || applyGroup.isPending
+          }
+          onClick={() => applyGroup.mutate()}
+          className="ml-auto min-h-11 shrink-0 rounded-xl bg-[#1E3A5F] px-3 text-xs font-semibold text-white disabled:opacity-40"
+        >
+          {applyGroup.isPending ? 'Aplicando…' : 'Aplicar al grupo'}
+        </button>
+      </div>
+
       {enrollments.length === 0 && (
         <p className="text-sm text-slate-400 text-center py-12 px-6">
           No hay matrículas activas en este grupo.
@@ -660,15 +754,34 @@ export function GradeGridScreen({
           })}
 
         {focused && !openActivity && (
-          <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200">
+          <div className="flex items-center justify-between gap-2 px-4 py-2 bg-white border-b border-slate-200">
             <span className="text-xs font-semibold text-slate-500">def</span>
             <span className="font-mono text-lg font-bold text-slate-900">
               {displayDef(structure, rowScores(focused.student))}
             </span>
+            <button
+              type="button"
+              onClick={() => setSheet({ kind: 'detail', studentId: focused.student })}
+              className="min-h-11 px-2 text-xs font-semibold text-blue-700"
+            >
+              Detalle
+            </button>
+            <button
+              type="button"
+              aria-label="Aplicar sugerida de esta fila"
+              disabled={
+                displayDef(structure, rowScores(focused.student)) === '0' ||
+                applyRow.isPending
+              }
+              onClick={() => applyRow.mutate(focused.student)}
+              className="min-h-11 min-w-11 rounded-full text-emerald-700 disabled:text-slate-300"
+            >
+              <IconCheck size={18} />
+            </button>
           </div>
         )}
 
-        {focused && bundle.segments.length === 0 && (
+        {focused && bundle.segments.length === 0 && bundle.components.length === 0 && (
           <p className="text-sm text-slate-500 text-center py-12 px-6">
             Este esquema no tiene segmentos. El promedio queda en 0.
           </p>
@@ -830,6 +943,11 @@ export function GradeGridScreen({
           })
         }
         onEditWeights={(componentId) => setSheet({ kind: 'weights', componentId })}
+        onOpenDetail={(studentId) => setSheet({ kind: 'detail', studentId })}
+        onApplyRow={(studentId) => applyRow.mutate(studentId)}
+        applyDisabled={(studentId) =>
+          displayDef(structure, rowScores(studentId)) === '0' || applyRow.isPending
+        }
       />
       </>
       )}
@@ -855,6 +973,28 @@ export function GradeGridScreen({
               existingCount={
                 ordered.filter((activity) => activity.segment === sheet.segmentId).length
               }
+              onClose={() => setSheet(null)}
+            />
+          </div>
+        </>
+      )}
+      {sheet?.kind === 'detail' && bundle.scheme && (
+        <>
+          <button
+            type="button"
+            aria-label="Cerrar"
+            className="grade-grid-scrim"
+            onClick={() => setSheet(null)}
+          />
+          <div className="grade-grid-sheet">
+            <GradeGridDetailSheet
+              schemeId={bundle.scheme.id}
+              studentId={sheet.studentId}
+              studentName={
+                enrollments.find((row) => row.student === sheet.studentId)
+                  ?.student_name ?? 'Estudiante'
+              }
+              defText={displayDef(structure, rowScores(sheet.studentId))}
               onClose={() => setSheet(null)}
             />
           </div>
@@ -889,11 +1029,23 @@ export function GradeGridScreen({
 
       {focused && openActivity && !sheet && (
         <div className="bg-white border-t border-slate-200">
-          <div className="flex items-center justify-between px-4 pt-2">
+          <div className="flex items-center justify-between gap-2 px-4 pt-2">
             <span className="text-xs font-semibold text-slate-500">def</span>
             <span className="font-mono text-lg font-bold text-slate-900">
               {displayDef(structure, rowScores(focused.student))}
             </span>
+            <button
+              type="button"
+              aria-label="Aplicar sugerida de esta fila"
+              disabled={
+                displayDef(structure, rowScores(focused.student)) === '0' ||
+                applyRow.isPending
+              }
+              onClick={() => applyRow.mutate(focused.student)}
+              className="min-h-11 min-w-11 rounded-full text-emerald-700 disabled:text-slate-300"
+            >
+              <IconCheck size={18} />
+            </button>
           </div>
           <div className="flex items-stretch">
             <button
