@@ -84,6 +84,9 @@ export function GradeGridMatrix({
   savingKey,
   errors,
   onOpenCell,
+  onAddActivity,
+  onEditActivity,
+  onEditWeights,
 }: {
   enrollments: Enrollment[]
   activities: EnrichedActivity[]
@@ -97,6 +100,9 @@ export function GradeGridMatrix({
   savingKey: string | null
   errors: Record<string, string>
   onOpenCell: (studentId: string, activityId: string) => void
+  onAddActivity: (segmentId: string) => void
+  onEditActivity: (activity: EnrichedActivity) => void
+  onEditWeights: (componentId: string) => void
 }) {
   const groups = columnGroups(components, segments, activities)
   const columns = groups.flatMap((group) =>
@@ -109,6 +115,23 @@ export function GradeGridMatrix({
 
   return (
     <div className="grade-grid-matrix min-h-0 flex-1 overflow-auto">
+      {columns.length === 0 && (
+        <div className="flex flex-wrap gap-2 border-b border-slate-200 bg-white px-3 py-2">
+          {components
+            .slice()
+            .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+            .map((component) => (
+              <button
+                key={component.id}
+                type="button"
+                onClick={() => onEditWeights(component.id)}
+                className="min-h-11 rounded-full border border-slate-200 px-3 text-xs font-semibold text-slate-700"
+              >
+                Pesos · {component.name}
+              </button>
+            ))}
+        </div>
+      )}
       <table className="border-separate border-spacing-0 text-left">
         <thead className="sticky top-0 z-30">
           <tr>
@@ -124,11 +147,20 @@ export function GradeGridMatrix({
                 colSpan={group.colSpan}
                 className="bg-slate-50 border-b border-r border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-600"
               >
-                <span className="block truncate">
-                  {group.component.name}{' '}
-                  <span className="font-mono font-normal text-slate-400">
-                    {group.component.weight_percent}%
+                <span className="flex items-center justify-between gap-1">
+                  <span className="truncate">
+                    {group.component.name}{' '}
+                    <span className="font-mono font-normal text-slate-400">
+                      {group.component.weight_percent}%
+                    </span>
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => onEditWeights(group.component.id)}
+                    className="min-h-11 shrink-0 px-2 text-[11px] font-semibold text-[#1E3A5F]"
+                  >
+                    Pesos
+                  </button>
                 </span>
               </th>
             ))}
@@ -147,11 +179,21 @@ export function GradeGridMatrix({
                   colSpan={column.activities.length}
                   className={`border-b border-r border-slate-200 px-2 py-1 text-[10px] font-semibold ${column.tone}`}
                 >
-                  <span className="block truncate">
-                    {column.segment.name}{' '}
-                    <span className="font-mono font-normal opacity-70">
-                      {column.segment.weight_percent}%
+                  <span className="flex items-center justify-between gap-1">
+                    <span className="truncate">
+                      {column.segment.name}{' '}
+                      <span className="font-mono font-normal opacity-70">
+                        {column.segment.weight_percent}%
+                      </span>
                     </span>
+                    <button
+                      type="button"
+                      aria-label={`Nueva actividad en ${column.segment.name}`}
+                      onClick={() => onAddActivity(column.segment.id)}
+                      className="min-h-11 min-w-11 shrink-0 text-base font-semibold"
+                    >
+                      +
+                    </button>
                   </span>
                 </th>
               )),
@@ -163,10 +205,16 @@ export function GradeGridMatrix({
                 column.activities.map((activity) => (
                   <th
                     key={activity.id}
-                    title={activity.name}
-                    className={`min-w-[72px] w-[72px] max-w-[72px] border-b border-r border-slate-200 px-1 py-1 text-[10px] font-medium ${column.tone}`}
+                    className={`min-w-[72px] w-[72px] max-w-[72px] border-b border-r border-slate-200 p-0 text-[10px] font-medium ${column.tone}`}
                   >
-                    <span className="block truncate">{activity.name}</span>
+                    <button
+                      type="button"
+                      title={activity.name}
+                      onClick={() => onEditActivity(activity)}
+                      className="block h-11 w-full truncate px-1 text-left"
+                    >
+                      {activity.name}
+                    </button>
                   </th>
                 )),
               ),

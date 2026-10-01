@@ -21,6 +21,10 @@ import {
 } from '@/features/grading/activityStatus'
 import { GradeGridMatrix } from '@/features/grading/GradeGridMatrix'
 import {
+  GradeGridActivitySheet,
+  GradeGridWeightSheet,
+} from '@/features/grading/GradeGridSheets'
+import {
   displayDef,
   isRowComplete,
   type GradeGridStructure,
@@ -183,11 +187,23 @@ function GridHeader({
 }
 
 const GRID_LAYOUT_CSS = `
-.grade-grid-root { container-type: inline-size; }
+.grade-grid-root { container-type: inline-size; position: relative; }
 .grade-grid-root .grade-grid-matrix { display: none; }
+.grade-grid-scrim { position: absolute; inset: 0; z-index: 30; border: 0; background: rgba(15, 23, 42, 0.35); }
+.grade-grid-sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 40;
+  max-height: 78%; overflow: auto; background: white;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.12);
+}
 @container (min-width: 560px) {
   .grade-grid-root .grade-grid-list { display: none; }
   .grade-grid-root .grade-grid-matrix { display: block; }
+  .grade-grid-scrim { display: none; }
+  .grade-grid-sheet {
+    position: relative; max-height: 48%; border-radius: 0; box-shadow: none;
+    border-top: 1px solid #e2e8f0;
+  }
 }
 `
 
@@ -272,6 +288,11 @@ export function GradeGridScreen({
   overridesRef.current = overrides
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [sheet, setSheet] = useState<
+    | { kind: 'activity'; segmentId: string; activityId?: string }
+    | { kind: 'weights'; componentId: string }
+    | null
+  >(null)
   const [savingKey, setSavingKey] = useState<string | null>(null)
   const queueRef = useRef<SaveJob[]>([])
   const runningRef = useRef(false)
@@ -658,16 +679,43 @@ export function GradeGridScreen({
             const segments = bySortOrder(bundle.segments).filter(
               (segment) => segment.subject_component === component.id,
             )
-            if (segments.length === 0) return null
+            if (segments.length === 0) {
+              return (
+                <section key={component.id} className="mb-2">
+                  <div className="px-4 pt-3 pb-1 flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      {component.name}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setSheet({ kind: 'weights', componentId: component.id })}
+                      className="min-h-11 px-2 text-xs font-semibold text-[#1E3A5F]"
+                    >
+                      Pesos
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-400 px-4 py-2">
+                    Sin segmentos. Abre pesos para crear el primero.
+                  </p>
+                </section>
+              )
+            }
             return (
               <section key={component.id} className="mb-2">
-                <div className="px-4 pt-3 pb-1 flex items-baseline justify-between">
+                <div className="px-4 pt-3 pb-1 flex items-center justify-between gap-2">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     {component.name}
+                    <span className="ml-2 font-mono normal-case tracking-normal text-slate-400">
+                      {component.weight_percent}%
+                    </span>
                   </p>
-                  <span className="font-mono text-[10px] text-slate-400">
-                    {component.weight_percent}%
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSheet({ kind: 'weights', componentId: component.id })}
+                    className="min-h-11 px-2 text-xs font-semibold text-[#1E3A5F]"
+                  >
+                    Pesos
+                  </button>
                 </div>
                 {segments.map((segment) => {
                   const tone = SEGMENT_TONES[toneBySegment.get(segment.id) ?? 0]!
@@ -683,6 +731,16 @@ export function GradeGridScreen({
                         <span className="font-mono text-[10px] text-slate-400">
                           {segment.weight_percent}%
                         </span>
+                        <button
+                          type="button"
+                          aria-label={`Nueva actividad en ${segment.name}`}
+                          onClick={() =>
+                            setSheet({ kind: 'activity', segmentId: segment.id })
+                          }
+                          className="ml-auto min-h-11 min-w-11 text-base font-semibold text-[#1E3A5F]"
+                        >
+                          +
+                        </button>
                       </div>
                       {segmentActivities.length === 0 && (
                         <p className="text-xs text-slate-400 px-1 py-2">
@@ -696,17 +754,9 @@ export function GradeGridScreen({
                         const isOpen = openActivity?.id === activity.id
                         const error = errors[key]
                         return (
-                          <button
+                          <div
                             key={activity.id}
-                            type="button"
-                            onClick={() =>
-                              onFocus(
-                                isOpen
-                                  ? { student: focused.student }
-                                  : { student: focused.student, activity: activity.id },
-                              )
-                            }
-                            className={`w-full min-h-11 text-left bg-white rounded-xl border px-3 py-2.5 mb-1.5 flex items-center gap-3 ${
+                            className={`w-full min-h-11 bg-white rounded-xl border px-3 py-1 mb-1.5 flex items-center gap-2 ${
                               isOpen
                                 ? 'border-blue-400 ring-1 ring-blue-200'
                                 : error
@@ -715,22 +765,40 @@ export function GradeGridScreen({
                             }`}
                           >
                             <span className={`w-1 self-stretch rounded-full border ${tone}`} />
-                            <div className="flex-1 min-w-0">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSheet({
+                                  kind: 'activity',
+                                  segmentId: segment.id,
+                                  activityId: activity.id,
+                                })
+                              }
+                              className="flex-1 min-h-11 min-w-0 text-left"
+                            >
                               <p className="text-sm font-medium text-slate-900 truncate">
                                 {activity.name}
                               </p>
                               {error && (
                                 <p className="text-[11px] text-red-600 mt-0.5">{error}</p>
                               )}
-                            </div>
-                            <span
-                              className={`font-mono text-sm font-semibold ${
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onFocus(
+                                  isOpen
+                                    ? { student: focused.student }
+                                    : { student: focused.student, activity: activity.id },
+                                )
+                              }
+                              className={`min-h-11 min-w-11 font-mono text-sm font-semibold ${
                                 shown ? 'text-slate-900' : 'text-slate-300'
                               }`}
                             >
                               {savingKey === key ? '…' : formatScoreDisplay(shown)}
-                            </span>
-                          </button>
+                            </button>
+                          </div>
                         )
                       })}
                     </div>
@@ -753,11 +821,73 @@ export function GradeGridScreen({
         savingKey={savingKey}
         errors={errors}
         onOpenCell={(sid, aid) => onFocus({ student: sid, activity: aid })}
+        onAddActivity={(segmentId) => setSheet({ kind: 'activity', segmentId })}
+        onEditActivity={(activity) =>
+          setSheet({
+            kind: 'activity',
+            segmentId: activity.segment,
+            activityId: activity.id,
+          })
+        }
+        onEditWeights={(componentId) => setSheet({ kind: 'weights', componentId })}
       />
       </>
       )}
 
-      {focused && openActivity && (
+      {sheet?.kind === 'activity' && (
+        <>
+          <button
+            type="button"
+            aria-label="Cerrar"
+            className="grade-grid-scrim"
+            onClick={() => setSheet(null)}
+          />
+          <div className="grade-grid-sheet">
+            <GradeGridActivitySheet
+              segmentId={sheet.segmentId}
+              segmentName={
+                bundle.segments.find((segment) => segment.id === sheet.segmentId)?.name ??
+                'Segmento'
+              }
+              editing={
+                ordered.find((activity) => activity.id === sheet.activityId) ?? null
+              }
+              existingCount={
+                ordered.filter((activity) => activity.segment === sheet.segmentId).length
+              }
+              onClose={() => setSheet(null)}
+            />
+          </div>
+        </>
+      )}
+      {sheet?.kind === 'weights' && (
+        <>
+          <button
+            type="button"
+            aria-label="Cerrar"
+            className="grade-grid-scrim"
+            onClick={() => setSheet(null)}
+          />
+          <div className="grade-grid-sheet">
+            {(() => {
+              const component = bundle.components.find(
+                (item) => item.id === sheet.componentId,
+              )
+              if (!component || !bundle.scheme) return null
+              return (
+                <GradeGridWeightSheet
+                  schemeId={bundle.scheme.id}
+                  component={component}
+                  segments={bundle.segments}
+                  onClose={() => setSheet(null)}
+                />
+              )
+            })()}
+          </div>
+        </>
+      )}
+
+      {focused && openActivity && !sheet && (
         <div className="bg-white border-t border-slate-200">
           <div className="flex items-center justify-between px-4 pt-2">
             <span className="text-xs font-semibold text-slate-500">def</span>

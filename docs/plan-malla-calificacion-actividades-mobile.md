@@ -3,7 +3,7 @@
 **Proyecto:** eduCalc  
 **Documento:** Plan de implementación por fases (solo `mobile/`)  
 **Fecha:** Septiembre 2026  
-**Estado:** Fase 5 pendiente  
+**Estado:** Fase 6 pendiente  
 **Relacionado con:** [plan-malla-calificacion-actividades.md](./plan-malla-calificacion-actividades.md), [brief-ui-docente-mobile-first.md](./brief-ui-docente-mobile-first.md), [convenciones-rutas-mobile.md](./convenciones-rutas-mobile.md), [modulo-gestion-calificaciones-por-actividades.md](./modulo-gestion-calificaciones-por-actividades.md)
 
 Misma tarea que la malla del admin: el docente califica a todo el grupo de un esquema, ve el promedio del periodo y lo aplica sin tocar la definitiva. La interfaz nace en el teléfono y se recompone en tablet. No es un port de AG Grid.
@@ -45,7 +45,7 @@ flowchart LR
 | 2 | Ruta `/courses/:courseId/grade-grid`, página y botón de entrada | Hecha |
 | 3 | Lista estrecha, teclado, guardado de celda y `def` visible | Hecha |
 | 4 | Matriz cuando el detalle mide ≥ 560 px | Hecha |
-| 5 | Alta y edición de actividades, reparto de pesos | Pendiente |
+| 5 | Alta y edición de actividades, reparto de pesos | Hecha |
 | 6 | Detalle del estudiante, aplicar fila y aplicar grupo | Pendiente |
 | 7 | `tsc` y checklist en 390, 768 y 1194 px | Pendiente |
 
@@ -413,7 +413,7 @@ Reglas de esas funciones:
 
 ### Fase 5 — Actividades y pesos
 
-**Estado:** Pendiente  
+**Estado:** Hecha  
 **Objetivo:** desde la malla se crea o edita una actividad y se reparten los pesos de un componente.  
 **Empieza cuando:** la fase 4 está Hecha.  
 **Al terminar:** un segmento nuevo o una actividad nueva aparecen en la lista y en la matriz sin salir de la ruta. El plan del curso se ve y guarda igual que antes.
@@ -454,12 +454,12 @@ Reglas de esas funciones:
 
 **Criterio de hecho**
 
-- [ ] `+` crea la actividad en ese segmento, con fecha de hoy y máximo `5.00`, y pasa a ser columna o fila de nota.
-- [ ] El nombre abre la edición. No hay forma de borrar.
-- [ ] Soltar un divisor deja la suma en 100 % y el valor sigue tras recargar.
-- [ ] Con la suma en 100 % no se crea segmento hasta liberar 5 %. Después, el alta usa el resto.
-- [ ] El plan (`/courses/:id/plan`) sigue creando actividades y moviendo pesos como antes.
-- [ ] `bunx tsc --noEmit` pasa.
+- [x] `+` crea la actividad en ese segmento, con fecha de hoy y máximo `5.00`, y pasa a ser columna o fila de nota.
+- [x] El nombre abre la edición. No hay forma de borrar.
+- [x] Soltar un divisor deja la suma en 100 % y el valor sigue tras recargar.
+- [x] Con la suma en 100 % no se crea segmento hasta liberar 5 %. Después, el alta usa el resto.
+- [x] El plan (`/courses/:id/plan`) sigue creando actividades y moviendo pesos como antes.
+- [x] `bunx tsc --noEmit` pasa.
 
 **Deja listo:** la estructura se puede completar desde la malla. La fase 6 solo añade lectura del desglose y los dos apply.
 
@@ -570,6 +570,12 @@ Formato:
 - Decisiones que no estaban en el plan:
 - Siguiente:
 ```
+
+### 2026-09-30 — Fase 5 — Hecha
+- Hecho: `ActivityFormFields` vive en su archivo y el plan lo importa con la misma UI. La malla abre un sheet de actividad (`+` con fecha de hoy y máximo `5.00`, el nombre edita, sin borrar) y un sheet de pesos (catálogo solo lectura, barra si hay 2+ segmentos al 100 %, campo sin divisor si hay uno solo al 100 %, plantillas con el restante). En la lista los botones están en la ficha; en la matriz, en el encabezado. `bunx tsc --noEmit` pasa.
+- Pendiente dentro de la fase: soltar el divisor contra el API queda en la fase 7. Las mutaciones que ya existían invalidan `['grading']`, que cubre `courseActivitiesBundle`, así que no se añadió una segunda invalidación.
+- Decisiones que no estaban en el plan: con 2+ segmentos al 100 % la barra no libera peso, así que el sheet tiene «Liberar peso» para bajar un segmento al menos 5 %. El segmento creado justo después usa todo el restante. Si el componente todavía se está armando, la plantilla usa su peso por defecto, igual que el plan. En el teléfono el sheet es absoluto abajo, con velo; desde 560 px queda anclado en la columna, sin velo. El nombre de la actividad abre la edición y la nota abre el teclado.
+- Siguiente: Fase 6, detalle del estudiante y aplicar fila o grupo.
 
 ### 2026-09-30 — Fase 4 — Hecha
 - Hecho: la raíz de la malla es un container query. Por debajo de 560 px sigue la lista. Desde 560 px se ve `GradeGridMatrix`: nombre fijo a la izquierda, actividades con scroll horizontal, `def` fijo a la derecha, encabezados de componente y segmento. El toque abre el mismo teclado. Aceptar en la matriz, al final de la fila, pasa a la primera actividad del siguiente estudiante. El foco sigue en el query. `bunx tsc --noEmit` pasa.
