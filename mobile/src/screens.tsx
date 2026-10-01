@@ -42,6 +42,7 @@ import {
 } from "@/session/TeacherSessionContext"
 import { APP_NAME } from "@/app/appName"
 import type { CourseSection } from "@/navigation"
+import { useBreakpoint } from "@/navigation/useBreakpoint"
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 
@@ -619,6 +620,50 @@ export function CoursesScreen({
   )
 }
 
+const ACTIVITIES_RETURN_HINT_MS = 4500
+const ACTIVITIES_RETURN_HINT_FADE_MS = 400
+
+/** Aviso breve al entrar a un estudiante en el teléfono. Flota, no empuja el contenido. */
+function useActivitiesReturnHint(active: boolean) {
+  const [presence, setPresence] = useState<"enter" | "on" | "off" | "gone">(
+    active ? "enter" : "gone",
+  )
+
+  useEffect(() => {
+    if (!active) {
+      setPresence((current) => (current === "gone" ? "gone" : "off"))
+      return
+    }
+    setPresence("enter")
+    let fadeIn = 0
+    const frame = window.requestAnimationFrame(() => {
+      fadeIn = window.requestAnimationFrame(() => {
+        setPresence((current) => (current === "enter" ? "on" : current))
+      })
+    })
+    const hide = window.setTimeout(
+      () => setPresence("off"),
+      ACTIVITIES_RETURN_HINT_MS,
+    )
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.cancelAnimationFrame(fadeIn)
+      window.clearTimeout(hide)
+    }
+  }, [active])
+
+  useEffect(() => {
+    if (presence !== "off") return
+    const remove = window.setTimeout(
+      () => setPresence("gone"),
+      ACTIVITIES_RETURN_HINT_FADE_MS,
+    )
+    return () => window.clearTimeout(remove)
+  }, [presence])
+
+  return presence
+}
+
 // ─── Course Detail ────────────────────────────────────────────────────────────
 
 interface CourseDetailProps {
@@ -651,6 +696,10 @@ export function CourseDetailScreen({
   onBack,
 }: CourseDetailProps) {
   const session = useTeacherSession()
+  const isTablet = useBreakpoint()
+  const activitiesHint = useActivitiesReturnHint(
+    !isTablet && section === "activities" && Boolean(gradeGridStudentId),
+  )
   const course = useSessionCourse(courseId)
   if (!course) return <CourseNotFound onBack={onBack} />
   const tabs: { id: CourseSection; label: string }[] = [
@@ -663,7 +712,7 @@ export function CourseDetailScreen({
   return (
     <div className="flex flex-col h-full bg-[#F1F5F9]">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200">
+      <div className="relative z-20 bg-white border-b border-slate-200">
         <div className="flex items-center gap-2 px-4 py-3">
           {onBack && (
             <button
@@ -718,6 +767,29 @@ export function CourseDetailScreen({
             </button>
           ))}
         </div>
+        {activitiesHint !== "gone" && (
+          <div className="pointer-events-none absolute inset-x-0 top-full z-30">
+            <span
+              aria-hidden
+              className={`absolute top-1.5 h-2 w-2 -translate-x-1/2 rotate-45 bg-[#1E3A5F] transition-opacity ease-out ${
+                activitiesHint === "on" ? "opacity-100" : "opacity-0"
+              }`}
+              style={{
+                left: "37.5%",
+                transitionDuration: `${ACTIVITIES_RETURN_HINT_FADE_MS}ms`,
+              }}
+            />
+            <p
+              role="status"
+              className={`mx-3 mt-2 rounded-lg bg-[#1E3A5F] px-3 py-2 text-center text-[11px] font-medium leading-snug text-white shadow-lg transition-opacity ease-out ${
+                activitiesHint === "on" ? "opacity-100" : "opacity-0"
+              }`}
+              style={{ transitionDuration: `${ACTIVITIES_RETURN_HINT_FADE_MS}ms` }}
+            >
+              Toca Actividades para volver al listado general
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
