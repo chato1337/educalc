@@ -630,6 +630,7 @@ interface CourseDetailProps {
   onGoToPeriodGrades: () => void
   onGoToRecoveries: () => void
   onGoToPlan: () => void
+  onGoToGradeGrid: () => void
   onSelectStudent: (id: string) => void
   onBack?: () => void
 }
@@ -643,6 +644,7 @@ export function CourseDetailScreen({
   onGoToPeriodGrades,
   onGoToRecoveries,
   onGoToPlan,
+  onGoToGradeGrid,
   onSelectStudent,
   onBack,
 }: CourseDetailProps) {
@@ -725,6 +727,7 @@ export function CourseDetailScreen({
             course={course}
             onGoToGradeActivity={onGoToGradeActivity}
             onGoToPlan={onGoToPlan}
+            onGoToGradeGrid={onGoToGradeGrid}
           />
         )}
         {section === "grades" && (
@@ -869,6 +872,7 @@ function AttendanceSection({
 
 export { RollCallScreen } from "@/features/attendance/RollCallScreen"
 export { GradeActivityScreen } from "@/features/grading/GradeActivityScreen"
+export { GradeGridScreen } from "@/features/grading/GradeGridScreen"
 export { SchemePlanScreen } from "@/features/grading/SchemePlanScreen"
 export { PeriodGradesScreen } from "@/features/grades/PeriodGradesScreen"
 export { RecoveriesScreen } from "@/features/recoveries/RecoveriesScreen"

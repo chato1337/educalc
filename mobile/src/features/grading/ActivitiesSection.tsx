@@ -139,10 +139,12 @@ export function ActivitiesSection({
   course,
   onGoToGradeActivity,
   onGoToPlan,
+  onGoToGradeGrid,
 }: {
   course: Course
   onGoToGradeActivity: (id: string) => void
   onGoToPlan: () => void
+  onGoToGradeGrid: () => void
 }) {
   const session = useTeacherSession()
   const period = session.periods.find((p) => p.id === session.selectedPeriodId)
@@ -171,13 +173,24 @@ export function ActivitiesSection({
             {period.name}
           </p>
         )}
-        <button
-          type="button"
-          onClick={onGoToPlan}
-          className="text-xs font-semibold text-blue-700 hover:underline"
-        >
-          {bundle?.scheme ? 'Editar plan' : 'Crear plan'}
-        </button>
+        <div className="flex items-center gap-3">
+          {bundle?.scheme && (
+            <button
+              type="button"
+              onClick={onGoToGradeGrid}
+              className="text-xs font-semibold text-[#1E3A5F] hover:underline"
+            >
+              Calificar el grupo
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onGoToPlan}
+            className="text-xs font-semibold text-blue-700 hover:underline"
+          >
+            {bundle?.scheme ? 'Editar plan' : 'Crear plan'}
+          </button>
+        </div>
       </div>
 
       {bundleQuery.isLoading && (

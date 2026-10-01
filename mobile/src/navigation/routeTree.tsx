@@ -38,6 +38,7 @@ import {
   PeriodGradesPage,
   RecoveriesPage,
   RollCallPage,
+  GradeGridPage,
   SchemePlanPage,
   SchoolRecordPage,
   StudentProfilePage,
@@ -210,6 +211,10 @@ export function AppRoutes() {
               element={<RecoveriesPage />}
             />
             <Route path="courses/:courseId/plan" element={<SchemePlanPage />} />
+            <Route
+              path="courses/:courseId/grade-grid"
+              element={<GradeGridPage />}
+            />
             <Route
               path="courses/:courseId/students/:studentId"
               element={<StudentProfilePage />}

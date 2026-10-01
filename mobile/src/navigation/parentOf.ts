@@ -52,6 +52,11 @@ export function parentOf(pathname: string): string {
     return routes.course(plan.params.courseId, { section: "activities" })
   }
 
+  const gradeGrid = matchPath("/courses/:courseId/grade-grid", pathname)
+  if (gradeGrid?.params.courseId) {
+    return routes.course(gradeGrid.params.courseId, { section: "activities" })
+  }
+
   const course = matchPath("/courses/:courseId", pathname)
   if (course) return routes.courses()
 

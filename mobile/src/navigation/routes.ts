@@ -29,6 +29,18 @@ function oneOf<T extends string>(
   return (allowed as readonly string[]).includes(value) ? value as T : undefined
 }
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Vacío o mal formado cuenta como sin foco, no como otra pantalla. */
+export function parseOptionalUuid(
+  value: string | null | undefined,
+): string | undefined {
+  if (!value) return undefined
+  const trimmed = value.trim()
+  return UUID_RE.test(trimmed) ? trimmed : undefined
+}
+
 function qs(params: Record<string, string | undefined | null>): string {
   const search = new URLSearchParams()
   for (const [key, value] of Object.entries(params)) {
@@ -70,6 +82,14 @@ export const routes = {
   schemePlan: (courseId: string, opts?: { view?: PlanView }) =>
     `/courses/${courseId}/plan${qs({
       view: opts?.view && opts.view !== "estructura" ? opts.view : undefined,
+    })}`,
+  gradeGrid: (
+    courseId: string,
+    opts?: { student?: string; activity?: string },
+  ) =>
+    `/courses/${courseId}/grade-grid${qs({
+      student: parseOptionalUuid(opts?.student),
+      activity: parseOptionalUuid(opts?.activity),
     })}`,
   courseStudent: (
     courseId: string,

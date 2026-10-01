@@ -3,7 +3,7 @@
 **Proyecto:** eduCalc  
 **Documento:** Plan de implementación por fases (solo `mobile/`)  
 **Fecha:** Septiembre 2026  
-**Estado:** Fase 2 pendiente  
+**Estado:** Fase 3 pendiente  
 **Relacionado con:** [plan-malla-calificacion-actividades.md](./plan-malla-calificacion-actividades.md), [brief-ui-docente-mobile-first.md](./brief-ui-docente-mobile-first.md), [convenciones-rutas-mobile.md](./convenciones-rutas-mobile.md), [modulo-gestion-calificaciones-por-actividades.md](./modulo-gestion-calificaciones-por-actividades.md)
 
 Misma tarea que la malla del admin: el docente califica a todo el grupo de un esquema, ve el promedio del periodo y lo aplica sin tocar la definitiva. La interfaz nace en el teléfono y se recompone en tablet. No es un port de AG Grid.
@@ -42,7 +42,7 @@ flowchart LR
 | Fase | Entrega | Estado |
 |---|---|---|
 | 1 | `gradeGridMath.ts`: `def`, fila completa, malla completa | Hecha |
-| 2 | Ruta `/courses/:courseId/grade-grid`, página y botón de entrada | Pendiente |
+| 2 | Ruta `/courses/:courseId/grade-grid`, página y botón de entrada | Hecha |
 | 3 | Lista estrecha, teclado, guardado de celda y `def` visible | Pendiente |
 | 4 | Matriz cuando el detalle mide ≥ 560 px | Pendiente |
 | 5 | Alta y edición de actividades, reparto de pesos | Pendiente |
@@ -264,7 +264,7 @@ Reglas de esas funciones:
 
 ### Fase 2 — Ruta, página y entrada
 
-**Estado:** Pendiente  
+**Estado:** Hecha  
 **Objetivo:** el docente abre la malla desde Actividades, recarga en el mismo sitio y vuelve atrás al curso.  
 **Empieza cuando:** la fase 1 está Hecha.  
 **Al terminar:** la ruta existe. La pantalla muestra carga, error, curso desconocido, sin periodo o sin esquema. Todavía no se califica.
@@ -303,13 +303,13 @@ Reglas de esas funciones:
 
 **Criterio de hecho**
 
-- [ ] Desde Actividades, con esquema, se abre `/courses/:id/grade-grid`.
-- [ ] Atrás vuelve a `/courses/:id?section=activities`. Tras recargar, atrás sigue yendo ahí (`parentOf`).
-- [ ] Recargar conserva el path. `?student=` y `?activity=` sobreviven aunque la lista aún no los use.
-- [ ] Sin esquema no aparece el botón; el vacío de la ruta ofrece ir al plan.
-- [ ] En el teléfono la tab bar no se ve. En tablet la pantalla ocupa el detalle, no una ventana nueva.
-- [ ] Curso desconocido: vacío con atrás, sin ir a Hoy.
-- [ ] `bunx tsc --noEmit` pasa.
+- [x] Desde Actividades, con esquema, se abre `/courses/:id/grade-grid`.
+- [x] Atrás vuelve a `/courses/:id?section=activities`. Tras recargar, atrás sigue yendo ahí (`parentOf`).
+- [x] Recargar conserva el path. `?student=` y `?activity=` sobreviven aunque la lista aún no los use.
+- [x] Sin esquema no aparece el botón; el vacío de la ruta ofrece ir al plan.
+- [x] En el teléfono la tab bar no se ve. En tablet la pantalla ocupa el detalle, no una ventana nueva.
+- [x] Curso desconocido: vacío con atrás, sin ir a Hoy.
+- [x] `bunx tsc --noEmit` pasa.
 
 **Deja listo:** `GradeGridScreen` montada con `courseId`, periodo de sesión, `studentId`, `activityId` y callbacks `onFocus`, `onBack`, `onGoToPlan`. La fase 3 rellena el cuerpo.
 
@@ -570,6 +570,12 @@ Formato:
 - Decisiones que no estaban en el plan:
 - Siguiente:
 ```
+
+### 2026-09-30 — Fase 2 — Hecha
+- Hecho: `routes.gradeGrid` omite `student` y `activity` vacíos o que no son UUID. `GradeGridPage` lee el query, hace `replace` en `onFocus` y `back` para atrás. `parentOf` de `/courses/:id/grade-grid` es `/courses/:id?section=activities`, antes del match genérico del curso. «Calificar el grupo» solo si hay esquema. La pantalla cubre curso desconocido, sin periodo («No hay periodos para este año»), error de red, sin esquema con «Ir al plan», y un texto de espera si el esquema existe. `phoneShowsTabBar` sigue en falso en esta ruta. `bunx tsc --noEmit` pasa.
+- Pendiente dentro de la fase: nada. El recorrido con un docente logueado queda para la fase 7; el padre, el parser y la tab bar se comprobaron con un script local.
+- Decisiones que no estaban en el plan: el aviso sin periodo reutiliza el texto de Más («No hay periodos para este año»). Un UUID se acepta con el patrón 8-4-4-4-12, sin exigir versión. `GradeGridScreen` se reexporta desde `screens.tsx`, igual que `GradeActivityScreen`, para que `pages.tsx` no importe la feature directo.
+- Siguiente: Fase 3, lista estrecha, teclado y guardado de celda.
 
 ### 2026-09-30 — Fase 1 — Hecha
 - Hecho: `gradeGridMath.ts` exporta `displayDef`, `isRowComplete` e `isGridComplete`. Casos: sin actividades y nota faltante → `0` y fila incompleta; `weightsValid: false` → `0` y malla incompleta; 4 y 5 → `4.50`; 60/40 con 5.00 y 3.00 → `4.20`; 1/3 → `0.33`; 1.00 y 1.01 (promedio 1.005) → `1.01` (half-up, no bankers). `bunx tsc --noEmit` pasa.

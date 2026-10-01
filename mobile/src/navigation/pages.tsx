@@ -10,6 +10,7 @@ import {
   CourseDetailScreen,
   CoursesScreen,
   GradeActivityScreen,
+  GradeGridScreen,
   IndicatorsEditorScreen,
   MoreScreen,
   PeriodGradesScreen,
@@ -26,6 +27,7 @@ import {
   inferReportPick,
   parseCourseSection,
   parseGroupTab,
+  parseOptionalUuid,
   parsePeriodGradesTab,
   parsePlanView,
   parseReportPick,
@@ -126,6 +128,7 @@ export function CourseDetailPage() {
       onGoToPeriodGrades={() => go(routes.periodGrades(courseId))}
       onGoToRecoveries={() => go(routes.recoveries(courseId))}
       onGoToPlan={() => go(routes.schemePlan(courseId))}
+      onGoToGradeGrid={() => go(routes.gradeGrid(courseId))}
       onSelectStudent={(studentId) =>
         go(routes.courseStudent(courseId, studentId))
       }
@@ -196,6 +199,24 @@ export function RecoveriesPage() {
   const courseId = useRequiredParam("courseId")
   const { back } = useAppNav()
   return <RecoveriesScreen courseId={courseId} onBack={back} />
+}
+
+export function GradeGridPage() {
+  const courseId = useRequiredParam("courseId")
+  const [searchParams] = useSearchParams()
+  const session = useTeacherSession()
+  const { go, replace, back } = useAppNav()
+  return (
+    <GradeGridScreen
+      courseId={courseId}
+      periodId={session.selectedPeriodId ?? ""}
+      studentId={parseOptionalUuid(searchParams.get("student"))}
+      activityId={parseOptionalUuid(searchParams.get("activity"))}
+      onFocus={(focus) => replace(routes.gradeGrid(courseId, focus))}
+      onBack={back}
+      onGoToPlan={() => go(routes.schemePlan(courseId))}
+    />
+  )
 }
 
 export function SchemePlanPage() {
