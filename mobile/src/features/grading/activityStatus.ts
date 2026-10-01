@@ -6,9 +6,13 @@ export function isScoreFilled(score: string | null | undefined): boolean {
   return score != null && String(score).trim() !== ''
 }
 
-export function parseDecimal(value: string | null | undefined): number | null {
-  if (value == null || value.trim() === '' || value.trim() === '.') return null
-  const n = Number(String(value).replace(',', '.'))
+export function parseDecimal(
+  value: string | number | null | undefined,
+): number | null {
+  if (value == null) return null
+  const raw = String(value).trim()
+  if (raw === '' || raw === '.') return null
+  const n = Number(raw.replace(',', '.'))
   return Number.isFinite(n) ? n : null
 }
 
@@ -19,7 +23,9 @@ export function serializeScore(raw: string): string | null {
   return n.toFixed(2)
 }
 
-export function formatScoreDisplay(score: string | null | undefined): string {
+export function formatScoreDisplay(
+  score: string | number | null | undefined,
+): string {
   const n = parseDecimal(score ?? null)
   if (n == null) return '—'
   return n.toFixed(2)

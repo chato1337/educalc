@@ -48,7 +48,7 @@ Solo entidades que ya existen. No hay modelo nuevo.
 - No se pegan bloques desde Excel.
 - Las pantallas actuales del módulo siguen: esquemas, notas por actividad y nota sugerida.
 - No se añade `@mui/x-data-grid-pro` ni AG Grid Enterprise. Esta pantalla usa AG Grid Community (MIT). El resto del admin sigue en `@mui/x-data-grid`.
-- Mobile no entra en este plan.
+- Mobile no entra en este plan. La variante de la app docente está en [plan-malla-calificacion-actividades-mobile.md](./plan-malla-calificacion-actividades-mobile.md).
 
 ### Regla de la columna def
 
