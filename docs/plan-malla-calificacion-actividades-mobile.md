@@ -3,7 +3,7 @@
 **Proyecto:** eduCalc  
 **Documento:** Plan de implementación por fases (solo `mobile/`)  
 **Fecha:** Septiembre 2026  
-**Estado:** Fase 3 pendiente  
+**Estado:** Fase 4 pendiente  
 **Relacionado con:** [plan-malla-calificacion-actividades.md](./plan-malla-calificacion-actividades.md), [brief-ui-docente-mobile-first.md](./brief-ui-docente-mobile-first.md), [convenciones-rutas-mobile.md](./convenciones-rutas-mobile.md), [modulo-gestion-calificaciones-por-actividades.md](./modulo-gestion-calificaciones-por-actividades.md)
 
 Misma tarea que la malla del admin: el docente califica a todo el grupo de un esquema, ve el promedio del periodo y lo aplica sin tocar la definitiva. La interfaz nace en el teléfono y se recompone en tablet. No es un port de AG Grid.
@@ -43,7 +43,7 @@ flowchart LR
 |---|---|---|
 | 1 | `gradeGridMath.ts`: `def`, fila completa, malla completa | Hecha |
 | 2 | Ruta `/courses/:courseId/grade-grid`, página y botón de entrada | Hecha |
-| 3 | Lista estrecha, teclado, guardado de celda y `def` visible | Pendiente |
+| 3 | Lista estrecha, teclado, guardado de celda y `def` visible | Hecha |
 | 4 | Matriz cuando el detalle mide ≥ 560 px | Pendiente |
 | 5 | Alta y edición de actividades, reparto de pesos | Pendiente |
 | 6 | Detalle del estudiante, aplicar fila y aplicar grupo | Pendiente |
@@ -317,7 +317,7 @@ Reglas de esas funciones:
 
 ### Fase 3 — Lista, teclado y guardado
 
-**Estado:** Pendiente  
+**Estado:** Hecha  
 **Objetivo:** en ancho menor a 560 px el docente recorre estudiantes, escribe notas y ve `def`.  
 **Empieza cuando:** la fase 2 está Hecha.  
 **Al terminar:** se puede calificar el grupo en el teléfono. No hay matriz, ni alta de actividades, ni aplicar.
@@ -355,14 +355,14 @@ Reglas de esas funciones:
 
 **Criterio de hecho**
 
-- [ ] Escribir y aceptar guarda. Recargar muestra la nota.
-- [ ] Vaciar una nota guardada la deja pendiente. No aparece `0.00` en la celda.
-- [ ] Por encima de `max_score` el teclado no agrega el dígito. No abre el teclado del sistema.
-- [ ] Con una nota faltante, `def` es `0`. Con la fila completa y pesos válidos, `def` coincide con un cálculo manual de la fase 1.
-- [ ] El query `student` y `activity` sobrevive a recargar, y el teclado reabre esa celda.
-- [ ] Un id de estudiante que no está en el bundle deja la lista sin ficha.
-- [ ] Error de red al guardar muestra `getErrorMessage` y el resto de las filas sigue.
-- [ ] `bunx tsc --noEmit` pasa.
+- [x] Escribir y aceptar guarda. Recargar muestra la nota.
+- [x] Vaciar una nota guardada la deja pendiente. No aparece `0.00` en la celda.
+- [x] Por encima de `max_score` el teclado no agrega el dígito. No abre el teclado del sistema.
+- [x] Con una nota faltante, `def` es `0`. Con la fila completa y pesos válidos, `def` coincide con un cálculo manual de la fase 1.
+- [x] El query `student` y `activity` sobrevive a recargar, y el teclado reabre esa celda.
+- [x] Un id de estudiante que no está en el bundle deja la lista sin ficha.
+- [x] Error de red al guardar muestra `getErrorMessage` y el resto de las filas sigue.
+- [x] `bunx tsc --noEmit` pasa.
 
 **Deja listo:** el estado de foco y la cola de guardado sirven igual para la matriz. La fase 4 añade el otro layout, no otra forma de guardar.
 
@@ -570,6 +570,12 @@ Formato:
 - Decisiones que no estaban en el plan:
 - Siguiente:
 ```
+
+### 2026-09-30 — Fase 3 — Hecha
+- Hecho: en cualquier ancho la malla es lista. Toque abre la ficha (`?student=`). Toque en la actividad abre `ScoreKeypad` (`?activity=`). Aceptar encola un POST o PATCH y avanza; al final de la fila salta al primer pendiente del siguiente. Vacío con nota previa manda `score: null`; vacío sin registro no crea nada. `def` sale de `displayDef`. Pesos inválidos muestran alerta y dejan `def` en `0`. Un estudiante que no está en el bundle deja la lista. `bunx tsc --noEmit` pasa.
+- Pendiente dentro de la fase: el guardado contra el API con un docente logueado queda en la fase 7. La cola copia el patrón de `GradeActivityScreen` (no se extrajo).
+- Decisiones que no estaban en el plan: atrás de la ficha hace `replace` sin query y se queda en la malla; `onBack` solo sale desde la lista, porque si hay historial `back()` abandonaría la ruta. Cerrar el teclado es volver a tocar la actividad abierta, sin guardar. Las flechas cambian de celda sin guardar. El borrador es local por celda y se descarta al guardar bien. `def` y el progreso usan la nota ya aceptada, con actualización optimista, no el borrador a medias. Si no queda un pendiente después, el teclado se cierra y la ficha sigue.
+- Siguiente: Fase 4, matriz cuando el contenedor mide 560 px o más.
 
 ### 2026-09-30 — Fase 2 — Hecha
 - Hecho: `routes.gradeGrid` omite `student` y `activity` vacíos o que no son UUID. `GradeGridPage` lee el query, hace `replace` en `onFocus` y `back` para atrás. `parentOf` de `/courses/:id/grade-grid` es `/courses/:id?section=activities`, antes del match genérico del curso. «Calificar el grupo» solo si hay esquema. La pantalla cubre curso desconocido, sin periodo («No hay periodos para este año»), error de red, sin esquema con «Ir al plan», y un texto de espera si el esquema existe. `phoneShowsTabBar` sigue en falso en esta ruta. `bunx tsc --noEmit` pasa.
