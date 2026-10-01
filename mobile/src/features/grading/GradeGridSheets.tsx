@@ -358,9 +358,14 @@ export function GradeGridWeightSheet({
   )
 }
 
-function sameTwoDecimals(shown: string, api: string | null | undefined): boolean {
-  if (api == null || api.trim() === '') return false
-  const parsed = Number(api.replace(',', '.'))
+function sameTwoDecimals(
+  shown: string,
+  api: string | number | null | undefined,
+): boolean {
+  if (api == null) return false
+  const raw = String(api).trim()
+  if (raw === '') return false
+  const parsed = Number(raw.replace(',', '.'))
   if (!Number.isFinite(parsed)) return false
   return parsed.toFixed(2) === shown
 }
@@ -430,7 +435,9 @@ export function GradeGridDetailSheet({
                   >
                     <span className="truncate text-slate-700">{activity.name}</span>
                     <span className="font-mono text-slate-900">
-                      {formatScoreDisplay(activity.score)}
+                      {formatScoreDisplay(
+                        activity.score == null ? null : String(activity.score),
+                      )}
                     </span>
                   </li>
                 ))}

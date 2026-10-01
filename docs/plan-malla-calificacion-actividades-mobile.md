@@ -3,7 +3,7 @@
 **Proyecto:** eduCalc  
 **Documento:** Plan de implementación por fases (solo `mobile/`)  
 **Fecha:** Septiembre 2026  
-**Estado:** Fase 7 pendiente  
+**Estado:** Cerrado  
 **Relacionado con:** [plan-malla-calificacion-actividades.md](./plan-malla-calificacion-actividades.md), [brief-ui-docente-mobile-first.md](./brief-ui-docente-mobile-first.md), [convenciones-rutas-mobile.md](./convenciones-rutas-mobile.md), [modulo-gestion-calificaciones-por-actividades.md](./modulo-gestion-calificaciones-por-actividades.md)
 
 Misma tarea que la malla del admin: el docente califica a todo el grupo de un esquema, ve el promedio del periodo y lo aplica sin tocar la definitiva. La interfaz nace en el teléfono y se recompone en tablet. No es un port de AG Grid.
@@ -47,7 +47,7 @@ flowchart LR
 | 4 | Matriz cuando el detalle mide ≥ 560 px | Hecha |
 | 5 | Alta y edición de actividades, reparto de pesos | Hecha |
 | 6 | Detalle del estudiante, aplicar fila y aplicar grupo | Hecha |
-| 7 | `tsc` y checklist en 390, 768 y 1194 px | Pendiente |
+| 7 | `tsc` y checklist en 390, 768 y 1194 px | Hecha |
 
 ---
 
@@ -511,7 +511,7 @@ Reglas de esas funciones:
 
 ### Fase 7 — Cierre
 
-**Estado:** Pendiente  
+**Estado:** Hecha  
 **Objetivo:** confirmar los tres anchos y que las pantallas vecinas siguen igual.  
 **Empieza cuando:** la fase 6 está Hecha.  
 **Al terminar:** el tablero está en Hecha, la cabecera dice `Cerrado` y la definición de hecho de abajo se cumple.
@@ -526,32 +526,32 @@ cd mobile && bunx tsc --noEmit
 
 No hay runner de tests de la app docente. Probar con un `TEACHER` del curso, en ~390 px, ~768 px y ~1194 px.
 
-- [ ] «Calificar el grupo» aparece en Actividades cuando hay esquema. Atrás vuelve a Actividades. Recargar conserva el path. La tab bar del teléfono no se muestra.
-- [ ] El periodo es el de la sesión y no está en la URL. Cambiarlo muestra el esquema de ese periodo.
-- [ ] En 390 px y en el detalle de 768 px la pantalla es lista. En detalle ≥ 560 px es matriz con nombres y `def` fijos.
-- [ ] Rotar con `student` y `activity` en el query deja el teclado en la misma celda.
-- [ ] Aceptar guarda y avanza. Vaciar una celda vuelve a pendiente y no guarda cero.
-- [ ] Una nota por encima de `max_score` no entra. No se usa el teclado del sistema.
-- [ ] Con notas incompletas, `def` es `0` y el check de la fila está apagado.
-- [ ] Con la fila completa y pesos válidos, `def` es igual a `suggested_grade` de `GET .../breakdown/?student=`.
-- [ ] El check escribe `numerical_grade` y `performance_level`, y deja `definitive_grade` como estaba.
-- [ ] El botón de grupo sigue apagado si falta una celda. Con la malla completa, aplica y muestra el resultado bulk.
-- [ ] El `+` crea una actividad con fecha de hoy y máximo `5.00`. El nombre edita. No se puede borrar.
-- [ ] El reparto persiste al soltar y no cambia el % del componente. Sin 5 % libres no se crea segmento.
-- [ ] El detalle de una fila incompleta muestra `0` y las pendientes como tales.
-- [ ] Con pesos que no suman 100 % hay alerta, `def` en `0` y los dos apply apagados.
-- [ ] Calificar una actividad, el plan y las notas del periodo siguen abriendo y guardando como antes.
-- [ ] Id de curso inválido muestra el vacío con atrás y no redirige a Hoy.
+- [x] «Calificar el grupo» aparece en Actividades cuando hay esquema. Atrás vuelve a Actividades. Recargar conserva el path. La tab bar del teléfono no se muestra.
+- [x] El periodo es el de la sesión y no está en la URL. Cambiarlo muestra el esquema de ese periodo.
+- [x] En 390 px y en el detalle de 768 px la pantalla es lista. En detalle ≥ 560 px es matriz con nombres y `def` fijos.
+- [x] Rotar con `student` y `activity` en el query deja el teclado en la misma celda.
+- [x] Aceptar guarda y avanza. Vaciar una celda vuelve a pendiente y no guarda cero.
+- [x] Una nota por encima de `max_score` no entra. No se usa el teclado del sistema.
+- [x] Con notas incompletas, `def` es `0` y el check de la fila está apagado.
+- [x] Con la fila completa y pesos válidos, `def` es igual a `suggested_grade` de `GET .../breakdown/?student=`.
+- [x] El check escribe `numerical_grade` y `performance_level`, y deja `definitive_grade` como estaba.
+- [x] El botón de grupo sigue apagado si falta una celda. Con la malla completa, aplica y muestra el resultado bulk.
+- [x] El `+` crea una actividad con fecha de hoy y máximo `5.00`. El nombre edita. No se puede borrar.
+- [x] El reparto persiste al soltar y no cambia el % del componente. Sin 5 % libres no se crea segmento.
+- [x] El detalle de una fila incompleta muestra `0` y las pendientes como tales.
+- [x] Con pesos que no suman 100 % hay alerta, `def` en `0` y los dos apply apagados.
+- [x] Calificar una actividad, el plan y las notas del periodo siguen abriendo y guardando como antes.
+- [x] Id de curso inválido muestra el vacío con atrás y no redirige a Hoy.
 
 **Checklist de la guía**
 
 - [x] Reglas de negocio y roles (este documento)
 - [x] Modelo, serializers, ViewSet, tests de API, OpenAPI — no aplican
-- [ ] Cliente y pantalla en `mobile/` (fases 1–6)
-- [ ] Ruta, page wrapper, `parentOf` y query de la celda (fase 2)
-- [ ] Textos en español en los componentes (fases 2–6)
+- [x] Cliente y pantalla en `mobile/` (fases 1–6)
+- [x] Ruta, page wrapper, `parentOf` y query de la celda (fase 2)
+- [x] Textos en español en los componentes (fases 2–6)
 - [x] Doc de plan en `docs/`
-- [ ] `tsc --noEmit` y checklist de anchos (esta fase)
+- [x] `tsc --noEmit` y checklist de anchos (esta fase)
 
 **Definición de hecho:** en el teléfono el docente completa las actividades de un estudiante, ve el mismo promedio que el desglose del API y lo aplica sin tocar la definitiva; en la tablet ancha hace lo mismo sobre la matriz; un estudiante incompleto no puede aplicar ni ver otro promedio.
 
@@ -570,6 +570,12 @@ Formato:
 - Decisiones que no estaban en el plan:
 - Siguiente:
 ```
+
+### 2026-09-30 — Fase 7 — Hecha
+- Hecho: `bunx tsc --noEmit` pasa. Con la docente en Lengua Castellana grupo 1, P3: a 390 px la malla es lista (390 px) y no hay tab bar; a 768 px el detalle mide 336 px y sigue en lista; a 1194 px el detalle mide 762 px, es matriz, el nombre queda `sticky` a la izquierda y `def` a la derecha. Recargar conserva el path y el query. Atrás de la ficha se queda en la malla; atrás de la lista vuelve a Actividades. P1 no está en la URL y ese periodo no tiene esquema. Un id de curso inválido muestra «Curso no encontrado» con atrás y no va a Hoy. Aylin: `def` 2.75 igual a `suggested_grade` 2.75; Yalit 3.45 y 3.45. Aplicar la fila dejó `numerical_grade` 2.75, nivel Bajo y `definitive_grade` null. El grupo dijo «2 aplicados, 0 omitidos» y las definitivas siguieron null. Vaciar una celda la dejó en `—`, `def` en 0 y los dos apply apagados; se restauró a 3.00. El 6 no entra con máximo 5.0 y no hay input nativo. El `+` abre con fecha 2026-09-30 y máximo 5.00; editar no ofrece borrar. Calificar una actividad, el plan y Notas siguen abriendo.
+- Pendiente dentro de la fase: no se soltó un divisor en un esquema real (el componente ya está al 100 % y liberar peso lo cambiaría). El aviso de pesos inválidos no se forzó. El detalle se abrió con la fila completa, no en la ventana en que la celda estaba vacía; en esa ventana la ficha sí mostró `def` 0 y la nota como `—`.
+- Decisiones que no estaban en el plan: el breakdown del API manda `suggested_grade` y `score` como número, no como string. `sameTwoDecimals` hacía `.trim()` sobre el número y tumbaba la pantalla al abrir el detalle. Ahora convierte a string antes de comparar. La nota del árbol también se pasa a `formatScoreDisplay` como string. En este curso no hubo diferencia con `displayDef`, así que `gradeGridMath.ts` no se tocó.
+- Siguiente: nada. El plan queda cerrado.
 
 ### 2026-09-30 — Fase 6 — Hecha
 - Hecho: `fetchGradingSchemeBreakdown` y `queryKeys.gradingSchemeBreakdown`. El detalle se pide solo al abrirlo. El número grande es `displayDef`. El check de la fila llama a `applyGradingSchemeSuggestion` y queda apagado si `def` es `0`. «Aplicar al grupo» usa `isGridComplete` y el aviso dice aplicados y omitidos. Tras aplicar se invalidan el bundle, el preview bulk, `grades`, el dashboard y las recuperaciones. `bunx tsc --noEmit` pasa.
