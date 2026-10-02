@@ -1,4 +1,5 @@
 import AddIcon from '@mui/icons-material/Add'
+import CenterFocusStrongOutlinedIcon from '@mui/icons-material/CenterFocusStrongOutlined'
 import CheckIcon from '@mui/icons-material/Check'
 import GroupsIcon from '@mui/icons-material/Groups'
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined'
@@ -81,6 +82,31 @@ ModuleRegistry.registerModules([AllCommunityModule])
 
 const SCORE_MIN_WIDTH = 96
 const SCORE_PATTERN = /^-?\d{0,2}(\.\d{0,2})?$/
+const MISSING_HIGHLIGHT_MS = 2300
+
+function missingHighlightKey(rowId: string, activityId: string) {
+  return `${rowId}:${activityId}`
+}
+
+function missingScoreCells(rows: GradeRow[], model: GradeModel, revision: number) {
+  const activityIds = model.componentOrder.flatMap((component) =>
+    component.segments.flatMap((segment) => segment.activityIds),
+  )
+  const cells: Array<{ rowId: string; activityId: string; colId: string }> = []
+  for (const row of rows) {
+    for (const activityId of activityIds) {
+      if ((row.scores[activityId] ?? '').trim() === '') {
+        cells.push({
+          rowId: row.id,
+          activityId,
+          colId: `score:${activityId}`,
+        })
+      }
+    }
+  }
+  // La revisión obliga a recalcular tras editar una nota en el sitio, sin cambiar el resultado.
+  return revision < 0 ? [] : cells
+}
 
 type SegmentTint = {
   cell: string
@@ -472,6 +498,7 @@ function buildColumnDefs(
   activities: GradingActivity[],
   labels: { student: string; document: string; def: string; actions: string },
   mode: PaletteMode,
+  missingHighlight: { current: Set<string> },
 ): Array<ColDef<GradeRow> | ColGroupDef<GradeRow>> {
   const segmentTints = SEGMENT_TINTS[mode]
   const componentHeader = COMPONENT_HEADER[mode]
@@ -532,6 +559,13 @@ function buildColumnDefs(
                       color: tint.cellText,
                       textAlign: 'center',
                     },
+                    cellClass: (params) =>
+                      params.data &&
+                      missingHighlight.current.has(
+                        missingHighlightKey(params.data.id, activity.id),
+                      )
+                        ? 'grade-grid-missing'
+                        : undefined,
                     headerComponent: ActivityColumnHeader,
                     headerComponentParams: {
                       activityId: activity.id,
@@ -738,6 +772,9 @@ export function ActivityGradeGridPage() {
   const gridRef = useRef<AgGridReact<GradeRow>>(null)
   const revertingRef = useRef(false)
   const refreshTimerRef = useRef<number | null>(null)
+  const highlightTimerRef = useRef<number | null>(null)
+  const missingHighlightRef = useRef<Set<string>>(new Set())
+  const [scoreRevision, setScoreRevision] = useState(0)
   const modelRef = useRef<GradeModel>({
     weightsValid: false,
     activityIds: [],
@@ -911,6 +948,8 @@ export function ActivityGradeGridPage() {
       })
   }, [enrollmentsQuery.data, model.activityIds, scoresQuery.data])
 
+  const missingCells = missingScoreCells(rows, model, scoreRevision)
+
   const studentLabel = t('gradingSchemes.student')
   const documentLabel = t('gradingSchemes.document')
   const defLabel = t('activityGrading.gradeGrid.def')
@@ -962,6 +1001,7 @@ export function ActivityGradeGridPage() {
           actions: actionsLabel,
         },
         muiTheme.palette.mode,
+        missingHighlightRef,
       ),
     }
   }
@@ -1028,6 +1068,9 @@ export function ActivityGradeGridPage() {
     () => () => {
       if (refreshTimerRef.current != null) {
         window.clearTimeout(refreshTimerRef.current)
+      }
+      if (highlightTimerRef.current != null) {
+        window.clearTimeout(highlightTimerRef.current)
       }
     },
     [],
@@ -1142,6 +1185,7 @@ export function ActivityGradeGridPage() {
     const scoreId = event.data.scoreIds[activityId]
     if (parsed.value == null && !scoreId) {
       event.data.scores[activityId] = ''
+      setScoreRevision((revision) => revision + 1)
       event.api.refreshCells({
         rowNodes: [event.node],
         columns: ['def', 'actions'],
@@ -1163,6 +1207,7 @@ export function ActivityGradeGridPage() {
               })
       event.data.scoreIds[activityId] = saved.id
       event.data.scores[activityId] = saved.score ?? ''
+      setScoreRevision((revision) => revision + 1)
       setSaveError(null)
       event.api.refreshCells({
         rowNodes: [event.node],
@@ -1187,6 +1232,54 @@ export function ActivityGradeGridPage() {
       activitiesQuery.isLoading ||
       scoresQuery.isLoading ||
       enrollmentsQuery.isLoading)
+
+  const canHighlightMissing = Boolean(scheme) && !loading && missingCells.length > 0
+  const highlightMissingTitle = !scheme
+    ? t('activityGrading.gradeGrid.highlightMissingNeedScheme')
+    : missingCells.length === 0
+      ? t('activityGrading.gradeGrid.highlightMissingDone')
+      : t('activityGrading.gradeGrid.highlightMissingHint')
+
+  function focusMissingScores() {
+    const api = gridRef.current?.api
+    const first = missingCells[0]
+    if (!api || !first) return
+    if (highlightTimerRef.current != null) {
+      window.clearTimeout(highlightTimerRef.current)
+      highlightTimerRef.current = null
+    }
+    const keys = new Set(
+      missingCells.map((cell) => missingHighlightKey(cell.rowId, cell.activityId)),
+    )
+    const nodesById = new Map<string, NonNullable<ReturnType<typeof api.getRowNode>>>()
+    const columns = new Set<string>()
+    for (const cell of missingCells) {
+      const node = api.getRowNode(cell.rowId)
+      if (node) nodesById.set(cell.rowId, node)
+      columns.add(cell.colId)
+    }
+    const rowNodes = [...nodesById.values()]
+    const columnList = [...columns]
+    const paint = (active: Set<string>) => {
+      missingHighlightRef.current = active
+      api.refreshCells({ rowNodes, columns: columnList, force: true })
+    }
+    paint(new Set())
+    window.requestAnimationFrame(() => {
+      if (api.isDestroyed()) return
+      paint(keys)
+      const rowIndex = api.getRowNode(first.rowId)?.rowIndex
+      if (rowIndex == null) return
+      api.ensureIndexVisible(rowIndex, 'middle')
+      api.ensureColumnVisible(first.colId, 'middle')
+      api.setFocusedCell(rowIndex, first.colId)
+    })
+    highlightTimerRef.current = window.setTimeout(() => {
+      highlightTimerRef.current = null
+      if (api.isDestroyed()) return
+      paint(new Set())
+    }, MISSING_HIGHLIGHT_MS)
+  }
 
   const weightComponent =
     components.find((component) => component.id === weightComponentId) ?? null
@@ -1259,42 +1352,60 @@ export function ActivityGradeGridPage() {
             />
           </>
         ) : null}
-        <Button
-          variant="contained"
-          color="secondary"
-          startIcon={<GroupsIcon />}
-          disabled={!canApplyGroup || applyBulkMutation.isPending || !scheme}
-          onClick={() => {
-            setApplyMessage(null)
-            setBulkOpen(true)
-          }}
-          sx={
-            Boolean(scheme) && canApplyGroup && !applyBulkMutation.isPending
-              ? {
-                  flexShrink: 0,
-                  ml: { md: 'auto' },
-                  color: '#FFFFFF',
-                  backgroundColor: '#1D4ED8',
-                  '@keyframes gradeGridApplyReady': {
-                    '0%, 100%': { backgroundColor: '#1D4ED8' },
-                    '50%': { backgroundColor: '#2563EB' },
-                  },
-                  animation: 'gradeGridApplyReady 2.8s ease-in-out infinite',
-                  '&:hover': {
-                    animation: 'none',
-                    backgroundColor: '#1E40AF',
-                    color: '#FFFFFF',
-                  },
-                  '@media (prefers-reduced-motion: reduce)': {
-                    animation: 'none',
-                    backgroundColor: '#1D4ED8',
-                  },
-                }
-              : { flexShrink: 0, ml: { md: 'auto' } }
-          }
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ ml: { md: 'auto' }, flexShrink: 0 }}
         >
-          {t('activityGrading.gradeGrid.applyGroup')}
-        </Button>
+          <Tooltip title={highlightMissingTitle}>
+            <span>
+              <Button
+                variant="outlined"
+                startIcon={<CenterFocusStrongOutlinedIcon />}
+                disabled={!canHighlightMissing}
+                onClick={focusMissingScores}
+                sx={{ flexShrink: 0 }}
+              >
+                {t('activityGrading.gradeGrid.highlightMissing')}
+              </Button>
+            </span>
+          </Tooltip>
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<GroupsIcon />}
+            disabled={!canApplyGroup || applyBulkMutation.isPending || !scheme}
+            onClick={() => {
+              setApplyMessage(null)
+              setBulkOpen(true)
+            }}
+            sx={
+              Boolean(scheme) && canApplyGroup && !applyBulkMutation.isPending
+                ? {
+                    flexShrink: 0,
+                    color: '#FFFFFF',
+                    backgroundColor: '#1D4ED8',
+                    '@keyframes gradeGridApplyReady': {
+                      '0%, 100%': { backgroundColor: '#1D4ED8' },
+                      '50%': { backgroundColor: '#2563EB' },
+                    },
+                    animation: 'gradeGridApplyReady 2.8s ease-in-out infinite',
+                    '&:hover': {
+                      animation: 'none',
+                      backgroundColor: '#1E40AF',
+                      color: '#FFFFFF',
+                    },
+                    '@media (prefers-reduced-motion: reduce)': {
+                      animation: 'none',
+                      backgroundColor: '#1D4ED8',
+                    },
+                  }
+                : { flexShrink: 0 }
+            }
+          >
+            {t('activityGrading.gradeGrid.applyGroup')}
+          </Button>
+        </Stack>
       </Stack>
 
       {selectedInstitutionId && !schemeId ? (
@@ -1314,6 +1425,22 @@ export function ActivityGradeGridPage() {
             '& .ag-header-group-cell .ag-header-cell-comp-wrapper': {
               height: '100%',
               maxHeight: 'none',
+            },
+            '& .grade-grid-missing': {
+              animation: 'gradeGridMissingPulse 0.75s ease-in-out 3',
+              '@media (prefers-reduced-motion: reduce)': {
+                animation: 'none',
+                boxShadow: 'inset 0 0 0 2px #D97706',
+              },
+            },
+            '@keyframes gradeGridMissingPulse': {
+              '0%, 100%': {
+                boxShadow: 'inset 0 0 0 0 rgba(217, 119, 6, 0)',
+              },
+              '50%': {
+                boxShadow:
+                  'inset 0 0 0 3px #D97706, inset 0 0 14px rgba(245, 158, 11, 0.65)',
+              },
             },
           }}
         >

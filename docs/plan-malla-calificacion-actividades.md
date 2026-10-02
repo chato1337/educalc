@@ -38,6 +38,7 @@ Solo entidades que ya existen. No hay modelo nuevo.
 3. Abrir el reparto de pesos de los segmentos de un componente, y desde ahí crear un segmento.
 4. Ver el detalle de un estudiante.
 5. Aplicar la nota sugerida de una fila, o de todo el grupo cuando la malla está completa.
+6. Localizar las celdas aún sin nota: el botón las resalta un momento y enfoca la primera. Cuando ya no queda ninguna, ese botón se apaga.
 
 ### Qué no debe cambiar
 
@@ -202,6 +203,8 @@ flowchart TD
     N -->|Sí| P[Check aplica la sugerida de la fila]
     C --> Q{Todas las filas completas?}
     Q -->|Sí| R[Botón del encabezado aplica al grupo]
+    Q -->|No| S[Resaltar pendientes enfoca la primera celda vacía y pulsa el resto]
+    Q -->|Sí| T[Resaltar pendientes queda apagado]
 ```
 
 ### Encabezado de tres niveles
@@ -279,6 +282,7 @@ El check de aplicar no se duplica dentro del modal.
 
 - Fila: el check llama a `applyGradingSchemeSuggestion`. Deshabilitado si `def` es `0`.
 - Grupo: botón en el encabezado de la página, deshabilitado hasta que todas las filas estén completas y los pesos sean válidos. Luego el endpoint bulk y el mismo aviso de resultado que ya usa el panel (aplicados, omitidos, nivel de desempeño).
+- Pendientes: botón **Resaltar pendientes**, a la izquierda del de grupo. No llama a la API. El detalle y las conclusiones están en la sección 10.
 - Tras aplicar, `def` sigue mostrando el promedio. La nota oficial queda en `Grade`. Avisar con el mensaje de confirmación que ya existe.
 - Invalidar notas del esquema, breakdown y calificaciones del periodo.
 
@@ -366,6 +370,7 @@ Checklist manual, con un usuario `TEACHER` del curso y luego un `ADMIN`:
 - [ ] Con la fila completa y pesos válidos, `def` es igual a `suggested_grade` de `GET .../breakdown/?student=`.
 - [ ] El check escribe `numerical_grade` y `performance_level`, y deja `definitive_grade` como estaba.
 - [ ] El botón de grupo sigue apagado si falta una sola celda de cualquier estudiante. Con la malla completa, aplica y muestra el resultado bulk.
+- [x] **Resaltar pendientes** enfoca la primera celda vacía y pulsa solo las vacías. Con la malla completa, el botón queda apagado. Ver sección 10.
 - [ ] El `+` crea una columna en ese segmento, con fecha de hoy y máximo `5.00`.
 - [ ] El nombre largo se recorta. Clic en el nombre edita. No hay forma de borrar la actividad.
 - [ ] Arrastrar el borde de una actividad, del nombre y de `def` cambia su ancho. Un doble clic lo ajusta al texto. La columna no se puede dejar más angosta que la nota. Recargar restaura el ancho inicial.
@@ -391,3 +396,41 @@ Checklist manual, con un usuario `TEACHER` del curso y luego un `ADMIN`:
 - [ ] `tsc --noEmit` y checklist manual
 
 Definición de hecho: un docente completa una fila, ve el mismo promedio que el desglose del API, lo aplica sin tocar la definitiva, y un estudiante incompleto no puede aplicar ni ver otro promedio en la columna.
+
+---
+
+## 10. Resaltar pendientes — conclusiones
+
+**Fecha:** 1 de octubre de 2026  
+**Estado:** Implementado (solo frontend)
+
+El docente pierde las celdas vacías cuando la malla es más ancha que la ventana. Hace falta un atajo que las señale sin guardar nada y sin parecerse al botón de aplicar al grupo.
+
+### Decisión
+
+| Tema | Conclusión |
+|---|---|
+| Dónde | A la izquierda de **Aplicar nota sugerida a todo el grupo**, en la misma fila del periodo y el esquema |
+| Texto | `activityGrading.gradeGrid.highlightMissing` = «Resaltar pendientes» |
+| Qué cuenta como pendiente | Celda de actividad con nota vacía o ausente. Un `0` es calificación. Un segmento sin actividades no tiene celda que buscar |
+| Orden de «la primera» | Lectura de la grilla: estudiantes de arriba abajo (`student_name`, locale `es`) y, en cada fila, actividades de izquierda a derecha (componente, segmento, actividad). No el `sort_order` global de actividades |
+| Al pulsar | La grilla se desplaza hasta esa celda y la enfoca. No abre el editor. Todas las pendientes pulsan a la vez |
+| Duración | Unos 2,3 s (tres pulsos). Luego la marca desaparece. Con `prefers-reduced-motion`, borde estático el mismo tiempo |
+| Cuándo se apaga | No queda ninguna celda pendiente, no hay esquema elegido, o la malla todavía está cargando. El tooltip dice el motivo |
+| API | Ninguna. No cambia `def`, ni el check de la fila, ni el apply de grupo |
+
+El apply de grupo y este botón son inversos. El de grupo solo se enciende con la malla completa y pesos válidos. **Resaltar pendientes** solo se enciende mientras falte alguna nota.
+
+### Por qué no `flashCells`
+
+`api.flashCells` de AG Grid Community marca la intersección de las filas y las columnas que se le pasan. Si el estudiante A no tiene la actividad 1 y el B no tiene la 2, también parpadearían celdas que ya tienen nota. La marca va celda a celda: `cellClass` lee un conjunto `${estudiante}:${actividad}` y `refreshCells({ force: true })` redibuja solo esas columnas y filas. El pulso es un `box-shadow` ámbar inset (clase `grade-grid-missing`), para que se vea encima del color del segmento.
+
+El foco usa `ensureIndexVisible`, `ensureColumnVisible` y `setFocusedCell`. Sigue en Community; no hace falta Enterprise.
+
+### Tras editar una celda
+
+La nota se escribe en la fila de la grilla antes de que el refetch termine. Un contador de revisión obliga a volver a contar las pendientes en ese momento, así el botón se apaga al guardar la última celda vacía y se enciende si se borra una nota.
+
+### Verificación
+
+En un esquema con notas y celdas vacías: el foco cayó en la primera vacía (primera fila), el pulso `gradeGridMissingPulse` solo en las vacías, y las celdas con nota (3,50 y 4,00) quedaron fuera. A los ~2,3 s la clase desapareció. El botón de grupo siguió apagado.
