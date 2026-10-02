@@ -192,7 +192,10 @@ export function AdminLayout() {
   )
 
   return (
-    <Box className="flex min-h-screen w-full">
+    <Box
+      className="flex min-h-screen w-full"
+      sx={{ '--app-bar-height': `${appBarHeightPx}px` }}
+    >
       <AppBar
         ref={appBarRef}
         position="fixed"

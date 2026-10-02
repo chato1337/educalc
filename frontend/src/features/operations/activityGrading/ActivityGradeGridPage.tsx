@@ -1197,7 +1197,7 @@ export function ActivityGradeGridPage() {
   ].join('|')
 
   return (
-    <Box className="flex flex-col gap-4">
+    <Box className="flex flex-col gap-4 flex-1 min-h-0">
       <Typography variant="h6">{t('activityGrading.gradeGrid.title')}</Typography>
 
       {!selectedInstitutionId ? (
@@ -1304,8 +1304,8 @@ export function ActivityGradeGridPage() {
       {scheme ? (
         <Box
           sx={{
-            height: 'calc(100vh - 280px)',
-            minHeight: 420,
+            flex: 1,
+            minHeight: 0,
             width: '100%',
             '& .ag-header-group-cell': {
               paddingInline: 0,

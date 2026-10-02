@@ -19,16 +19,23 @@ export function ActivityGradingLayout() {
     <Box
       className={
         fullWidth
-          ? 'p-4 md:p-6 w-full flex flex-col gap-4'
+          ? 'p-4 md:p-6 w-full flex flex-col gap-4 overflow-hidden box-border'
           : 'p-4 md:p-6 max-w-6xl mx-auto w-full flex flex-col gap-4'
       }
+      sx={
+        fullWidth
+          ? { height: 'calc(100dvh - var(--app-bar-height, 64px))' }
+          : undefined
+      }
     >
-      <PageHeader
-        title={t('activityGrading.moduleTitle')}
-        subtitle={t('activityGrading.moduleSubtitle')}
-      />
+      <Box sx={{ flexShrink: 0 }}>
+        <PageHeader
+          title={t('activityGrading.moduleTitle')}
+          subtitle={t('activityGrading.moduleSubtitle')}
+        />
+      </Box>
 
-      <Paper sx={{ width: '100%' }}>
+      <Paper sx={{ width: '100%', flexShrink: 0 }}>
         <Tabs
           value={tabValue}
           variant="scrollable"
@@ -50,7 +57,13 @@ export function ActivityGradingLayout() {
         </Tabs>
       </Paper>
 
-      <Outlet />
+      <Box
+        className={
+          fullWidth ? 'flex flex-col flex-1 min-h-0 overflow-hidden' : undefined
+        }
+      >
+        <Outlet />
+      </Box>
     </Box>
   )
 }
