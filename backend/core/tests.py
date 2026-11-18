@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.urls import reverse
 from rest_framework.test import APIClient
 
+from .bulletin_service import build_bulletin_context
 from .bulk_load_grading import (
     bulk_load_grading_structure,
     bulk_load_student_activity_scores,
@@ -16,6 +17,7 @@ from .grading_suggestion_service import (
     compute_suggested_grade,
     validate_scheme_weights,
 )
+from .performance_summary_service import sync_performance_summaries_for_group_period
 from .models import (
     AcademicArea,
     AcademicIndicator,
@@ -178,6 +180,88 @@ class PerformanceSummaryFromGradesTests(TransactionTestCase):
         self.assertEqual(sh.rank, 1)
         self.assertEqual(sl.rank, 2)
         self.assertEqual(sl.period_average, Decimal("2.00"))
+
+    def test_unrecovered_loss_caps_period_average_at_loss_mark(self):
+        ca2 = CourseAssignment.objects.create(
+            subject=Subject.objects.create(
+                academic_area=self.area,
+                institution=self.inst,
+                name="Ciencias",
+            ),
+            teacher=self.teacher,
+            group=self.group,
+            academic_year=self.ay,
+        )
+        Grade.objects.create(
+            student=self.s_high,
+            course_assignment=self.ca,
+            academic_period=self.period,
+            numerical_grade=Decimal("2.00"),
+        )
+        Grade.objects.create(
+            student=self.s_high,
+            course_assignment=ca2,
+            academic_period=self.period,
+            numerical_grade=Decimal("5.00"),
+        )
+
+        summary = PerformanceSummary.objects.get(student=self.s_high, group=self.group)
+        self.assertEqual(summary.period_average, Decimal("2.90"))
+
+    def test_period_average_keeps_mean_below_loss_mark(self):
+        ca2 = CourseAssignment.objects.create(
+            subject=Subject.objects.create(
+                academic_area=self.area,
+                institution=self.inst,
+                name="Ciencias",
+            ),
+            teacher=self.teacher,
+            group=self.group,
+            academic_year=self.ay,
+        )
+        Grade.objects.create(
+            student=self.s_high,
+            course_assignment=self.ca,
+            academic_period=self.period,
+            numerical_grade=Decimal("1.00"),
+        )
+        Grade.objects.create(
+            student=self.s_high,
+            course_assignment=ca2,
+            academic_period=self.period,
+            numerical_grade=Decimal("1.50"),
+        )
+
+        summary = PerformanceSummary.objects.get(student=self.s_high, group=self.group)
+        self.assertEqual(summary.period_average, Decimal("1.25"))
+
+    def test_recovered_grade_is_used_in_period_average(self):
+        ca2 = CourseAssignment.objects.create(
+            subject=Subject.objects.create(
+                academic_area=self.area,
+                institution=self.inst,
+                name="Ciencias",
+            ),
+            teacher=self.teacher,
+            group=self.group,
+            academic_year=self.ay,
+        )
+        Grade.objects.create(
+            student=self.s_high,
+            course_assignment=self.ca,
+            academic_period=self.period,
+            numerical_grade=Decimal("2.00"),
+            definitive_grade=Decimal("3.00"),
+        )
+        Grade.objects.create(
+            student=self.s_high,
+            course_assignment=ca2,
+            academic_period=self.period,
+            numerical_grade=Decimal("5.00"),
+        )
+
+        summary = PerformanceSummary.objects.get(student=self.s_high, group=self.group)
+        self.assertEqual(summary.period_average, Decimal("4.00"))
 
     def test_grade_delete_removes_summary_when_no_grades_left(self):
         g = Grade.objects.create(
@@ -735,7 +819,94 @@ class GradingConsolidatedCsvExportApiTests(TestCase):
         self.assertEqual(row["Lengua (P2)"], "")
         self.assertEqual(row["asignaturas_calificadas"], "1")
         self.assertEqual(row["asignaturas_pendientes"], "1")
+        self.assertEqual(row["Lengua (DEF)"], "4.50")
+        self.assertEqual(row["promedio (P1)"], "4.50")
+        self.assertEqual(row["promedio (P2)"], "")
         self.assertEqual(row["promedio_numerico"], "4.50")
+
+    def test_csv_matches_bulletin_for_recovery_and_unrecovered_loss(self):
+        GradingScale.objects.create(
+            institution=self.inst,
+            code="BJ",
+            name="Bajo",
+            min_score=Decimal("0.00"),
+            max_score=Decimal("2.99"),
+        )
+        GradingScale.objects.create(
+            institution=self.inst,
+            code="BS",
+            name="Básico",
+            min_score=Decimal("3.00"),
+            max_score=Decimal("3.99"),
+        )
+        lengua = Grade.objects.get(student=self.student, academic_period=self.p1)
+        lengua.numerical_grade = Decimal("2.50")
+        lengua.save(update_fields=["numerical_grade"])
+        Grade.objects.create(
+            student=self.student,
+            course_assignment=self.ca,
+            academic_period=self.p2,
+            numerical_grade=Decimal("4.00"),
+        )
+        ciencias = Subject.objects.create(
+            academic_area=self.area,
+            institution=self.inst,
+            name="Ciencias",
+        )
+        ca_ciencias = CourseAssignment.objects.create(
+            subject=ciencias,
+            teacher=self.teacher,
+            group=self.group,
+            academic_year=self.ay,
+        )
+        Grade.objects.create(
+            student=self.student,
+            course_assignment=ca_ciencias,
+            academic_period=self.p1,
+            numerical_grade=Decimal("2.00"),
+            definitive_grade=Decimal("3.00"),
+        )
+        Grade.objects.create(
+            student=self.student,
+            course_assignment=ca_ciencias,
+            academic_period=self.p2,
+            numerical_grade=Decimal("5.00"),
+        )
+        sync_performance_summaries_for_group_period(self.group.id, self.p1.id)
+        sync_performance_summaries_for_group_period(self.group.id, self.p2.id)
+
+        ctx = build_bulletin_context(
+            student=self.student,
+            academic_year=self.ay,
+            period_ids=[self.p1.id, self.p2.id],
+        )
+        by_subject = {row["subject_sub"]: row for row in ctx["grade_rows"]}
+
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.get(self.url, {"academic_year": str(self.ay.id)})
+        self.assertEqual(response.status_code, 200)
+        body = b"".join(response.streaming_content).decode("utf-8-sig")
+        lines = [ln for ln in body.strip().splitlines() if ln]
+        header = lines[0].split(",")
+        csv_row = dict(zip(header, lines[1].split(",")))
+
+        def bulletin_cell(subject, index):
+            value = by_subject[subject]["period_cells"][index]["value"]
+            return "" if value == "—" else value
+
+        self.assertEqual(csv_row["Lengua (P1)"], bulletin_cell("Lengua", 0))
+        self.assertEqual(csv_row["Lengua (P2)"], bulletin_cell("Lengua", 1))
+        self.assertEqual(csv_row["Lengua (DEF)"], by_subject["Lengua"]["def_value"])
+        self.assertEqual(csv_row["Ciencias (P1)"], bulletin_cell("Ciencias", 0))
+        self.assertEqual(csv_row["Ciencias (P2)"], bulletin_cell("Ciencias", 1))
+        self.assertEqual(csv_row["Ciencias (DEF)"], by_subject["Ciencias"]["def_value"])
+        self.assertEqual(csv_row["Ciencias (P1)"], "3.00")
+        self.assertEqual(csv_row["Lengua (DEF)"], "2.90")
+        self.assertEqual(csv_row["Ciencias (DEF)"], "4.00")
+        self.assertEqual(csv_row["promedio (P1)"], ctx["avg_row"][0])
+        self.assertEqual(csv_row["promedio (P2)"], ctx["avg_row"][1])
+        self.assertEqual(csv_row["promedio (P1)"], "2.75")
+        self.assertEqual(csv_row["promedio (P2)"], "4.50")
 
     def test_coordinator_wrong_institution_forbidden(self):
         self.client.force_authenticate(user=self.coord_user)

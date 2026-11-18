@@ -184,19 +184,35 @@ class GradeRecoveryApiTests(APITestCase):
             url,
             {
                 "grade": str(self.grade_bajo.id),
-                "recovery_grade": "3.20",
+                "recovery_grade": "3.00",
                 "description": "Sustentación oral de competencias pendientes.",
             },
             format="json",
         )
         self.assertEqual(r.status_code, 201, r.data)
         self.grade_bajo.refresh_from_db()
-        self.assertEqual(self.grade_bajo.definitive_grade, Decimal("3.20"))
+        self.assertEqual(self.grade_bajo.definitive_grade, Decimal("3.00"))
         self.assertEqual(GradeRecovery.objects.count(), 1)
         recovery = GradeRecovery.objects.get()
         self.assertEqual(recovery.description, "Sustentación oral de competencias pendientes.")
         self.assertEqual(recovery.created_by_id, self.teacher.id)
         self.assertIsNone(recovery.previous_definitive_grade)
+
+    def test_recovery_grade_must_be_basic_minimum(self):
+        url = reverse("graderecovery-list")
+        r = self.client.post(
+            url,
+            {
+                "grade": str(self.grade_bajo.id),
+                "recovery_grade": "3.20",
+                "description": "Nota distinta al mínimo de Básico.",
+            },
+            format="json",
+        )
+        self.assertEqual(r.status_code, 400)
+        self.grade_bajo.refresh_from_db()
+        self.assertIsNone(self.grade_bajo.definitive_grade)
+        self.assertEqual(GradeRecovery.objects.count(), 0)
 
     def test_cannot_recover_other_teacher_grade(self):
         url = reverse("graderecovery-list")
@@ -396,6 +412,32 @@ class BulletinPeriodRecoveryTests(APITestCase):
         row = self._row(ctx)
         # (3.00 recuperado + 4.00 numérico) / 2
         self.assertEqual(row["def_value"], "3.50")
+
+    def test_bulletin_year_def_caps_unrecovered_loss(self):
+        ctx = build_bulletin_context(
+            student=self.student,
+            academic_year=self.ay,
+            period_ids=[self.p1.id, self.p2.id],
+        )
+        row = self._row(ctx)
+        # (2.50 + 4.00) / 2 = 3.25, por encima de 2.90 y P1 sigue en Bajo.
+        self.assertEqual(row["period_cells"][0]["value"], "2.50")
+        self.assertEqual(row["def_value"], "2.90")
+
+    def test_bulletin_year_def_keeps_average_below_loss_mark(self):
+        self.grade_p1.numerical_grade = Decimal("1.00")
+        self.grade_p1.save(update_fields=["numerical_grade"])
+        Grade.objects.filter(student=self.student, academic_period=self.p2).update(
+            numerical_grade=Decimal("1.20")
+        )
+
+        ctx = build_bulletin_context(
+            student=self.student,
+            academic_year=self.ay,
+            period_ids=[self.p1.id, self.p2.id],
+        )
+        row = self._row(ctx)
+        self.assertEqual(row["def_value"], "1.10")
 
     def test_bulletin_single_period_def_is_the_recovered_grade(self):
         self.grade_p1.definitive_grade = Decimal("3.00")

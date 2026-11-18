@@ -13,7 +13,8 @@ def grade_recovery_create_schema():
         summary="Apply grade recovery",
         description=(
             "Registra una recuperación para una calificación en escala Baja (BJ) "
-            "y sobrescribe ``Grade.definitive_grade`` con ``recovery_grade``. "
+            "y sobrescribe ``Grade.definitive_grade`` con el mínimo de Básico "
+            "(por ejemplo 3.00). ``recovery_grade`` debe ser exactamente ese mínimo. "
             "El alcance por rol aplica como en ``/api/grades/`` "
             "(docente: solo sus asignaciones)."
         ),

@@ -59,22 +59,30 @@ import {
 } from '@/features/operations/gradeRecoveriesApi'
 import {
   useAcademicPeriodsForYear,
+  useGradingScalesForInstitution,
   useGroupsForFilters,
   useTeacherCourseAssignments,
 } from '@/features/operations/operationsQueries'
 import { useTeacherScopeListDefaults } from '@/features/operations/useTeacherScopeListDefaults'
 import { useUiStore } from '@/stores/uiStore'
-import type { Grade } from '@/types/schemas'
+import type { Grade, GradingScale } from '@/types/schemas'
 
 const recoverySchema = z.object({
-  recovery_grade: z
-    .string()
-    .min(1)
-    .refine((v) => !Number.isNaN(Number(v)), { message: 'invalid' }),
   description: z
     .string()
     .refine((v) => !isRichTextEmpty(v), { message: 'required' }),
 })
+
+function basicRecoveryScore(scales: GradingScale[]): string {
+  const match = scales.find((scale) => {
+    const code = scale.code.trim().toUpperCase()
+    const name = scale.name.trim().toLowerCase()
+    return code === 'BS' || name === 'básico' || name === 'basico'
+  })
+  if (!match) return '3.00'
+  const score = Number(match.min_score)
+  return Number.isFinite(score) ? score.toFixed(2) : '3.00'
+}
 
 type RecoveryFormValues = z.infer<typeof recoverySchema>
 
@@ -147,6 +155,14 @@ export function GradeRecoveriesPage() {
     setFilterGroupId,
   )
 
+  const { data: gradingScales = [] } = useGradingScalesForInstitution(
+    selectedInstitutionId,
+  )
+  const recoveryGrade = useMemo(
+    () => basicRecoveryScore(gradingScales),
+    [gradingScales],
+  )
+
   const { data: periods = [] } = useAcademicPeriodsForYear(filterYearId)
   const { data: groups = [] } = useGroupsForFilters(
     selectedInstitutionId,
@@ -179,7 +195,7 @@ export function GradeRecoveriesPage() {
 
   const form = useForm<RecoveryFormValues>({
     resolver: zodResolver(recoverySchema) as Resolver<RecoveryFormValues>,
-    defaultValues: { recovery_grade: '', description: '' },
+    defaultValues: { description: '' },
   })
 
   const applyMutation = useMutation({
@@ -199,19 +215,13 @@ export function GradeRecoveriesPage() {
   function openRecovery(grade: Grade) {
     setSelectedGrade(grade)
     setFormError(null)
-    form.reset({
-      recovery_grade:
-        grade.definitive_grade != null && grade.definitive_grade !== ''
-          ? String(grade.definitive_grade)
-          : '',
-      description: '',
-    })
+    form.reset({ description: '' })
   }
 
   function closeModal() {
     setSelectedGrade(null)
     setFormError(null)
-    form.reset({ recovery_grade: '', description: '' })
+    form.reset({ description: '' })
   }
 
   function onSubmit(values: RecoveryFormValues) {
@@ -224,7 +234,7 @@ export function GradeRecoveriesPage() {
     setFormError(null)
     applyMutation.mutate({
       grade: selectedGrade.id,
-      recovery_grade: values.recovery_grade,
+      recovery_grade: recoveryGrade,
       description,
     })
   }
@@ -460,26 +470,12 @@ export function GradeRecoveriesPage() {
 
           {formError ? <Alert severity="error">{formError}</Alert> : null}
 
-          <Controller
-            name="recovery_grade"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <TextField
-                {...field}
-                label={t('gradeRecoveries.recoveryGrade')}
-                required
-                fullWidth
-                type="number"
-                inputProps={{ step: '0.01', min: 0, max: 5 }}
-                error={Boolean(fieldState.error)}
-                helperText={
-                  fieldState.error
-                    ? t('gradeRecoveries.recoveryGradeRequired')
-                    : t('gradeRecoveries.recoveryGradeHelp')
-                }
-              />
-            )}
-          />
+          <Typography variant="body2">
+            <strong>{t('gradeRecoveries.recoveryGrade')}:</strong> {recoveryGrade}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {t('gradeRecoveries.recoveryGradeHelp', { grade: recoveryGrade })}
+          </Typography>
           <Controller
             name="description"
             control={form.control}

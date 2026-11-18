@@ -18,6 +18,7 @@ from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
 from weasyprint import HTML
 
+from .average_policy import effective_grade, official_average, resolve_passing_min
 from .indicator_utils import resolve_indicator_catalog, resolve_indicator_outcome
 from .models import (
     AcademicIndicator,
@@ -212,15 +213,18 @@ def _parse_uuid_list(raw: str | None) -> list[UUID] | None:
 
 def _effective_period_grade(grade: Grade) -> Decimal:
     """Grade shown for a period: recovery (``definitive_grade``) if set, else official."""
-    if grade.definitive_grade is not None:
-        return grade.definitive_grade
-    return grade.numerical_grade
+    shown = effective_grade(grade.numerical_grade, grade.definitive_grade)
+    if shown is None:
+        return grade.numerical_grade
+    return shown
 
 
 def _year_definitive_grade(
-    grades_for_assignment: list[Grade], period_order: list[UUID]
+    grades_for_assignment: list[Grade],
+    period_order: list[UUID],
+    passing_min: Decimal,
 ) -> Decimal | None:
-    """Average of each selected period's effective grade (recovery if set, else numerical)."""
+    """Official average of each selected period's effective grade."""
     by_period = {g.academic_period_id: g for g in grades_for_assignment}
     values: list[Decimal] = []
     for pid in period_order:
@@ -228,9 +232,7 @@ def _year_definitive_grade(
         if not g:
             continue
         values.append(_effective_period_grade(g))
-    if not values:
-        return None
-    return sum(values) / len(values)
+    return official_average(values, passing_min)
 
 
 def build_bulletin_context(
@@ -266,6 +268,7 @@ def build_bulletin_context(
 
     institution = group.campus.institution
     scales = _load_scales_for_institution(institution.id)
+    passing_min = resolve_passing_min(institution.id)
 
     periods_qs = AcademicPeriod.objects.filter(academic_year=academic_year).order_by(
         "number"
@@ -337,7 +340,7 @@ def build_bulletin_context(
             else:
                 period_cells.append({"value": "—", "css": ""})
 
-        ydef = _year_definitive_grade(glist, period_order)
+        ydef = _year_definitive_grade(glist, period_order, passing_min)
         se_total = 0
         ce_total = 0
         for p in periods:

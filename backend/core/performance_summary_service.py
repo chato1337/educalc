@@ -1,19 +1,25 @@
 """
-Recompute PerformanceSummary (period average, rank, definitive average) from Grade rows.
+Recompute PerformanceSummary (official period average, rank, definitive average) from Grade rows.
+
+``period_average`` uses the recovered grade when present. If any subject in the
+period stays below Básico and the mean would reach the loss mark, the average
+becomes that mark (passing minimum minus one tenth, 3.00 → 2.90). A mean already
+below the mark is kept.
 
 Rank uses competition ranking (1,2,2,4) among active enrollments in the group that have
 at least one grade in the period. Students with grades but no active enrollment still get
 a summary row with rank left unset.
 """
 import logging
+from collections import defaultdict
 from contextlib import contextmanager
 from contextvars import ContextVar
 from decimal import Decimal
 from typing import Iterable, List, Optional, Tuple
 
 from django.db import transaction
-from django.db.models import Avg, Count
 
+from .average_policy import effective_grade, official_average, resolve_passing_min
 from .models import AcademicPeriod, CourseAssignment, Enrollment, Grade, Group, PerformanceSummary
 
 logger = logging.getLogger(__name__)
@@ -78,7 +84,7 @@ def sync_performance_summaries_for_group_period(group_id, academic_period_id) ->
     )
 
     try:
-        group = Group.objects.select_related("academic_year").get(pk=group_id)
+        group = Group.objects.select_related("academic_year", "campus").get(pk=group_id)
     except Group.DoesNotExist:
         logger.warning(
             "performance_summary_recalc_abort reason=group_not_found group_id=%s",
@@ -106,14 +112,27 @@ def sync_performance_summaries_for_group_period(group_id, academic_period_id) ->
         )
         return
 
+    effective_by_student: dict = defaultdict(list)
+    definitive_by_student: dict = defaultdict(list)
+    for student_id, numerical, definitive in Grade.objects.filter(
+        academic_period_id=academic_period_id,
+        course_assignment__group_id=group_id,
+    ).values_list("student_id", "numerical_grade", "definitive_grade"):
+        shown = effective_grade(numerical, definitive)
+        if shown is None:
+            continue
+        effective_by_student[student_id].append(shown)
+        if definitive is not None:
+            definitive_by_student[student_id].append(definitive)
+
+    passing_min = resolve_passing_min(group.campus.institution_id)
     stats = {
-        r["student_id"]: r
-        for r in Grade.objects.filter(
-            academic_period_id=academic_period_id,
-            course_assignment__group_id=group_id,
-        )
-        .values("student_id")
-        .annotate(avg_num=Avg("numerical_grade"), avg_def=Avg("definitive_grade"), n=Count("id"))
+        student_id: {
+            "period_average": official_average(values, passing_min),
+            "definitive_values": definitive_by_student.get(student_id, []),
+            "n": len(values),
+        }
+        for student_id, values in effective_by_student.items()
     }
 
     enrolled_active = set(
@@ -131,9 +150,11 @@ def sync_performance_summaries_for_group_period(group_id, academic_period_id) ->
         deleted_count = delete_result[0]
 
         ranked_pool = [
-            (sid, _q2(stats[sid]["avg_num"]))
+            (sid, stats[sid]["period_average"])
             for sid in enrolled_active
-            if sid in stats and stats[sid]["n"] > 0 and stats[sid]["avg_num"] is not None
+            if sid in stats
+            and stats[sid]["n"] > 0
+            and stats[sid]["period_average"] is not None
         ]
         ranked_pool.sort(key=lambda x: (-x[1], str(x[0])))
         rank_by_student = _competition_ranks(ranked_pool)
@@ -142,11 +163,15 @@ def sync_performance_summaries_for_group_period(group_id, academic_period_id) ->
         for student_id, row in stats.items():
             if not row["n"]:
                 continue
-            avg_num = row["avg_num"]
-            if avg_num is None:
+            period_avg = row["period_average"]
+            if period_avg is None:
                 continue
-            period_avg = _q2(avg_num)
-            def_avg = _q2(row["avg_def"]) if row["avg_def"] is not None else None
+            definitive_values = row["definitive_values"]
+            def_avg = (
+                _q2(sum(definitive_values, Decimal("0")) / Decimal(len(definitive_values)))
+                if definitive_values
+                else None
+            )
             rank_val = rank_by_student.get(student_id)
 
             PerformanceSummary.objects.update_or_create(

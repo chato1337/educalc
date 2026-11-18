@@ -583,7 +583,10 @@ class GradeRecoveryCreateSerializer(serializers.Serializer):
     recovery_grade = serializers.DecimalField(
         max_digits=4,
         decimal_places=2,
-        help_text="Nota de recuperación; sobrescribe definitive_grade.",
+        help_text=(
+            "Nota de recuperación. Debe ser el mínimo de Básico de la institución "
+            "(por ejemplo 3.00) y sobrescribe definitive_grade."
+        ),
     )
     description = serializers.CharField(
         allow_blank=False,

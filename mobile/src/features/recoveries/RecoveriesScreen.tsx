@@ -15,11 +15,7 @@ import {
   flatInfinitePages,
   infiniteListCount,
 } from '@/api/useInfiniteList'
-import {
-  formatScoreDisplay,
-  parseDecimal,
-  serializeScore,
-} from '@/features/grading/activityStatus'
+import { formatScoreDisplay } from '@/features/grading/activityStatus'
 import {
   useCreateGradeRecoveryMutation,
   useEligibleGradesInfiniteQuery,
@@ -29,7 +25,18 @@ import {
   useSessionCourse,
   useTeacherSession,
 } from '@/session/TeacherSessionContext'
-import type { Grade, GradeRecovery } from '@/types/schemas'
+import type { Grade, GradeRecovery, GradingScale } from '@/types/schemas'
+
+function basicRecoveryScore(scales: GradingScale[]): string {
+  const match = scales.find((scale) => {
+    const code = scale.code.trim().toUpperCase()
+    const name = scale.name.trim().toLowerCase()
+    return code === 'BS' || name === 'básico' || name === 'basico'
+  })
+  if (!match) return '3.00'
+  const score = Number(match.min_score)
+  return Number.isFinite(score) ? score.toFixed(2) : '3.00'
+}
 
 export interface RecoveriesProps {
   courseId: string
@@ -39,6 +46,10 @@ export interface RecoveriesProps {
 export function RecoveriesScreen({ courseId, onBack }: RecoveriesProps) {
   const course = useSessionCourse(courseId)
   const session = useTeacherSession()
+  const recoveryScore = useMemo(
+    () => basicRecoveryScore(session.gradingScales),
+    [session.gradingScales],
+  )
   const periodId = session.selectedPeriodId ?? undefined
   const eligibleQuery = useEligibleGradesInfiniteQuery(
     course ? { course_assignment: course.id, academic_period: periodId } : null,
@@ -51,7 +62,6 @@ export function RecoveriesScreen({ courseId, onBack }: RecoveriesProps) {
   const createMutation = useCreateGradeRecoveryMutation()
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [recoveryGrade, setRecoveryGrade] = useState('')
   const [description, setDescription] = useState('')
   const [formError, setFormError] = useState('')
   const [writeFailed, setWriteFailed] = useState(false)
@@ -83,14 +93,8 @@ export function RecoveriesScreen({ courseId, onBack }: RecoveriesProps) {
 
   const handleSave = async () => {
     if (!selectedId || !selected) return
-    const serialized = serializeScore(recoveryGrade)
-    if (!serialized || !description.trim()) {
-      setFormError('Ingresa la nota de recuperación y la evidencia.')
-      return
-    }
-    const n = parseDecimal(serialized)
-    if (n == null || n < 0 || n > 5) {
-      setFormError('La nota debe estar entre 0.00 y 5.00.')
+    if (!description.trim()) {
+      setFormError('Ingresa la evidencia de la recuperación.')
       return
     }
     setFormError('')
@@ -98,12 +102,11 @@ export function RecoveriesScreen({ courseId, onBack }: RecoveriesProps) {
     try {
       await createMutation.mutateAsync({
         grade: selected.id,
-        recovery_grade: serialized,
+        recovery_grade: recoveryScore,
         description: description.trim(),
       })
       setSavedIds((prev) => new Set(prev).add(selectedId))
       setSelectedId(null)
-      setRecoveryGrade('')
       setDescription('')
     } catch (err) {
       setWriteFailed(true)
@@ -124,8 +127,6 @@ export function RecoveriesScreen({ courseId, onBack }: RecoveriesProps) {
     )
   }
 
-  const serializedPreview = serializeScore(recoveryGrade)
-
   return (
     <div className="flex flex-col h-full bg-[#F1F5F9]">
       <SectionHeader
@@ -138,8 +139,9 @@ export function RecoveriesScreen({ courseId, onBack }: RecoveriesProps) {
         <div className="bg-red-50 border border-red-200 rounded-xl p-3.5 text-xs text-red-800">
           <p className="font-semibold mb-1">¿Cómo funciona?</p>
           <p>
-            La nota de recuperación <strong>reemplaza la definitiva</strong>. La nota oficial del
-            periodo no cambia. Se puede recuperar más de una vez.
+            La recuperación queda en <strong>{recoveryScore}</strong>, el mínimo de Básico, y
+            reemplaza la definitiva. La nota numérica del periodo no cambia. Se puede registrar
+            más de una vez.
           </p>
         </div>
 
@@ -174,7 +176,6 @@ export function RecoveriesScreen({ courseId, onBack }: RecoveriesProps) {
                     setSelectedId(isSelected ? null : s.id)
                     setFormError('')
                     setWriteFailed(false)
-                    setRecoveryGrade('')
                     setDescription('')
                   }}
                   className={`w-full text-left bg-white rounded-xl border transition-all ${
@@ -219,33 +220,11 @@ export function RecoveriesScreen({ courseId, onBack }: RecoveriesProps) {
                     <p className="text-xs font-semibold text-red-800 mb-3">
                       La definitiva pasará de{' '}
                       <span className="font-mono">{formatScoreDisplay(from)}</span>
-                      {serializedPreview ? (
-                        <>
-                          {' '}
-                          a{' '}
-                          <span className="font-mono">
-                            {formatScoreDisplay(serializedPreview)}
-                          </span>
-                        </>
-                      ) : null}
-                      . La nota del periodo (numérica) no cambia.
+                      {' a '}
+                      <span className="font-mono">{recoveryScore}</span>
+                      . Esa nota entra al promedio. La nota numérica del periodo no cambia.
                     </p>
                     <div className="space-y-3">
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">
-                          Nota de recuperación (0.00 – 5.00)
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          max={5}
-                          step={0.01}
-                          placeholder="3.00"
-                          value={recoveryGrade}
-                          onChange={(e) => setRecoveryGrade(e.target.value)}
-                          className="w-full h-10 px-3 rounded-lg border border-slate-200 font-mono text-sm outline-none focus:border-red-400 focus:ring-1 focus:ring-red-100"
-                        />
-                      </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-600 mb-1">
                           Evidencia / descripción
@@ -268,11 +247,7 @@ export function RecoveriesScreen({ courseId, onBack }: RecoveriesProps) {
                       <button
                         type="button"
                         onClick={() => void handleSave()}
-                        disabled={
-                          createMutation.isPending ||
-                          !recoveryGrade ||
-                          !description.trim()
-                        }
+                        disabled={createMutation.isPending || !description.trim()}
                         className="w-full h-10 rounded-lg bg-red-600 text-white font-semibold text-sm hover:bg-red-700 disabled:opacity-40 transition-colors"
                       >
                         {createMutation.isPending

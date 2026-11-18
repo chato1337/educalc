@@ -1,7 +1,9 @@
 """API ViewSets with OpenAPI documentation and role-based queryset scoping."""
+from decimal import Decimal
+from typing import List, Optional
+
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from typing import List, Optional
 from django.db.models import Q
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
@@ -77,6 +79,7 @@ from .pagination import StandardLimitOffsetPagination
 from .permissions import IsAdminUser, IsBulkLoadStaff, IsCoordinator, IsTeacher
 from .services.file_utils import upload_for_resource
 from .recovery_openapi import grade_recovery_create_schema, grade_recovery_eligible_schema
+from .average_policy import resolve_passing_min
 from .recovery_utils import (
     exclude_grades_with_recovery,
     filter_grades_in_bajo_scale,
@@ -1574,6 +1577,20 @@ class GradeRecoveryViewSet(GradeRecoveryRoleScopeMixin, viewsets.ModelViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        passing_min = resolve_passing_min(
+            grade.course_assignment.subject.institution_id
+        ).quantize(Decimal("0.01"))
+        if recovery_grade.quantize(Decimal("0.01")) != passing_min:
+            return Response(
+                {
+                    "error": (
+                        "La nota de recuperación debe ser el mínimo de Básico "
+                        f"({passing_min})."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        recovery_grade = passing_min
 
         profile = get_user_profile(request.user)
         created_by = (

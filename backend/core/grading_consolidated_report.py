@@ -2,8 +2,10 @@
 Pivoted CSV export: one row per active enrollment (student) with one column per
 subject (or subject × period when several periods are included).
 
-Cells hold the student's numerical grade (or the definitive grade when available)
-for that (subject, period) slot. Empty cell means the slot is still PENDIENTE.
+Cells hold the same effective grade as the bulletin: the recovered grade
+(``definitive_grade``) when set, otherwise the numerical grade. Empty cell means
+the slot is still PENDIENTE. Subject ``(DEF)`` columns and the per-period
+promedio use ``official_average``, the same rule as the bulletin.
 
 Uses a single round-trip to the database with a LEFT JOIN to ``Grade``; optional
 filters are appended as parameterized predicates (no string interpolation of user
@@ -20,6 +22,8 @@ from typing import Any, Iterable
 
 from django.db import connection
 
+from .average_policy import effective_grade, official_average, resolve_passing_min
+
 FIXED_HEADERS = [
     "institucion_nombre",
     "institucion_dane",
@@ -34,10 +38,9 @@ FIXED_HEADERS = [
     "matricula_estado",
 ]
 
-SUMMARY_HEADERS = [
+COUNT_HEADERS = [
     "asignaturas_calificadas",
     "asignaturas_pendientes",
-    "promedio_numerico",
 ]
 
 
@@ -110,7 +113,8 @@ SELECT
   st.full_name,
   e.status,
   gr.numerical_grade,
-  gr.definitive_grade
+  gr.definitive_grade,
+  i.id
 FROM core_enrollment e
 INNER JOIN core_student st ON st.id = e.student_id
 INNER JOIN core_group g ON g.id = e.group_id
@@ -134,12 +138,12 @@ WHERE e.status = %s AND e.academic_year_id = %s
     return sql, params
 
 
-def _format_grade(numerical: Any, definitive: Any) -> str:
-    """Prefer the numerical grade; fall back to the definitive grade when set."""
-    value = numerical if numerical is not None else definitive
+def _format_grade(numerical: Any, definitive: Any) -> tuple[str, Decimal | None]:
+    """Bulletin cell: recovered grade when set, otherwise the numerical grade."""
+    value = effective_grade(numerical, definitive)
     if value is None:
-        return ""
-    return str(value)
+        return "", None
+    return f"{value:.2f}", value
 
 
 def _safe_str(v: Any) -> str:
@@ -184,6 +188,7 @@ def _build_pivot(
             enrollment_status,
             numerical_grade,
             definitive_grade,
+            institution_id,
         ) = row
 
         if student_id not in students_by_id:
@@ -201,6 +206,7 @@ def _build_pivot(
                 "estudiante_documento": _safe_str(doc_number),
                 "estudiante_nombre_completo": _safe_str(student_fullname),
                 "matricula_estado": _safe_str(enrollment_status),
+                "institution_id": institution_id,
             }
 
         if subject_id not in subjects_by_id:
@@ -219,9 +225,7 @@ def _build_pivot(
 
         key = (student_id, subject_id, period_id)
         if key not in grades:
-            value = numerical_grade if numerical_grade is not None else definitive_grade
-            decimal_value = value if isinstance(value, Decimal) else None
-            grades[key] = (_format_grade(numerical_grade, definitive_grade), decimal_value)
+            grades[key] = _format_grade(numerical_grade, definitive_grade)
 
     students = sorted(
         students_by_id.values(),
@@ -246,8 +250,12 @@ def _build_pivot(
 def _dynamic_headers(
     subjects: list[dict], periods: list[dict]
 ) -> tuple[list[str], list[tuple]]:
-    """Return ``(headers, column_keys)`` aligned by index. ``column_keys[i]`` is
-    ``(subject_id, period_id)`` for the i-th dynamic column."""
+    """Return ``(headers, column_keys)`` aligned by index.
+
+    A grade key is ``("grade", subject_id, period_id)``. When the export covers
+    more than one period, a ``("def", subject_id)`` key follows that subject and
+    matches the bulletin DEF column.
+    """
     multi_period = len(periods) > 1
     headers: list[str] = []
     column_keys: list[tuple] = []
@@ -258,8 +266,21 @@ def _dynamic_headers(
             else:
                 header = subj["subject_nombre"]
             headers.append(header)
-            column_keys.append((subj["subject_id"], period["period_id"]))
+            column_keys.append(("grade", subj["subject_id"], period["period_id"]))
+        if multi_period:
+            headers.append(f"{subj['subject_nombre']} (DEF)")
+            column_keys.append(("def", subj["subject_id"]))
     return headers, column_keys
+
+
+def _summary_headers(periods: list[dict]) -> list[str]:
+    """Per-period promedio matches the bulletin row. ``promedio_numerico`` is the
+    official average of every filled cell in the export."""
+    headers = list(COUNT_HEADERS)
+    if len(periods) > 1:
+        headers.extend(f"promedio (P{period['period_number']})" for period in periods)
+    headers.append("promedio_numerico")
+    return headers
 
 
 def iter_grading_consolidated_csv(filters: dict[str, Any]) -> Iterable[bytes]:
@@ -277,23 +298,42 @@ def iter_grading_consolidated_csv(filters: dict[str, Any]) -> Iterable[bytes]:
 
     students, subjects, periods, grades = _build_pivot(raw_rows)
     dyn_headers, col_keys = _dynamic_headers(subjects, periods)
+    summary_headers = _summary_headers(periods)
+    passing_by_inst = {
+        institution_id: resolve_passing_min(institution_id)
+        for institution_id in {student["institution_id"] for student in students}
+    }
 
     buf = io.StringIO()
     writer = csv.writer(buf)
-    writer.writerow(FIXED_HEADERS + dyn_headers + SUMMARY_HEADERS)
+    writer.writerow(FIXED_HEADERS + dyn_headers + summary_headers)
     yield ("\ufeff" + buf.getvalue()).encode("utf-8")
     buf.seek(0)
     buf.truncate(0)
 
     for student in students:
         fixed_values = [student[h] for h in FIXED_HEADERS]
+        passing_min = passing_by_inst[student["institution_id"]]
+        by_period: dict[Any, list[Decimal]] = {period["period_id"]: [] for period in periods}
+        all_values: list[Decimal] = []
 
         dynamic_values: list[str] = []
         calificadas = 0
         pendientes = 0
-        numeric_sum = Decimal("0")
-        numeric_count = 0
-        for subject_id, period_id in col_keys:
+        for key in col_keys:
+            if key[0] == "def":
+                subject_values = [
+                    grades[(student["student_id"], key[1], period["period_id"])][1]
+                    for period in periods
+                    if (student["student_id"], key[1], period["period_id"]) in grades
+                    and grades[(student["student_id"], key[1], period["period_id"])][1]
+                    is not None
+                ]
+                def_avg = official_average(subject_values, passing_min)
+                dynamic_values.append("" if def_avg is None else f"{def_avg:.2f}")
+                continue
+
+            _, subject_id, period_id = key
             pair = grades.get((student["student_id"], subject_id, period_id))
             if pair is None:
                 dynamic_values.append("")
@@ -301,21 +341,21 @@ def iter_grading_consolidated_csv(filters: dict[str, Any]) -> Iterable[bytes]:
                 continue
             text_value, decimal_value = pair
             dynamic_values.append(text_value)
-            if text_value == "":
+            if text_value == "" or decimal_value is None:
                 pendientes += 1
-            else:
-                calificadas += 1
-                if decimal_value is not None:
-                    numeric_sum += decimal_value
-                    numeric_count += 1
+                continue
+            calificadas += 1
+            by_period[period_id].append(decimal_value)
+            all_values.append(decimal_value)
 
-        if numeric_count > 0:
-            average = (numeric_sum / Decimal(numeric_count)).quantize(Decimal("0.01"))
-            average_cell = str(average)
-        else:
-            average_cell = ""
+        def _cell(values: list[Decimal]) -> str:
+            average = official_average(values, passing_min)
+            return "" if average is None else f"{average:.2f}"
 
-        summary_values = [str(calificadas), str(pendientes), average_cell]
+        summary_values = [str(calificadas), str(pendientes)]
+        if len(periods) > 1:
+            summary_values.extend(_cell(by_period[period["period_id"]]) for period in periods)
+        summary_values.append(_cell(all_values))
 
         writer.writerow(fixed_values + dynamic_values + summary_values)
         yield buf.getvalue().encode("utf-8")
