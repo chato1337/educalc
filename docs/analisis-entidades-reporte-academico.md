@@ -302,9 +302,15 @@ Calificación numérica de un estudiante en una asignatura por periodo.
 | `academic_period` | FK → AcademicPeriod | Periodo | Sí |
 | `numerical_grade` | decimal | Calificación numérica (0-5) | Sí |
 | `performance_level` | FK → GradingScale | Nivel de desempeño (derivado) | No |
-| `definitive_grade` | decimal | Nota definitiva **del periodo** (recuperación u override). El boletín la usa en esa columna de periodo si existe | No |
+| `definitive_grade` | decimal | Nota de recuperación **del periodo**. El boletín la usa en esa columna de periodo si existe. No es la definitiva del año | No |
 | `created_at` | datetime | Fecha de creación | Sí |
 | `updated_at` | datetime | Última actualización | Sí |
+
+**Definitiva del año y promoción.** La definitiva del año de una asignatura no se guarda en `Grade`. Es el promedio oficial de las notas efectivas de sus periodos: `definitive_grade` si ese periodo tiene recuperación, y `numerical_grade` si no. El mínimo para aprobarla es el `min_score` de la escala Básico (3.00 en la escala estándar).
+
+Ese promedio es la media cuando todos los periodos llegan a Básico. Si algún periodo sigue por debajo, la definitiva queda por debajo de Básico: la media se conserva cuando ya está bajo la marca de pérdida (el mínimo de Básico menos una décima; 3.00 → 2.90) y baja a esa marca cuando la media quedaría allí o más alta.
+
+El estudiante pierde la definitiva de la asignatura cuando ese valor queda bajo el mínimo de Básico. Si pierde la definitiva de al menos una asignatura, reprueba el año lectivo. Lo aprueba cuando cada asignatura queda en ese mínimo o por encima.
 
 ---
 

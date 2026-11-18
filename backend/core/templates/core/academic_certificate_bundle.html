@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>{{ bundle_title }}</title>
+<style>
+{% include "core/academic_certificate_styles.html" %}
+</style>
+</head>
+<body>
+{% for html in certificate_html_parts %}
+<div class="certificate-page">{{ html|safe }}</div>
+{% endfor %}
+</body>
+</html>

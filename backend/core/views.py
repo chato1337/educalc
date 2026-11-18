@@ -296,12 +296,12 @@ class InstitutionViewSet(InstitutionRoleScopeMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filterset_fields = ["dane_code", "nit", "name"]
 
-    def _upload_bulletin_logo(self, request, url_field: str):
+    def _upload_institution_image(self, request, url_field: str, folder: str):
         institution = self.get_object()
         upload_for_resource(
             institution,
             request.FILES.get("file"),
-            folder="bulletin-logos",
+            folder=folder,
             url_field=url_field,
         )
         institution.refresh_from_db()
@@ -328,7 +328,9 @@ class InstitutionViewSet(InstitutionRoleScopeMixin, viewsets.ModelViewSet):
         permission_classes=[IsCoordinator],
     )
     def bulletin_logo_left(self, request, pk=None):
-        return self._upload_bulletin_logo(request, "bulletin_logo_left_url")
+        return self._upload_institution_image(
+            request, "bulletin_logo_left_url", "bulletin-logos"
+        )
 
     @extend_schema(
         summary="Upload the right bulletin crest",
@@ -351,7 +353,55 @@ class InstitutionViewSet(InstitutionRoleScopeMixin, viewsets.ModelViewSet):
         permission_classes=[IsCoordinator],
     )
     def bulletin_logo_right(self, request, pk=None):
-        return self._upload_bulletin_logo(request, "bulletin_logo_right_url")
+        return self._upload_institution_image(
+            request, "bulletin_logo_right_url", "bulletin-logos"
+        )
+
+    @extend_schema(
+        summary="Upload the rector signature",
+        description=(
+            "Multipart field `file`. Replaces the rector signature used on the "
+            "student certificate. ADMIN or COORDINATOR of this institution."
+        ),
+        tags=["Institutions"],
+        methods=["POST"],
+        request={"multipart/form-data": BulletinLogoUploadSerializer},
+        responses={200: InstitutionSerializer},
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="rector-signature",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsCoordinator],
+    )
+    def rector_signature(self, request, pk=None):
+        return self._upload_institution_image(
+            request, "rector_signature_url", "certificate-signatures"
+        )
+
+    @extend_schema(
+        summary="Upload the secretary signature",
+        description=(
+            "Multipart field `file`. Replaces the secretary signature used on the "
+            "student certificate. ADMIN or COORDINATOR of this institution."
+        ),
+        tags=["Institutions"],
+        methods=["POST"],
+        request={"multipart/form-data": BulletinLogoUploadSerializer},
+        responses={200: InstitutionSerializer},
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="secretary-signature",
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsCoordinator],
+    )
+    def secretary_signature(self, request, pk=None):
+        return self._upload_institution_image(
+            request, "secretary_signature_url", "certificate-signatures"
+        )
 
 
 @schema_viewset(

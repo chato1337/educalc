@@ -1,12 +1,16 @@
 import { apiClient } from '@/api/client'
-import type { components, operations } from '@/types/openapi'
+import type { components } from '@/types/openapi'
 
 export type Institution = components['schemas']['Institution']
 
-type LeftUpload = operations['institutions_bulletin_logo_left_create']
-type RightUpload = operations['institutions_bulletin_logo_right_create']
+export type BulletinLogoSlot = 'left' | 'right' | 'rector' | 'secretary'
 
-export type BulletinLogoSlot = 'left' | 'right'
+const SLOT_PATH: Record<BulletinLogoSlot, string> = {
+  left: 'bulletin-logo-left',
+  right: 'bulletin-logo-right',
+  rector: 'rector-signature',
+  secretary: 'secretary-signature',
+}
 
 const ACCEPTED_IMAGE_TYPES = new Set([
   'image/jpeg',
@@ -34,13 +38,7 @@ export async function uploadBulletinLogo(
 ): Promise<Institution> {
   const body = new FormData()
   body.append('file', file)
-  const path =
-    slot === 'left'
-      ? `/api/institutions/${institutionId}/bulletin-logo-left/`
-      : `/api/institutions/${institutionId}/bulletin-logo-right/`
-  const { data } = await apiClient.post<
-    LeftUpload['responses'][200]['content']['application/json'] |
-      RightUpload['responses'][200]['content']['application/json']
-  >(path, body)
+  const path = `/api/institutions/${institutionId}/${SLOT_PATH[slot]}/`
+  const { data } = await apiClient.post<Institution>(path, body)
   return data
 }

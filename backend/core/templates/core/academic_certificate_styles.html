@@ -1,0 +1,75 @@
+  @page {
+    size: letter;
+    margin: 12mm;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "Times New Roman", Times, serif; color: #111; background: #fff; }
+  .certificado {
+    border: 1.5px solid #111;
+    padding: 16px 18px 20px;
+  }
+  .escudo-row { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .escudo-row td { vertical-align: middle; }
+  .escudo-side { width: 78px; text-align: center; }
+  .header-logo { width: 68px; height: 68px; object-fit: contain; }
+  .header-center { text-align: center; padding: 0 8px; }
+  .institucion {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    line-height: 1.25;
+  }
+  .subtitulo {
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .legal { margin-top: 4px; font-size: 10px; line-height: 1.35; }
+  .autorizacion {
+    margin: 10px 0 0;
+    font-size: 11px;
+    line-height: 1.35;
+    text-align: justify;
+  }
+  h1.certifican {
+    margin: 12px 0 8px;
+    text-align: center;
+    font-size: 18px;
+    letter-spacing: 3px;
+    font-weight: 700;
+  }
+  .cuerpo {
+    margin: 0 0 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    text-align: justify;
+  }
+  .grado-linea {
+    margin: 8px 0 4px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  table.valoraciones { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 8px; }
+  table.valoraciones th {
+    border-bottom: 1px solid #111;
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 0.4px;
+    padding: 3px 4px;
+  }
+  table.valoraciones th.desempeno, table.valoraciones td.desempeno { text-align: right; }
+  table.valoraciones td { padding: 3px 4px; border-bottom: 0.5px solid #bbb; vertical-align: top; }
+  table.valoraciones .area { font-weight: 700; }
+  table.valoraciones .enfasis { font-weight: 400; }
+  .firmas { width: 100%; border-collapse: collapse; margin-top: 18px; }
+  .firmas td { width: 50%; text-align: center; vertical-align: bottom; padding: 0 12px; }
+  .firma-imagen { height: 64px; max-width: 160px; object-fit: contain; }
+  .firma-espacio { height: 56px; }
+  .cargo { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; }
+  .firma-nombre { margin-top: 2px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+  .firma-doc { font-size: 10px; }
+  .certificate-page { page-break-after: always; break-after: page; }
+  .certificate-page:last-child { page-break-after: auto; break-after: auto; }

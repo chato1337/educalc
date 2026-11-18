@@ -41,6 +41,12 @@ const institutionSchema = z.object({
   dane_code: z.string().trim().min(1).max(20),
   legal_reference: z.string().max(255).optional(),
   nit: z.string().max(20).optional(),
+  certificate_subtitle: z.string().max(255).optional(),
+  certificate_authorization: z.string().optional(),
+  rector_name: z.string().max(255).optional(),
+  rector_document_number: z.string().max(40).optional(),
+  secretary_name: z.string().max(255).optional(),
+  secretary_document_number: z.string().max(40).optional(),
 })
 
 type InstitutionForm = z.infer<typeof institutionSchema>
@@ -50,6 +56,12 @@ const emptyForm: InstitutionForm = {
   dane_code: '',
   legal_reference: '',
   nit: '',
+  certificate_subtitle: '',
+  certificate_authorization: '',
+  rector_name: '',
+  rector_document_number: '',
+  secretary_name: '',
+  secretary_document_number: '',
 }
 
 export function InstitutionsPage() {
@@ -120,6 +132,12 @@ export function InstitutionsPage() {
         dane_code: row.dane_code,
         legal_reference: row.legal_reference ?? '',
         nit: row.nit ?? '',
+        certificate_subtitle: row.certificate_subtitle ?? '',
+        certificate_authorization: row.certificate_authorization ?? '',
+        rector_name: row.rector_name ?? '',
+        rector_document_number: row.rector_document_number ?? '',
+        secretary_name: row.secretary_name ?? '',
+        secretary_document_number: row.secretary_document_number ?? '',
       })
       setDialogOpen(true)
     },
@@ -194,8 +212,14 @@ export function InstitutionsPage() {
     setFormError(null)
     const body = {
       ...values,
-      legal_reference: values.legal_reference || undefined,
-      nit: values.nit || undefined,
+      legal_reference: values.legal_reference || '',
+      nit: values.nit || '',
+      certificate_subtitle: values.certificate_subtitle || '',
+      certificate_authorization: values.certificate_authorization || '',
+      rector_name: values.rector_name || '',
+      rector_document_number: values.rector_document_number || '',
+      secretary_name: values.secretary_name || '',
+      secretary_document_number: values.secretary_document_number || '',
     }
     if (editing) {
       updateMutation.mutate({ id: editing.id, body })
@@ -239,7 +263,7 @@ export function InstitutionsPage() {
         onLoadMore={() => void listQuery.fetchNextPage()}
       />
 
-      <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
+      <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="md">
         <DialogTitle>
           {editing ? t('institutions.editDialog') : t('institutions.newDialog')}
         </DialogTitle>
@@ -274,6 +298,42 @@ export function InstitutionsPage() {
               {...form.register('nit')}
               error={!!form.formState.errors.nit}
               helperText={form.formState.errors.nit?.message}
+              fullWidth
+            />
+            <TextField
+              label={t('institutions.certificateSubtitle')}
+              {...form.register('certificate_subtitle')}
+              error={!!form.formState.errors.certificate_subtitle}
+              helperText={form.formState.errors.certificate_subtitle?.message}
+              fullWidth
+            />
+            <TextField
+              label={t('institutions.certificateAuthorization')}
+              {...form.register('certificate_authorization')}
+              error={!!form.formState.errors.certificate_authorization}
+              helperText={form.formState.errors.certificate_authorization?.message}
+              fullWidth
+              multiline
+              minRows={3}
+            />
+            <TextField
+              label={t('institutions.rectorName')}
+              {...form.register('rector_name')}
+              fullWidth
+            />
+            <TextField
+              label={t('institutions.rectorDocument')}
+              {...form.register('rector_document_number')}
+              fullWidth
+            />
+            <TextField
+              label={t('institutions.secretaryName')}
+              {...form.register('secretary_name')}
+              fullWidth
+            />
+            <TextField
+              label={t('institutions.secretaryDocument')}
+              {...form.register('secretary_document_number')}
               fullWidth
             />
           </DialogContent>

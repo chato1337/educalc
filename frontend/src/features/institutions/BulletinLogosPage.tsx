@@ -30,6 +30,10 @@ type SlotCardProps = {
   slot: BulletinLogoSlot
   institutionId: string
   imageUrl: string
+  titleKey: string
+  helpKey: string
+  emptyKey?: string
+  savedKey?: string
   onUploaded: (institution: Institution) => void
 }
 
@@ -37,6 +41,10 @@ function LogoSlotCard({
   slot,
   institutionId,
   imageUrl,
+  titleKey,
+  helpKey,
+  emptyKey = 'bulletinLogos.empty',
+  savedKey = 'bulletinLogos.saved',
   onUploaded,
 }: SlotCardProps) {
   const { t } = useTranslation()
@@ -70,12 +78,8 @@ function LogoSlotCard({
     upload.mutate(file)
   }
 
-  const title = t(
-    slot === 'left' ? 'bulletinLogos.leftTitle' : 'bulletinLogos.rightTitle',
-  )
-  const help = t(
-    slot === 'left' ? 'bulletinLogos.leftHelp' : 'bulletinLogos.rightHelp',
-  )
+  const title = t(titleKey)
+  const help = t(helpKey)
 
   return (
     <Paper variant="outlined" className="p-4 flex flex-col gap-3">
@@ -102,13 +106,13 @@ function LogoSlotCard({
           <Box className="flex flex-col items-center gap-1 px-3 text-center">
             <ImageOutlinedIcon color="disabled" />
             <Typography variant="body2" color="text.secondary">
-              {t('bulletinLogos.empty')}
+              {t(emptyKey)}
             </Typography>
           </Box>
         )}
       </Box>
       {localError ? <Alert severity="error">{localError}</Alert> : null}
-      {saved ? <Alert severity="success">{t('bulletinLogos.saved')}</Alert> : null}
+      {saved ? <Alert severity="success">{t(savedKey)}</Alert> : null}
       <Button
         variant="contained"
         component="label"
@@ -184,12 +188,41 @@ export function BulletinLogosPage() {
               slot="left"
               institutionId={institutionQuery.data.id}
               imageUrl={institutionQuery.data.bulletin_logo_left_url}
+              titleKey="bulletinLogos.leftTitle"
+              helpKey="bulletinLogos.leftHelp"
               onUploaded={onUploaded}
             />
             <LogoSlotCard
               slot="right"
               institutionId={institutionQuery.data.id}
               imageUrl={institutionQuery.data.bulletin_logo_right_url}
+              titleKey="bulletinLogos.rightTitle"
+              helpKey="bulletinLogos.rightHelp"
+              onUploaded={onUploaded}
+            />
+          </Box>
+          <Typography variant="subtitle1" className="font-medium">
+            {t('bulletinLogos.signaturesTitle')}
+          </Typography>
+          <Box className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <LogoSlotCard
+              slot="rector"
+              institutionId={institutionQuery.data.id}
+              imageUrl={institutionQuery.data.rector_signature_url}
+              titleKey="bulletinLogos.rectorTitle"
+              helpKey="bulletinLogos.rectorHelp"
+              emptyKey="bulletinLogos.signatureEmpty"
+              savedKey="bulletinLogos.signatureSaved"
+              onUploaded={onUploaded}
+            />
+            <LogoSlotCard
+              slot="secretary"
+              institutionId={institutionQuery.data.id}
+              imageUrl={institutionQuery.data.secretary_signature_url}
+              titleKey="bulletinLogos.secretaryTitle"
+              helpKey="bulletinLogos.secretaryHelp"
+              emptyKey="bulletinLogos.signatureEmpty"
+              savedKey="bulletinLogos.signatureSaved"
               onUploaded={onUploaded}
             />
           </Box>

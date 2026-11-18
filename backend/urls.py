@@ -21,6 +21,7 @@ from core.auth_views import (
     RefreshTokenView,
 )
 from core.dashboard_views import DashboardKPIsView
+from core.academic_certificate_views import AcademicCertificatePdfView
 from core.academic_grades_report_views import AcademicGradesBulletinPdfView
 from core.performance_summary_views import (
     PerformanceSummaryRecalculateByGradeView,
@@ -144,6 +145,11 @@ urlpatterns = [
         "api/academic-grades/bulletin/",
         AcademicGradesBulletinPdfView.as_view(),
         name="academic-grades-bulletin-pdf",
+    ),
+    path(
+        "api/academic-grades/certificate/",
+        AcademicCertificatePdfView.as_view(),
+        name="academic-grades-certificate-pdf",
     ),
     path(
         "api/performance-summaries/recalculate-by-grade/",

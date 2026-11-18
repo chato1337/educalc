@@ -18,7 +18,7 @@ El módulo **Recuperaciones** permite al personal docente (y roles staff) listar
 
 No modifica `Grade.numerical_grade` ni `performance_level`. La sugerencia por actividades tampoco toca `definitive_grade`; este módulo es la vía explícita para hacerlo.
 
-En el **boletín**, la celda de ese periodo toma `definitive_grade` si existe; si no, `numerical_grade`. La columna Def anual es el promedio de esas notas efectivas por periodo.
+En el **boletín**, la celda de ese periodo toma `definitive_grade` si existe; si no, `numerical_grade`. La columna Def anual es el promedio oficial de esas notas efectivas por periodo. Si esa Def anual queda por debajo del mínimo de Básico, el estudiante pierde la asignatura y **reprueba el año**.
 
 ---
 
@@ -52,7 +52,9 @@ Ejemplo: P1 con `2.50` recuperado a `3.00` → `numerical_grade = 2.50`, `defini
 5. **Notas fuera de Bajo:** `400` — no se permite recuperación.
 6. **Scope:** el docente solo opera sobre calificaciones de sus `CourseAssignment` (mismo patrón que `/api/grades/`).
 7. **Boletín (por periodo):** si el periodo tiene `definitive_grade`, esa es la nota de la celda (y el color de escala); si no, `numerical_grade`.
-8. **Boletín (Def anual):** promedio simple de las notas efectivas de los periodos incluidos (recuperada o numérica). Una recuperación en P1 **no** sustituye por sí sola la Def del año.
+8. **Boletín (Def anual):** promedio oficial de las notas efectivas de los periodos de la asignatura (recuperada o numérica), el de `official_average` en `average_policy.py`. Si todos los periodos llegan al mínimo de Básico, la Def es la media. Si algún periodo sigue por debajo de Básico, la Def queda por debajo de ese mínimo: se conserva la media cuando ya está bajo la marca de pérdida (mínimo de Básico menos una décima; 3.00 → 2.90) y, si la media quedaría en esa marca o por encima, baja a la marca. Una recuperación en P1 sube la nota efectiva de ese periodo; no sustituye por sí sola la Def del año.
+9. **Pérdida de la definitiva:** el estudiante pierde la Def anual de una asignatura cuando ese valor queda por debajo del mínimo de Básico de la institución. Sin escala Básico, el mínimo es 3.00.
+10. **Promoción del año:** si pierde la Def anual de al menos una asignatura, reprueba el año lectivo. Aprueba el año cuando cada asignatura queda con Def anual en el mínimo de Básico o por encima. Recuperar todos los periodos en Bajo puede subir la Def y salvar el año; dejar un periodo en Bajo deja la Def de esa asignatura por debajo de Básico y el año se pierde.
 
 ---
 
@@ -64,7 +66,9 @@ La recuperación es **por periodo**. El cuadro de evaluaciones usa `_effective_p
 |---------|-------------------|--------------------|-------------------|
 | P1 | 2.50 | 3.00 | **3.00** (recuperación) |
 | P2 | 4.00 | — | **4.00** (oficial) |
-| Def anual | | | **3.50** = (3.00 + 4.00) / 2 |
+| Def anual | | | **3.50** = (3.00 + 4.00) / 2. La asignatura se aprueba. |
+
+Sin recuperar P1, la media sería 3.25 y P1 sigue en Bajo. La Def anual baja a **2.90**. El estudiante pierde esa definitiva y reprueba el año, aunque P2 esté en Alto. Con las dos notas en 1.00 y 1.20 la media ya está bajo 2.90, la Def queda en **1.10** y el año también se pierde.
 
 Antes, la celda de P1 mostraba 2.50 y la Def anual podía quedar en 3.00 (última `definitive_grade` encontrada). Eso ya no aplica.
 
@@ -338,7 +342,8 @@ Cobertura mínima esperada:
 | Calificaciones (`/grades`) | CRUD manual; puede editar definitiva del **periodo** |
 | Nota sugerida / actividades | **No** modifica `definitive_grade` |
 | **Recuperaciones** | Única acción de negocio dedicada a recuperación + historial (por periodo) |
-| Boletín | Celda del periodo: `definitive_grade` si existe, si no `numerical_grade`. Def anual: promedio de esas notas efectivas |
+| Boletín | Celda del periodo: `definitive_grade` si existe, si no `numerical_grade`. Def anual: promedio oficial de esas notas efectivas. Def bajo el mínimo de Básico: el estudiante reprueba el año |
+| Certificado | `GET /api/academic-grades/certificate/` usa esa misma Def anual. Si alguna asignatura queda bajo el mínimo de Básico, el PDF dice que no aprobó promover; si todas quedan en Básico o más, dice que aprobó promover |
 | Consolidado CSV | Sigue prefiriendo `numerical_grade` (definitiva solo si no hay numérica) |
 | Indicadores / nivel | Siguen `numerical_grade` y `performance_level` (la recuperación no los cambia) |
 | `PerformanceSummary` | Promedio y puesto del periodo usan `numerical_grade` |

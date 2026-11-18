@@ -49,6 +49,9 @@ const campusSchema = z.object({
   institution: z.string().uuid('Elige una institución'),
   name: z.string().trim().min(1).max(255),
   code: z.string().max(50).optional(),
+  locality: z.string().max(150).optional(),
+  municipality: z.string().max(150).optional(),
+  department: z.string().max(150).optional(),
 })
 
 type CampusForm = z.infer<typeof campusSchema>
@@ -57,6 +60,9 @@ const emptyForm: CampusForm = {
   institution: '',
   name: '',
   code: '',
+  locality: '',
+  municipality: '',
+  department: '',
 }
 
 export function CampusesPage() {
@@ -101,6 +107,9 @@ export function CampusesPage() {
       apiClient.post<Campus>('/api/campuses/', {
         ...body,
         code: body.code || '',
+        locality: body.locality || '',
+        municipality: body.municipality || '',
+        department: body.department || '',
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['campuses'] })
@@ -114,6 +123,9 @@ export function CampusesPage() {
       apiClient.patch<Campus>(`/api/campuses/${id}/`, {
         ...body,
         code: body.code || '',
+        locality: body.locality || '',
+        municipality: body.municipality || '',
+        department: body.department || '',
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['campuses'] })
@@ -150,6 +162,9 @@ export function CampusesPage() {
         institution: row.institution,
         name: row.name,
         code: row.code ?? '',
+        locality: row.locality ?? '',
+        municipality: row.municipality ?? '',
+        department: row.department ?? '',
       })
       setDialogOpen(true)
     },
@@ -317,6 +332,21 @@ export function CampusesPage() {
               {...form.register('code')}
               error={!!form.formState.errors.code}
               helperText={form.formState.errors.code?.message}
+              fullWidth
+            />
+            <TextField
+              label={t('campuses.locality')}
+              {...form.register('locality')}
+              fullWidth
+            />
+            <TextField
+              label={t('campuses.municipality')}
+              {...form.register('municipality')}
+              fullWidth
+            />
+            <TextField
+              label={t('campuses.department')}
+              {...form.register('department')}
               fullWidth
             />
           </DialogContent>

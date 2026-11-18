@@ -1,0 +1,88 @@
+<div class="certificado">
+  <table class="escudo-row" role="presentation">
+    <tr>
+      <td class="escudo-side">
+        {% if logo_left_url %}
+        <img class="header-logo" src="{{ logo_left_url }}" alt="Logo institución">
+        {% endif %}
+      </td>
+      <td class="header-center">
+        <div class="institucion">{{ institution_name }}</div>
+        {% if certificate_subtitle %}
+        <div class="subtitulo">{{ certificate_subtitle }}</div>
+        {% endif %}
+        <div class="legal">
+          {% if legal_reference %}<div>{{ legal_reference }}</div>{% endif %}
+          {% if nit %}<div>Registro: NIT. {{ nit }}</div>{% endif %}
+          {% if dane_code %}<div>DANE: {{ dane_code }}</div>{% endif %}
+        </div>
+      </td>
+      <td class="escudo-side">
+        {% if logo_right_url %}
+        <img class="header-logo" src="{{ logo_right_url }}" alt="Escudo">
+        {% endif %}
+      </td>
+    </tr>
+  </table>
+
+  {% if certificate_authorization %}
+  <p class="autorizacion">{{ certificate_authorization }}</p>
+  {% endif %}
+
+  <h1 class="certifican">CERTIFICAN</h1>
+  <p class="cuerpo">{{ student_paragraph }}</p>
+  <div class="grado-linea">{{ grade_line }}</div>
+
+  <table class="valoraciones">
+    <thead>
+      <tr>
+        <th>Áreas y/o asignaturas</th>
+        <th class="desempeno">Desempeño</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in area_rows %}
+      <tr>
+        <td>
+          <div class="area">{{ row.area_name }}:</div>
+          <div class="enfasis">{{ row.emphasis_line }}</div>
+        </td>
+        <td class="desempeno">{{ row.performance }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="2">Sin asignaturas registradas para el grupo.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p class="cuerpo">Total de Faltas de Asistencias en el periodo lectivo {{ absence_total }}</p>
+  <p class="cuerpo">{{ promotion_paragraph }}</p>
+  <p class="cuerpo">Dado en {{ place_clause }}, a los {{ issued_on_text }}.</p>
+
+  <table class="firmas" role="presentation">
+    <tr>
+      <td>
+        {% if rector_signature_url %}
+        <img class="firma-imagen" src="{{ rector_signature_url }}" alt="Firma rector">
+        {% else %}
+        <div class="firma-espacio"></div>
+        {% endif %}
+        <div class="cargo">RECTOR</div>
+        {% if rector_name %}<div class="firma-nombre">{{ rector_name }}</div>{% endif %}
+        {% if rector_document_number %}<div class="firma-doc">c.c. {{ rector_document_number }}</div>{% endif %}
+      </td>
+      <td>
+        {% if secretary_signature_url %}
+        <img class="firma-imagen" src="{{ secretary_signature_url }}" alt="Firma secretario">
+        {% else %}
+        <div class="firma-espacio"></div>
+        {% endif %}
+        <div class="cargo">SECRETARIO</div>
+        {% if secretary_name %}<div class="firma-nombre">{{ secretary_name }}</div>{% endif %}
+        {% if secretary_document_number %}<div class="firma-doc">c.c. {{ secretary_document_number }}</div>{% endif %}
+      </td>
+    </tr>
+  </table>
+</div>

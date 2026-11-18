@@ -51,6 +51,8 @@ class InstitutionAdmin(admin.ModelAdmin):
         "updated_at",
         "bulletin_logo_left_url",
         "bulletin_logo_right_url",
+        "rector_signature_url",
+        "secretary_signature_url",
     )
 
 

@@ -45,6 +45,33 @@ class Institution(TimeStampedModel):
         default="",
         help_text="Public URL of the crest on the right of the student bulletin.",
     )
+    certificate_subtitle = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Second name printed under the institution on the student certificate.",
+    )
+    certificate_authorization = models.TextField(
+        blank=True,
+        default="",
+        help_text="Authorization paragraph on the student certificate.",
+    )
+    rector_name = models.CharField(max_length=255, blank=True, default="")
+    rector_document_number = models.CharField(max_length=40, blank=True, default="")
+    secretary_name = models.CharField(max_length=255, blank=True, default="")
+    secretary_document_number = models.CharField(max_length=40, blank=True, default="")
+    rector_signature_url = models.URLField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Public URL of the rector signature on the student certificate.",
+    )
+    secretary_signature_url = models.URLField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Public URL of the secretary signature on the student certificate.",
+    )
 
     class Meta:
         ordering = ["name"]
@@ -63,6 +90,14 @@ class Campus(TimeStampedModel):
     )
     name = models.CharField(max_length=255)
     code = models.CharField(max_length=50, blank=True)
+    locality = models.CharField(
+        max_length=150,
+        blank=True,
+        default="",
+        help_text="Vereda or neighborhood printed on the student certificate.",
+    )
+    municipality = models.CharField(max_length=150, blank=True, default="")
+    department = models.CharField(max_length=150, blank=True, default="")
 
     class Meta:
         ordering = ["name"]

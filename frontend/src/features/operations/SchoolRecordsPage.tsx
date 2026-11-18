@@ -46,6 +46,7 @@ import {
 import { createServerSortHandlers } from '@/lib/dataGridServerSort'
 import { PageHeader } from '@/components/PageHeader'
 import { useAcademicYearsQuery } from '@/features/academic-structure/academicQueries'
+import { downloadStudentCertificatePdf } from '@/features/operations/gradesCertificateApi'
 import { downloadGradesBulletinPdf } from '@/features/operations/gradesBulletinApi'
 import {
   useAcademicPeriodsForYear,
@@ -74,6 +75,13 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 type BulletinScope = 'student' | 'group'
+
+function todayIso(): string {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${month}-${day}`
+}
 
 const schoolRecordSortHandlers = createServerSortHandlers({
   student_name: 'student__full_name',
@@ -114,6 +122,16 @@ export function SchoolRecordsPage() {
   const [bulletinScope, setBulletinScope] = useState<BulletinScope>('student')
   const [bulletinGroupId, setBulletinGroupId] = useState('')
   const [bulletinError, setBulletinError] = useState<string | null>(null)
+  const [certificateStudentSearchInput, setCertificateStudentSearchInput] =
+    useState('')
+  const [certificateAppliedStudentSearch, setCertificateAppliedStudentSearch] =
+    useState('')
+  const [certificateStudentId, setCertificateStudentId] = useState('')
+  const [certificateYearId, setCertificateYearId] = useState('')
+  const [certificateScope, setCertificateScope] = useState<BulletinScope>('student')
+  const [certificateGroupId, setCertificateGroupId] = useState('')
+  const [certificateIssuedOn, setCertificateIssuedOn] = useState(todayIso)
+  const [certificateError, setCertificateError] = useState<string | null>(null)
 
   const { data: academicYears = [] } = useAcademicYearsQuery(
     selectedInstitutionId,
@@ -201,6 +219,15 @@ export function SchoolRecordsPage() {
     undefined,
     { enabled: !!selectedInstitutionId && !!bulletinYearId },
   )
+  const { data: certificateStudentOptions = [] } = useStudentsSearch(
+    certificateAppliedStudentSearch,
+  )
+  const { data: groupsForCertificate = [] } = useGroupsForFilters(
+    selectedInstitutionId,
+    { academic_year: certificateYearId || null },
+    undefined,
+    { enabled: !!selectedInstitutionId && !!certificateYearId },
+  )
 
   const {
     data: compositeRecord,
@@ -255,6 +282,16 @@ export function SchoolRecordsPage() {
     setBulletinGroupId('')
   }, [bulletinYearId])
 
+  useEffect(() => {
+    if (!certificateYearId && academicYears[0]?.id) {
+      setCertificateYearId(academicYears[0].id)
+    }
+  }, [academicYears, certificateYearId])
+
+  useEffect(() => {
+    setCertificateGroupId('')
+  }, [certificateYearId])
+
   const downloadBulletinMutation = useMutation({
     mutationFn: () => {
       const period_ids =
@@ -276,6 +313,26 @@ export function SchoolRecordsPage() {
     },
     onMutate: () => setBulletinError(null),
     onError: (e) => setBulletinError(getErrorMessage(e)),
+  })
+
+  const downloadCertificateMutation = useMutation({
+    mutationFn: () => {
+      const issued_on = certificateIssuedOn || undefined
+      if (certificateScope === 'student') {
+        return downloadStudentCertificatePdf({
+          student: certificateStudentId,
+          academic_year: certificateYearId,
+          issued_on,
+        })
+      }
+      return downloadStudentCertificatePdf({
+        group: certificateGroupId,
+        academic_year: certificateYearId,
+        issued_on,
+      })
+    },
+    onMutate: () => setCertificateError(null),
+    onError: (e) => setCertificateError(getErrorMessage(e)),
   })
 
   const createMutation = useMutation({
@@ -314,6 +371,11 @@ export function SchoolRecordsPage() {
 
   const groupBulletinLabel = (g: Group) =>
     `${g.name} (${g.academic_year_year}) — ${g.grade_level_name} · ${g.campus_name}`
+
+  const selectedCertificateGroup = useMemo(
+    () => groupsForCertificate.find((g) => g.id === certificateGroupId) ?? null,
+    [groupsForCertificate, certificateGroupId],
+  )
 
   const selectedBulletinGroup = useMemo(
     () => groupsForBulletin.find((g) => g.id === bulletinGroupId) ?? null,
@@ -606,6 +668,151 @@ export function SchoolRecordsPage() {
                 : bulletinScope === 'group'
                   ? t('grades.downloadBulletinGroup')
                   : t('grades.downloadBulletin')}
+            </Button>
+          </Box>
+        </Paper>
+      ) : null}
+
+      {selectedInstitutionId && academicYears.length > 0 ? (
+        <Paper className="p-4 flex flex-col gap-3">
+          <Box>
+            <Typography variant="subtitle1" className="font-medium">
+              {t('grades.certificateTitle')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {t('grades.certificateSubtitle')}
+            </Typography>
+          </Box>
+          {certificateError ? (
+            <Alert severity="error" onClose={() => setCertificateError(null)}>
+              {certificateError}
+            </Alert>
+          ) : null}
+          <ToggleButtonGroup
+            exclusive
+            value={certificateScope}
+            onChange={(_, value: BulletinScope | null) => {
+              if (value != null) setCertificateScope(value)
+            }}
+            size="small"
+            color="primary"
+          >
+            <ToggleButton value="student">
+              {t('grades.bulletinScopeStudent')}
+            </ToggleButton>
+            <ToggleButton value="group">
+              {t('grades.bulletinScopeGroup')}
+            </ToggleButton>
+          </ToggleButtonGroup>
+          <Box className="flex flex-wrap gap-2 items-start">
+            <FormControl size="small" sx={{ minWidth: 160 }}>
+              <InputLabel>{t('grades.bulletinYear')}</InputLabel>
+              <Select
+                label={t('grades.bulletinYear')}
+                value={certificateYearId}
+                onChange={(e) => setCertificateYearId(e.target.value)}
+              >
+                {academicYears.map((year) => (
+                  <MenuItem key={year.id} value={year.id}>
+                    {yearLabel(year)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              size="small"
+              type="date"
+              label={t('grades.certificateIssuedOn')}
+              value={certificateIssuedOn}
+              onChange={(e) => setCertificateIssuedOn(e.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ minWidth: 180 }}
+            />
+          </Box>
+          {certificateScope === 'student' ? (
+            <Box className="flex flex-wrap gap-2 items-center">
+              <TextField
+                size="small"
+                label={t('grades.searchStudent')}
+                value={certificateStudentSearchInput}
+                onChange={(e) => setCertificateStudentSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    setCertificateAppliedStudentSearch(certificateStudentSearchInput)
+                  }
+                }}
+                sx={{ minWidth: 200 }}
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() =>
+                  setCertificateAppliedStudentSearch(certificateStudentSearchInput)
+                }
+              >
+                {t('common.search')}
+              </Button>
+              <Autocomplete
+                sx={{ minWidth: 260, flex: 1 }}
+                options={certificateStudentOptions}
+                getOptionLabel={(option: Student) => option.full_name}
+                value={
+                  certificateStudentOptions.find(
+                    (student) => student.id === certificateStudentId,
+                  ) ?? null
+                }
+                onChange={(_, value) => setCertificateStudentId(value?.id ?? '')}
+                renderInput={(params: AutocompleteRenderInputParams) => (
+                  <TextField {...params} label={t('grades.student')} size="small" />
+                )}
+              />
+            </Box>
+          ) : (
+            <Autocomplete
+              sx={{ minWidth: 320, maxWidth: '100%' }}
+              options={groupsForCertificate}
+              getOptionLabel={(group: Group) => groupBulletinLabel(group)}
+              value={
+                groupsForCertificate.find((group) => group.id === certificateGroupId) ??
+                null
+              }
+              onChange={(_, value) => setCertificateGroupId(value?.id ?? '')}
+              disabled={!certificateYearId}
+              renderInput={(params: AutocompleteRenderInputParams) => (
+                <TextField
+                  {...params}
+                  label={
+                    selectedCertificateGroup
+                      ? t('grades.bulletinGroupWithCampus', {
+                          campus: selectedCertificateGroup.campus_name,
+                        })
+                      : t('grades.bulletinGroup')
+                  }
+                  size="small"
+                />
+              )}
+              isOptionEqualToValue={(left, right) => left.id === right.id}
+            />
+          )}
+          <Box>
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<PictureAsPdfIcon />}
+              disabled={
+                !certificateYearId ||
+                downloadCertificateMutation.isPending ||
+                (certificateScope === 'student' && !certificateStudentId) ||
+                (certificateScope === 'group' && !certificateGroupId)
+              }
+              onClick={() => downloadCertificateMutation.mutate()}
+            >
+              {downloadCertificateMutation.isPending
+                ? t('grades.certificateDownloading')
+                : certificateScope === 'group'
+                  ? t('grades.downloadCertificateGroup')
+                  : t('grades.downloadCertificate')}
             </Button>
           </Box>
         </Paper>

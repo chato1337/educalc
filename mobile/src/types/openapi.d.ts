@@ -100,6 +100,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/academic-grades/certificate/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download student certificate PDF
+         * @description Returns the year certificate. The student passes when every subject definitive (official average of the period grades) is at or above Básico. One definitive below that minimum means the year is lost. **Single student:** `student` + `academic_year`. **Whole group:** `group` + `academic_year`. Provide exactly one of `student` or `group`. Optional `issued_on` is the expedition date (`YYYY-MM-DD`); the default is today.
+         */
+        get: operations["academic_grades_certificate_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/academic-indicator-catalogs/": {
         parameters: {
             query?: never;
@@ -322,7 +342,7 @@ export interface paths {
         put?: never;
         /**
          * Bulk load academic indicators from CSV
-         * @description Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO, PERIODO_NUM opcional (1–4; omitir = plantilla genérica); upsert en catálogo área+grado+periodo. (2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION, NOTA (opcional), NIVEL_DESEMPENO_TEXTO (opcional).
+         * @description Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA (alias: AREA_NOMBRE, NUCLEO), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO, PERIODO_NUM opcional (1–4; omitir = plantilla genérica); upsert en catálogo área+grado+periodo. (2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO, ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION, NOTA (opcional), NIVEL_DESEMPENO_TEXTO (opcional).
          */
         post: operations["academic_indicators_bulk_load_create"];
         delete?: never;
@@ -1149,7 +1169,7 @@ export interface paths {
         };
         /**
          * List Enrollments
-         * @description Student-group enrollment for an academic year Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, =academic_year__year, status. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_year, academic_year__year, status. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Student-group enrollment for an academic year. List results omit withdrawn enrollments unless `status=withdrawn` is set, or the query is limited to one `student`. Text search available through query param `search`. Supported fields: student__document_number, student__full_name, group__name, group__grade_level__name, =academic_year__year, status. Available exact-match filters via query params: student, student__document_number, group, group__name, academic_year, academic_year__year, status. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["enrollments_list"];
         put?: never;
@@ -1413,7 +1433,7 @@ export interface paths {
         put?: never;
         /**
          * Create Grade Recoveries
-         * @description Registra una recuperación para una calificación en escala Baja (BJ) y sobrescribe ``Grade.definitive_grade`` con ``recovery_grade``. El alcance por rol aplica como en ``/api/grades/`` (docente: solo sus asignaciones).
+         * @description Registra una recuperación para una calificación en escala Baja (BJ) y sobrescribe ``Grade.definitive_grade`` con el mínimo de Básico (por ejemplo 3.00). ``recovery_grade`` debe ser exactamente ese mínimo. El alcance por rol aplica como en ``/api/grades/`` (docente: solo sus asignaciones).
          */
         post: operations["grade_recoveries_create"];
         delete?: never;
@@ -2038,7 +2058,7 @@ export interface paths {
         };
         /**
          * Students rankings by period
-         * @description Rankings of students in this group by academic period. Uses PerformanceSummary when available. Optional: filter by period_id.
+         * @description Rankings of students in this group by academic period. Uses PerformanceSummary when available and includes only students with an active enrollment in the group. Optional: filter by period_id.
          */
         get: operations["groups_students_rankings_retrieve"];
         put?: never;
@@ -2138,6 +2158,86 @@ export interface paths {
          *     Subclass and override filter_queryset_by_role() or the role-specific methods.
          */
         patch: operations["institutions_partial_update"];
+        trace?: never;
+    };
+    "/api/institutions/{id}/bulletin-logo-left/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload the left bulletin crest
+         * @description Multipart field `file`. Replaces the previous left crest. ADMIN or COORDINATOR of this institution. Missing file or unsupported type returns 400 and keeps the stored URL. A failed upload returns 500 and does not write the new URL.
+         */
+        post: operations["institutions_bulletin_logo_left_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/institutions/{id}/bulletin-logo-right/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload the right bulletin crest
+         * @description Multipart field `file`. Replaces the previous right crest. ADMIN or COORDINATOR of this institution. Missing file or unsupported type returns 400 and keeps the stored URL. A failed upload returns 500 and does not write the new URL.
+         */
+        post: operations["institutions_bulletin_logo_right_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/institutions/{id}/rector-signature/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload the rector signature
+         * @description Multipart field `file`. Replaces the rector signature used on the student certificate. ADMIN or COORDINATOR of this institution.
+         */
+        post: operations["institutions_rector_signature_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/institutions/{id}/secretary-signature/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload the secretary signature
+         * @description Multipart field `file`. Replaces the secretary signature used on the student certificate. ADMIN or COORDINATOR of this institution.
+         */
+        post: operations["institutions_secretary_signature_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/parents/": {
@@ -2376,7 +2476,7 @@ export interface paths {
         };
         /**
          * CSV: consolidado de calificaciones pivoteado por estudiante
-         * @description Descarga CSV (UTF-8 con BOM) con **una única fila por estudiante** (matrícula activa) y **una columna por asignatura**. Cuando la exportación cubre más de un periodo, cada asignatura se despliega en varias columnas con el sufijo ``(P1)``, ``(P2)``, … por número de periodo. El valor de cada celda es la nota numérica (o la definitiva si no hay numérica) para esa terna (estudiante, asignatura, periodo); una celda vacía significa **PENDIENTE**. Al final se incluyen columnas de resumen ``asignaturas_calificadas``, ``asignaturas_pendientes`` y ``promedio_numerico`` (promedio simple sobre las notas existentes del estudiante). La consulta base usa un único ``SELECT`` con ``JOIN``/``LEFT JOIN`` (sin subconsultas correlacionadas por fila); el pivoteo se realiza en memoria tras el fetch. **COORDINATOR:** el conjunto queda restringido al ``UserProfile.institution`` del usuario. **ADMIN:** sin ``institution`` se exporta el año lectivo indicado (una institución por año); con ``institution`` se valida que coincida con la institución del año.
+         * @description Descarga CSV (UTF-8 con BOM) con **una única fila por estudiante** (matrícula activa) y **una columna por asignatura**. Cuando la exportación cubre más de un periodo, cada asignatura se despliega en varias columnas con el sufijo ``(P1)``, ``(P2)``, … por número de periodo. El valor de cada celda es la misma nota efectiva del boletín: la recuperada (``definitive_grade``) si existe y, si no, la numérica. Una celda vacía significa **PENDIENTE**. Con más de un periodo, cada asignatura incluye una columna ``(DEF)`` con la definitiva del boletín. El resumen trae ``promedio (P1)``, ``promedio (P2)``, … con el promedio del boletín de ese periodo, y ``promedio_numerico`` con la misma regla sobre todas las celdas con nota. Si una asignatura sigue en Bajo sin recuperación y el promedio quedaría en o por encima de la pérdida, el promedio baja al mínimo de Básico menos una décima (3.00 → 2.90). Si el promedio ya es más bajo, se conserva. La consulta base usa un único ``SELECT`` con ``JOIN``/``LEFT JOIN`` (sin subconsultas correlacionadas por fila); el pivoteo se realiza en memoria tras el fetch. **COORDINATOR:** el conjunto queda restringido al ``UserProfile.institution`` del usuario. **ADMIN:** sin ``institution`` se exporta el año lectivo indicado (una institución por año); con ``institution`` se valida que coincida con la institución del año.
          */
         get: operations["reports_grading_consolidated_retrieve"];
         put?: never;
@@ -2682,7 +2782,7 @@ export interface paths {
         };
         /**
          * List Students
-         * @description Student data Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name. Available exact-match filters via query params: document_type, document_number, gender, sisben, stratum. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
+         * @description Student data. For teachers and parents, the list omits students whose enrollments are all withdrawn. Administrators and coordinators still see them. Text search available through query param `search`. Supported fields: document_number, full_name, first_name, second_name, first_last_name, second_last_name. Available exact-match filters via query params: document_type, document_number, gender, sisben, stratum. Paginated list: response JSON has `count`, `next`, `previous`, and `results` (array of resources). Use `limit` and `offset` to page through `results`.
          */
         get: operations["students_list"];
         put?: never;
@@ -3543,6 +3643,14 @@ export interface components {
              */
             file: string;
         };
+        /** @description Multipart image for a bulletin crest. Field name is ``file``. */
+        BulletinLogoUploadRequest: {
+            /**
+             * Format: binary
+             * @description image/jpeg, image/jpg, image/png, image/gif or image/webp
+             */
+            file: string;
+        };
         Campus: {
             /** Format: uuid */
             readonly id: string;
@@ -3551,6 +3659,10 @@ export interface components {
             readonly institution_name: string;
             name: string;
             code?: string;
+            /** @description Vereda or neighborhood printed on the student certificate. */
+            locality?: string;
+            municipality?: string;
+            department?: string;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -3561,6 +3673,10 @@ export interface components {
             institution: string;
             name: string;
             code?: string;
+            /** @description Vereda or neighborhood printed on the student certificate. */
+            locality?: string;
+            municipality?: string;
+            department?: string;
         };
         ComponentSegment: {
             /** Format: uuid */
@@ -3941,7 +4057,7 @@ export interface components {
             grade: string;
             /**
              * Format: decimal
-             * @description Nota de recuperación; sobrescribe definitive_grade.
+             * @description Nota de recuperación. Debe ser el mínimo de Básico de la institución (por ejemplo 3.00) y sobrescribe definitive_grade.
              */
             recovery_grade: string;
             /** @description Descripción de la recuperación presentada. */
@@ -4082,6 +4198,34 @@ export interface components {
             legal_reference?: string;
             dane_code: string;
             nit?: string;
+            /**
+             * Format: uri
+             * @description Public URL of the crest on the left of the student bulletin.
+             */
+            readonly bulletin_logo_left_url: string;
+            /**
+             * Format: uri
+             * @description Public URL of the crest on the right of the student bulletin.
+             */
+            readonly bulletin_logo_right_url: string;
+            /** @description Second name printed under the institution on the student certificate. */
+            certificate_subtitle?: string;
+            /** @description Authorization paragraph on the student certificate. */
+            certificate_authorization?: string;
+            rector_name?: string;
+            rector_document_number?: string;
+            secretary_name?: string;
+            secretary_document_number?: string;
+            /**
+             * Format: uri
+             * @description Public URL of the rector signature on the student certificate.
+             */
+            readonly rector_signature_url: string;
+            /**
+             * Format: uri
+             * @description Public URL of the secretary signature on the student certificate.
+             */
+            readonly secretary_signature_url: string;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -4092,6 +4236,14 @@ export interface components {
             legal_reference?: string;
             dane_code: string;
             nit?: string;
+            /** @description Second name printed under the institution on the student certificate. */
+            certificate_subtitle?: string;
+            /** @description Authorization paragraph on the student certificate. */
+            certificate_authorization?: string;
+            rector_name?: string;
+            rector_document_number?: string;
+            secretary_name?: string;
+            secretary_document_number?: string;
         };
         LoginResponse: {
             /** @description JWT access token. Use in Authorization: Bearer <token> */
@@ -4720,6 +4872,10 @@ export interface components {
             institution?: string;
             name?: string;
             code?: string;
+            /** @description Vereda or neighborhood printed on the student certificate. */
+            locality?: string;
+            municipality?: string;
+            department?: string;
         };
         PatchedComponentSegmentRequest: {
             /** Format: uuid */
@@ -4833,6 +4989,14 @@ export interface components {
             legal_reference?: string;
             dane_code?: string;
             nit?: string;
+            /** @description Second name printed under the institution on the student certificate. */
+            certificate_subtitle?: string;
+            /** @description Authorization paragraph on the student certificate. */
+            certificate_authorization?: string;
+            rector_name?: string;
+            rector_document_number?: string;
+            secretary_name?: string;
+            secretary_document_number?: string;
         };
         PatchedParentRequest: {
             document_type?: string;
@@ -5796,6 +5960,33 @@ export interface operations {
                 /** @description Comma-separated academic period UUIDs to include (subset of the year's periods). */
                 period_ids?: string;
                 /** @description Student UUID (single-boletín mode; mutually exclusive with `group`). */
+                student?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+        };
+    };
+    academic_grades_certificate_retrieve: {
+        parameters: {
+            query: {
+                academic_year: string;
+                /** @description Group UUID. One certificate per active student. */
+                group?: string;
+                /** @description Expedition date, YYYY-MM-DD. Defaults to today. */
+                issued_on?: string;
+                /** @description Student UUID. Mutually exclusive with `group`. */
                 student?: string;
             };
             header?: never;
@@ -9964,6 +10155,110 @@ export interface operations {
                 "application/json": components["schemas"]["PatchedInstitutionRequest"];
                 "application/x-www-form-urlencoded": components["schemas"]["PatchedInstitutionRequest"];
                 "multipart/form-data": components["schemas"]["PatchedInstitutionRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Institution"];
+                };
+            };
+        };
+    };
+    institutions_bulletin_logo_left_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Institution. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulletinLogoUploadRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Institution"];
+                };
+            };
+        };
+    };
+    institutions_bulletin_logo_right_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Institution. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulletinLogoUploadRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Institution"];
+                };
+            };
+        };
+    };
+    institutions_rector_signature_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Institution. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulletinLogoUploadRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Institution"];
+                };
+            };
+        };
+    };
+    institutions_secretary_signature_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A UUID string identifying this Institution. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["BulletinLogoUploadRequest"];
             };
         };
         responses: {

@@ -265,7 +265,7 @@ Entidad `Grade`: una fila por estudiante + asignación + periodo.
 |-------|-------------|------------------|
 | `numerical_grade` | Nota del periodo (0.00–5.00) | Docente, o “aplicar sugerencia” |
 | `performance_level` | FK a `GradingScale` (BJ/BS/AL/SP) | Suele inferirse al aplicar sugerencia; editable |
-| `definitive_grade` | Nota definitiva (puede diferir) | Recuperación, o carga/edición explícita. La sugerencia **no** la pisa |
+| `definitive_grade` | Nota de recuperación de este periodo (puede diferir de la numérica) | Recuperación, o carga/edición explícita. La sugerencia **no** la pisa |
 
 API: CRUD `/api/grades/`. Crear requiere `student`, `course_assignment`, `academic_period`, `numerical_grade`.
 
@@ -531,7 +531,7 @@ Pantalla de revisión: estudiante, sugerida, oficial, nivel (chip de color por B
 1. Más / Curso → Recuperaciones, o deep-link desde nota BJ.
 2. Lista `eligible`.
 3. Captura: `recovery_grade` + `description` (evidencia: “taller de recuperación 14-ago”).
-4. Confirmar: “La definitiva pasará de X a Y. La nota del periodo (numérica) no cambia.” En el boletín, **ese periodo** muestra Y.
+4. Confirmar: “La definitiva pasará de X a Y. La nota del periodo (numérica) no cambia.” En el boletín, **ese periodo** muestra Y. La definitiva del año de la asignatura es el promedio de esas notas de periodo. Si queda por debajo de Básico, el estudiante pierde el año; recuperar cada Bajo puede subir ese promedio y salvarlo. Un periodo que sigue en Bajo deja la definitiva del año por debajo de Básico.
 5. Historial visible (reintentos).
 
 **Tablet:** lista de elegibles a la izquierda; formulario + historial a la derecha. Confirmar en el detalle, no en un modal que tape la nota original.

@@ -166,7 +166,7 @@ El modelo `Grade` ya tiene:
 - `academic_period` → FK `AcademicPeriod`
 - `numerical_grade` → nota del periodo
 - `performance_level` → FK a `GradingScale` (nivel de desempeño Decreto 1290: Superior, Alto, Básico, Bajo)
-- `definitive_grade` → nota definitiva opcional
+- `definitive_grade` → nota de recuperación de **ese periodo**. La definitiva del año es el promedio oficial de los periodos de la asignatura; si queda por debajo de Básico, el estudiante reprueba el año. El detalle está en [modulo-recuperaciones.md](./modulo-recuperaciones.md).
 
 **Comportamiento esperado:**
 

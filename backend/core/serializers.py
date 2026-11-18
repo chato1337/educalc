@@ -45,10 +45,23 @@ class InstitutionSerializer(serializers.ModelSerializer):
             "nit",
             "bulletin_logo_left_url",
             "bulletin_logo_right_url",
+            "certificate_subtitle",
+            "certificate_authorization",
+            "rector_name",
+            "rector_document_number",
+            "secretary_name",
+            "secretary_document_number",
+            "rector_signature_url",
+            "secretary_signature_url",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["bulletin_logo_left_url", "bulletin_logo_right_url"]
+        read_only_fields = [
+            "bulletin_logo_left_url",
+            "bulletin_logo_right_url",
+            "rector_signature_url",
+            "secretary_signature_url",
+        ]
 
 
 @extend_schema_serializer(component_name="BulletinLogoUpload")
@@ -71,6 +84,9 @@ class CampusSerializer(serializers.ModelSerializer):
             "institution_name",
             "name",
             "code",
+            "locality",
+            "municipality",
+            "department",
             "created_at",
             "updated_at",
         ]
