@@ -301,6 +301,54 @@ paths:
                 type: string
                 format: binary
           description: ''
+  /api/academic-grades/certificate/:
+    get:
+      operationId: academic_grades_certificate_retrieve
+      description: Returns the year certificate. The student passes when every subject
+        definitive (official average of the period grades) is at or above Básico.
+        One definitive below that minimum means the year is lost. **Single student:**
+        `student` + `academic_year`. **Whole group:** `group` + `academic_year`. Provide
+        exactly one of `student` or `group`. Optional `issued_on` is the expedition
+        date (`YYYY-MM-DD`); the default is today.
+      summary: Download student certificate PDF
+      parameters:
+      - in: query
+        name: academic_year
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: group
+        schema:
+          type: string
+          format: uuid
+        description: Group UUID. One certificate per active student.
+      - in: query
+        name: issued_on
+        schema:
+          type: string
+          format: date
+        description: Expedition date, YYYY-MM-DD. Defaults to today.
+      - in: query
+        name: student
+        schema:
+          type: string
+          format: uuid
+        description: Student UUID. Mutually exclusive with `group`.
+      tags:
+      - Grades
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          description: ''
   /api/academic-indicator-catalogs/:
     get:
       operationId: academic_indicator_catalogs_list
@@ -979,8 +1027,8 @@ paths:
     post:
       operationId: academic_indicators_bulk_load_create
       description: 'Dos formatos UTF-8: (1) Plantillas — DANE_COD, AREA_ACADEMICA
-        (alias: AREA_NOMBRE), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO, PERIODO_NUM opcional
-        (1–4; omitir = plantilla genérica); upsert en catálogo área+grado+periodo.
+        (alias: AREA_NOMBRE, NUCLEO), GRADO, LOGRO_POSITIVO, LOGRO_NEGATIVO, PERIODO_NUM
+        opcional (1–4; omitir = plantilla genérica); upsert en catálogo área+grado+periodo.
         (2) Legacy por estudiante — DOC_ESTUDIANTE, DANE_COD, ANO, SEDE, GRADO, GRUPO,
         ASIGNATURA_NOMBRE, PERIODO_NUM, DESCRIPCION, NOTA (opcional), NIVEL_DESEMPENO_TEXTO
         (opcional).'
@@ -3304,13 +3352,14 @@ paths:
   /api/enrollments/:
     get:
       operationId: enrollments_list
-      description: 'Student-group enrollment for an academic year Text search available
-        through query param `search`. Supported fields: student__document_number,
-        student__full_name, group__name, group__grade_level__name, =academic_year__year,
-        status. Available exact-match filters via query params: student, student__document_number,
-        group, group__name, academic_year, academic_year__year, status. Paginated
-        list: response JSON has `count`, `next`, `previous`, and `results` (array
-        of resources). Use `limit` and `offset` to page through `results`.'
+      description: 'Student-group enrollment for an academic year. List results omit
+        withdrawn enrollments unless `status=withdrawn` is set, or the query is limited
+        to one `student`. Text search available through query param `search`. Supported
+        fields: student__document_number, student__full_name, group__name, group__grade_level__name,
+        =academic_year__year, status. Available exact-match filters via query params:
+        student, student__document_number, group, group__name, academic_year, academic_year__year,
+        status. Paginated list: response JSON has `count`, `next`, `previous`, and
+        `results` (array of resources). Use `limit` and `offset` to page through `results`.'
       summary: List Enrollments
       parameters:
       - in: query
@@ -4170,7 +4219,8 @@ paths:
     post:
       operationId: grade_recoveries_create
       description: 'Registra una recuperación para una calificación en escala Baja
-        (BJ) y sobrescribe ``Grade.definitive_grade`` con ``recovery_grade``. El alcance
+        (BJ) y sobrescribe ``Grade.definitive_grade`` con el mínimo de Básico (por
+        ejemplo 3.00). ``recovery_grade`` debe ser exactamente ese mínimo. El alcance
         por rol aplica como en ``/api/grades/`` (docente: solo sus asignaciones).'
       summary: Create Grade Recoveries
       tags:
@@ -5959,7 +6009,8 @@ paths:
     get:
       operationId: groups_students_rankings_retrieve
       description: 'Rankings of students in this group by academic period. Uses PerformanceSummary
-        when available. Optional: filter by period_id.'
+        when available and includes only students with an active enrollment in the
+        group. Optional: filter by period_id.'
       summary: Students rankings by period
       parameters:
       - in: path
@@ -6229,6 +6280,138 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/institutions/{id}/bulletin-logo-left/:
+    post:
+      operationId: institutions_bulletin_logo_left_create
+      description: Multipart field `file`. Replaces the previous left crest. ADMIN
+        or COORDINATOR of this institution. Missing file or unsupported type returns
+        400 and keeps the stored URL. A failed upload returns 500 and does not write
+        the new URL.
+      summary: Upload the left bulletin crest
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Institution.
+        required: true
+      tags:
+      - Institutions
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulletinLogoUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Institution'
+          description: ''
+  /api/institutions/{id}/bulletin-logo-right/:
+    post:
+      operationId: institutions_bulletin_logo_right_create
+      description: Multipart field `file`. Replaces the previous right crest. ADMIN
+        or COORDINATOR of this institution. Missing file or unsupported type returns
+        400 and keeps the stored URL. A failed upload returns 500 and does not write
+        the new URL.
+      summary: Upload the right bulletin crest
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Institution.
+        required: true
+      tags:
+      - Institutions
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulletinLogoUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Institution'
+          description: ''
+  /api/institutions/{id}/rector-signature/:
+    post:
+      operationId: institutions_rector_signature_create
+      description: Multipart field `file`. Replaces the rector signature used on the
+        student certificate. ADMIN or COORDINATOR of this institution.
+      summary: Upload the rector signature
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Institution.
+        required: true
+      tags:
+      - Institutions
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulletinLogoUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Institution'
+          description: ''
+  /api/institutions/{id}/secretary-signature/:
+    post:
+      operationId: institutions_secretary_signature_create
+      description: Multipart field `file`. Replaces the secretary signature used on
+        the student certificate. ADMIN or COORDINATOR of this institution.
+      summary: Upload the secretary signature
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Institution.
+        required: true
+      tags:
+      - Institutions
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulletinLogoUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Institution'
+          description: ''
   /api/parents/:
     get:
       operationId: parents_list
@@ -6871,23 +7054,96 @@ paths:
               schema:
                 $ref: '#/components/schemas/PerformanceSummaryRecalculateByInstitutionResponse'
           description: ''
+  /api/reports/failing-students/:
+    get:
+      operationId: reports_failing_students_retrieve
+      description: 'Descarga CSV (UTF-8 con BOM) con **una fila por estudiante de
+        matrícula activa que no aprueba el año lectivo**. La regla es la del certificado
+        y del boletín: la definitiva de cada asignatura es el promedio oficial de
+        las notas efectivas de todos los periodos (``definitive_grade`` si existe
+        y, si no, ``numerical_grade``). El estudiante reprueba cuando alguna definitiva
+        queda por debajo del mínimo de Básico, o cuando alguna asignatura sigue sin
+        definitiva. Quien tiene todas las definitivas en ese mínimo o por encima no
+        sale en el archivo. ``detalle_reprobacion`` lista solo las asignaturas que
+        causan la reprobación (``2.90`` o ``PENDIENTE``). No se filtra por periodo,
+        asignatura, área ni docente: recortar ese conjunto cambiaría el resultado
+        del año. **COORDINATOR:** el conjunto queda restringido al ``UserProfile.institution``
+        del usuario. **ADMIN:** sin ``institution`` se exporta el año lectivo indicado;
+        con ``institution`` se valida que coincida con la institución del año.'
+      summary: 'CSV: estudiantes que reprueban el año'
+      parameters:
+      - in: query
+        name: academic_year
+        schema:
+          type: string
+          format: uuid
+        description: UUID del año lectivo (define cohorte e institución).
+        required: true
+      - in: query
+        name: campus
+        schema:
+          type: string
+          format: uuid
+        description: Filtrar por sede (de la misma institución del año).
+      - in: query
+        name: grade_level
+        schema:
+          type: string
+          format: uuid
+        description: Filtrar por nivel/grado (de la misma institución).
+      - in: query
+        name: group
+        schema:
+          type: string
+          format: uuid
+        description: Filtrar por grupo (del mismo año lectivo).
+      - in: query
+        name: institution
+        schema:
+          type: string
+          format: uuid
+        description: 'Solo ADMIN: debe ser la misma institución del año lectivo (doble
+          chequeo).'
+      tags:
+      - Reports
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '400':
+          description: Parámetros inválidos o combinación no permitida.
+        '403':
+          description: Sin permiso (solo ADMIN/COORDINATOR).
+        '404':
+          description: Año lectivo no encontrado.
   /api/reports/grading-consolidated/:
     get:
       operationId: reports_grading_consolidated_retrieve
-      description: Descarga CSV (UTF-8 con BOM) con **una única fila por estudiante**
+      description: 'Descarga CSV (UTF-8 con BOM) con **una única fila por estudiante**
         (matrícula activa) y **una columna por asignatura**. Cuando la exportación
         cubre más de un periodo, cada asignatura se despliega en varias columnas con
         el sufijo ``(P1)``, ``(P2)``, … por número de periodo. El valor de cada celda
-        es la nota numérica (o la definitiva si no hay numérica) para esa terna (estudiante,
-        asignatura, periodo); una celda vacía significa **PENDIENTE**. Al final se
-        incluyen columnas de resumen ``asignaturas_calificadas``, ``asignaturas_pendientes``
-        y ``promedio_numerico`` (promedio simple sobre las notas existentes del estudiante).
-        La consulta base usa un único ``SELECT`` con ``JOIN``/``LEFT JOIN`` (sin subconsultas
-        correlacionadas por fila); el pivoteo se realiza en memoria tras el fetch.
-        **COORDINATOR:** el conjunto queda restringido al ``UserProfile.institution``
-        del usuario. **ADMIN:** sin ``institution`` se exporta el año lectivo indicado
-        (una institución por año); con ``institution`` se valida que coincida con
-        la institución del año.
+        es la misma nota efectiva del boletín: la recuperada (``definitive_grade``)
+        si existe y, si no, la numérica. Una celda vacía significa **PENDIENTE**.
+        Con más de un periodo, cada asignatura incluye una columna ``(DEF)`` con la
+        definitiva del boletín. El resumen trae ``promedio (P1)``, ``promedio (P2)``,
+        … con el promedio del boletín de ese periodo, y ``promedio_numerico`` con
+        la misma regla sobre todas las celdas con nota. Si una asignatura sigue en
+        Bajo sin recuperación y el promedio quedaría en o por encima de la pérdida,
+        el promedio baja al mínimo de Básico menos una décima (3.00 → 2.90). Si el
+        promedio ya es más bajo, se conserva. La consulta base usa un único ``SELECT``
+        con ``JOIN``/``LEFT JOIN`` (sin subconsultas correlacionadas por fila); el
+        pivoteo se realiza en memoria tras el fetch. **COORDINATOR:** el conjunto
+        queda restringido al ``UserProfile.institution`` del usuario. **ADMIN:** sin
+        ``institution`` se exporta el año lectivo indicado (una institución por año);
+        con ``institution`` se valida que coincida con la institución del año.'
       summary: 'CSV: consolidado de calificaciones pivoteado por estudiante'
       parameters:
       - in: query
@@ -7712,12 +7968,14 @@ paths:
   /api/students/:
     get:
       operationId: students_list
-      description: 'Student data Text search available through query param `search`.
-        Supported fields: document_number, full_name, first_name, second_name, first_last_name,
-        second_last_name. Available exact-match filters via query params: document_type,
-        document_number, gender, sisben, stratum. Paginated list: response JSON has
-        `count`, `next`, `previous`, and `results` (array of resources). Use `limit`
-        and `offset` to page through `results`.'
+      description: 'Student data. For teachers and parents, the list omits students
+        whose enrollments are all withdrawn. Administrators and coordinators still
+        see them. Text search available through query param `search`. Supported fields:
+        document_number, full_name, first_name, second_name, first_last_name, second_last_name.
+        Available exact-match filters via query params: document_type, document_number,
+        gender, sisben, stratum. Paginated list: response JSON has `count`, `next`,
+        `previous`, and `results` (array of resources). Use `limit` and `offset` to
+        page through `results`.'
       summary: List Students
       parameters:
       - in: query
@@ -8623,12 +8881,15 @@ paths:
   /api/teachers/:
     get:
       operationId: teachers_list
-      description: 'Teacher/faculty information Text search available through query
-        param `search`. Supported fields: document_number, full_name, first_name,
-        second_name, first_last_name, second_last_name, email. Available exact-match
-        filters via query params: document_type, document_number, email, specialty.
-        Paginated list: response JSON has `count`, `next`, `previous`, and `results`
-        (array of resources). Use `limit` and `offset` to page through `results`.'
+      description: 'Teacher/faculty information. POST create also provisions a login
+        user (username nombre.apellido, initial password = document_number), matching
+        POST /api/teachers/bulk-load-users/. Text search available through query param
+        `search`. Supported fields: document_number, full_name, first_name, second_name,
+        first_last_name, second_last_name, email, user_profile__user__username. Available
+        exact-match filters via query params: document_type, document_number, email,
+        specialty. Paginated list: response JSON has `count`, `next`, `previous`,
+        and `results` (array of resources). Use `limit` and `offset` to page through
+        `results`.'
       summary: List Teachers
       parameters:
       - in: query
@@ -8669,7 +8930,7 @@ paths:
         schema:
           type: string
         description: 'Search text across: document_number, full_name, first_name,
-          second_name, first_last_name, second_last_name, email.'
+          second_name, first_last_name, second_last_name, email, user_profile__user__username.'
       - in: query
         name: specialty
         schema:
@@ -9150,6 +9411,81 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/users/available/:
+    get:
+      operationId: users_available_list
+      description: 'Django auth users that do not yet have a UserProfile. Paginated
+        list: response JSON has `count`, `next`, `previous`, and `results` (array
+        of resources). Use `limit` and `offset` to page through `results`.'
+      summary: List auth users available to assign a profile
+      parameters:
+      - in: query
+        name: institution
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: institution__dane_code
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Maximum number of items in the `results` array for this page.
+          If omitted, defaults to 20. Cannot exceed 500.
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Number of items to skip from the beginning of the filtered, ordered
+          queryset.
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: role
+        schema:
+          type: string
+          enum:
+          - ADMIN
+          - COORDINATOR
+          - PARENT
+          - TEACHER
+        description: |-
+          * `ADMIN` - Administrator
+          * `COORDINATOR` - Coordinator
+          * `TEACHER` - Teacher
+          * `PARENT` - Parent
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: user__email
+        schema:
+          type: string
+      - in: query
+        name: user__username
+        schema:
+          type: string
+      tags:
+      - Users
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAvailableUserList'
+          description: ''
 components:
   schemas:
     AcademicArea:
@@ -9858,6 +10194,27 @@ components:
       required:
       - academic_period
       - student
+    AvailableUser:
+      type: object
+      description: Auth user without a UserProfile, for the assign-user picklist.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+        email:
+          type: string
+          format: email
+          readOnly: true
+          title: Email address
+      required:
+      - email
+      - id
+      - username
     BlankEnum:
       enum:
       - ''
@@ -9947,6 +10304,16 @@ components:
             DISCAPACIDAD, TELEFONO'
       required:
       - file
+    BulletinLogoUploadRequest:
+      type: object
+      description: Multipart image for a bulletin crest. Field name is ``file``.
+      properties:
+        file:
+          type: string
+          format: binary
+          description: image/jpeg, image/jpg, image/png, image/gif or image/webp
+      required:
+      - file
     Campus:
       type: object
       properties:
@@ -9966,6 +10333,16 @@ components:
         code:
           type: string
           maxLength: 50
+        locality:
+          type: string
+          description: Vereda or neighborhood printed on the student certificate.
+          maxLength: 150
+        municipality:
+          type: string
+          maxLength: 150
+        department:
+          type: string
+          maxLength: 150
         created_at:
           type: string
           format: date-time
@@ -9994,6 +10371,16 @@ components:
         code:
           type: string
           maxLength: 50
+        locality:
+          type: string
+          description: Vereda or neighborhood printed on the student certificate.
+          maxLength: 150
+        municipality:
+          type: string
+          maxLength: 150
+        department:
+          type: string
+          maxLength: 150
       required:
       - institution
       - name
@@ -10956,7 +11343,8 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
-          description: Nota de recuperación; sobrescribe definitive_grade.
+          description: Nota de recuperación. Debe ser el mínimo de Básico de la institución
+            (por ejemplo 3.00) y sobrescribe definitive_grade.
         description:
           type: string
           minLength: 1
@@ -11312,6 +11700,45 @@ components:
         nit:
           type: string
           maxLength: 20
+        bulletin_logo_left_url:
+          type: string
+          format: uri
+          readOnly: true
+          description: Public URL of the crest on the left of the student bulletin.
+        bulletin_logo_right_url:
+          type: string
+          format: uri
+          readOnly: true
+          description: Public URL of the crest on the right of the student bulletin.
+        certificate_subtitle:
+          type: string
+          description: Second name printed under the institution on the student certificate.
+          maxLength: 255
+        certificate_authorization:
+          type: string
+          description: Authorization paragraph on the student certificate.
+        rector_name:
+          type: string
+          maxLength: 255
+        rector_document_number:
+          type: string
+          maxLength: 40
+        secretary_name:
+          type: string
+          maxLength: 255
+        secretary_document_number:
+          type: string
+          maxLength: 40
+        rector_signature_url:
+          type: string
+          format: uri
+          readOnly: true
+          description: Public URL of the rector signature on the student certificate.
+        secretary_signature_url:
+          type: string
+          format: uri
+          readOnly: true
+          description: Public URL of the secretary signature on the student certificate.
         created_at:
           type: string
           format: date-time
@@ -11321,10 +11748,14 @@ components:
           format: date-time
           readOnly: true
       required:
+      - bulletin_logo_left_url
+      - bulletin_logo_right_url
       - created_at
       - dane_code
       - id
       - name
+      - rector_signature_url
+      - secretary_signature_url
       - updated_at
     InstitutionRequest:
       type: object
@@ -11343,6 +11774,25 @@ components:
         nit:
           type: string
           maxLength: 20
+        certificate_subtitle:
+          type: string
+          description: Second name printed under the institution on the student certificate.
+          maxLength: 255
+        certificate_authorization:
+          type: string
+          description: Authorization paragraph on the student certificate.
+        rector_name:
+          type: string
+          maxLength: 255
+        rector_document_number:
+          type: string
+          maxLength: 40
+        secretary_name:
+          type: string
+          maxLength: 255
+        secretary_document_number:
+          type: string
+          maxLength: 40
       required:
       - dane_code
       - name
@@ -11565,6 +12015,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Attendance'
+    PaginatedAvailableUserList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailableUser'
     PaginatedCampusList:
       type: object
       required:
@@ -12383,6 +12856,16 @@ components:
         code:
           type: string
           maxLength: 50
+        locality:
+          type: string
+          description: Vereda or neighborhood printed on the student certificate.
+          maxLength: 150
+        municipality:
+          type: string
+          maxLength: 150
+        department:
+          type: string
+          maxLength: 150
     PatchedComponentSegmentRequest:
       type: object
       properties:
@@ -12597,6 +13080,25 @@ components:
         nit:
           type: string
           maxLength: 20
+        certificate_subtitle:
+          type: string
+          description: Second name printed under the institution on the student certificate.
+          maxLength: 255
+        certificate_authorization:
+          type: string
+          description: Authorization paragraph on the student certificate.
+        rector_name:
+          type: string
+          maxLength: 255
+        rector_document_number:
+          type: string
+          maxLength: 40
+        secretary_name:
+          type: string
+          maxLength: 255
+        secretary_document_number:
+          type: string
+          maxLength: 40
     PatchedParentRequest:
       type: object
       properties:
@@ -14008,6 +14510,10 @@ components:
         specialty:
           type: string
           maxLength: 100
+        username:
+          type: string
+          nullable: true
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -14023,6 +14529,7 @@ components:
       - full_name
       - id
       - updated_at
+      - username
     TeacherRequest:
       type: object
       properties:

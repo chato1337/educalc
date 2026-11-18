@@ -27,6 +27,7 @@ from core.performance_summary_views import (
     PerformanceSummaryRecalculateByGradeView,
     PerformanceSummaryRecalculateByInstitutionView,
 )
+from core.failing_students_export_views import FailingStudentsCsvExportView
 from core.grading_consolidated_export_views import GradingConsolidatedCsvExportView
 from core.report_views import (
     AcademicIndicatorsReportByStudentPeriodView,
@@ -165,6 +166,11 @@ urlpatterns = [
         "api/reports/grading-consolidated/",
         GradingConsolidatedCsvExportView.as_view(),
         name="report-grading-consolidated-csv",
+    ),
+    path(
+        "api/reports/failing-students/",
+        FailingStudentsCsvExportView.as_view(),
+        name="report-failing-students-csv",
     ),
     # API
     path("api/", include(router.urls)),

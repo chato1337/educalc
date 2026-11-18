@@ -26,6 +26,7 @@ import {
   SwapHoriz,
   TableChart,
   EventAvailable,
+  PersonOff,
 } from '@mui/icons-material'
 
 import type { AppRole } from '@/app/roleMatrix'
@@ -302,6 +303,12 @@ export const navSections: NavSection[] = [
         labelKey: 'nav.reportsGradingConsolidated',
         path: '/reports/grading-consolidated',
         icon: TableChart,
+        rolesAllowed: ADMIN_COORDINATOR,
+      },
+      {
+        labelKey: 'nav.reportsFailingStudents',
+        path: '/reports/failing-students',
+        icon: PersonOff,
         rolesAllowed: ADMIN_COORDINATOR,
       },
     ],

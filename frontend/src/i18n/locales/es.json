@@ -965,7 +965,8 @@
     "schoolRecords": "Libro final de calificaciones",
     "academicIndicatorsReports": "Informes de indicadores",
     "reportsSection": "Reportes y auditoría",
-    "reportsGradingConsolidated": "Consolidado calificaciones (CSV)"
+    "reportsGradingConsolidated": "Consolidado calificaciones (CSV)",
+    "reportsFailingStudents": "Estudiantes reprobados (CSV)"
   },
   "reports": {
     "gradingConsolidated": {
@@ -987,6 +988,25 @@
         "academicArea": "Área académica (opcional)",
         "subject": "Asignatura (opcional)",
         "teacher": "Docente (opcional)"
+      },
+      "errors": {
+        "yearRequired": "Indica el año lectivo.",
+        "yearInvalid": "El año lectivo no es válido."
+      }
+    },
+    "failingStudents": {
+      "title": "Estudiantes que reprueban el año",
+      "intro": "Exporta un CSV con una fila por estudiante de matrícula activa que no aprueba el año. Usa la misma regla del boletín y del certificado: la definitiva de cada asignatura es el promedio oficial de las notas efectivas de todos los periodos (la recuperada, si existe, y si no la numérica). El estudiante reprueba cuando alguna definitiva queda por debajo del mínimo de Básico, o cuando alguna asignatura sigue sin definitiva. Quien aprueba todas no aparece. El detalle lista solo las asignaturas que causan la reprobación. Requiere rol administrador o coordinador.",
+      "pickYear": "Selecciona año lectivo…",
+      "any": "Todos",
+      "download": "Descargar CSV",
+      "downloading": "Generando archivo…",
+      "coordinatorNoInstitution": "Tu usuario coordinador no tiene institución asignada; no se puede acotar el listado de años lectivos.",
+      "fields": {
+        "academicYear": "Año lectivo",
+        "campus": "Sede (opcional)",
+        "gradeLevel": "Grado / nivel (opcional)",
+        "group": "Grupo (opcional)"
       },
       "errors": {
         "yearRequired": "Indica el año lectivo.",

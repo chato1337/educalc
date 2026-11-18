@@ -32,6 +32,7 @@ import {
   GradesPage,
   GradingSchemeDetailPage,
   GradingSchemesPage,
+  FailingStudentsReportPage,
   GradingConsolidatedReportPage,
   GradingScalesPage,
   GroupRankingsPage,
@@ -185,6 +186,10 @@ export function AppRoutes() {
           <Route
             path="reports/grading-consolidated"
             element={<GradingConsolidatedReportPage />}
+          />
+          <Route
+            path="reports/failing-students"
+            element={<FailingStudentsReportPage />}
           />
           {resourceListConfigs.map((config) => (
             <Route

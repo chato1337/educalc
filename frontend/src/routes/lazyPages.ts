@@ -268,3 +268,9 @@ export const GradingConsolidatedReportPage = lazy(() =>
     default: m.GradingConsolidatedReportPage,
   })),
 )
+
+export const FailingStudentsReportPage = lazy(() =>
+  import('@/features/reports/FailingStudentsReportPage').then((m) => ({
+    default: m.FailingStudentsReportPage,
+  })),
+)

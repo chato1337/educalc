@@ -2467,6 +2467,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/failing-students/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * CSV: estudiantes que reprueban el año
+         * @description Descarga CSV (UTF-8 con BOM) con **una fila por estudiante de matrícula activa que no aprueba el año lectivo**. La regla es la del certificado y del boletín: la definitiva de cada asignatura es el promedio oficial de las notas efectivas de todos los periodos (``definitive_grade`` si existe y, si no, ``numerical_grade``). El estudiante reprueba cuando alguna definitiva queda por debajo del mínimo de Básico, o cuando alguna asignatura sigue sin definitiva. Quien tiene todas las definitivas en ese mínimo o por encima no sale en el archivo. ``detalle_reprobacion`` lista solo las asignaturas que causan la reprobación (``2.90`` o ``PENDIENTE``). No se filtra por periodo, asignatura, área ni docente: recortar ese conjunto cambiaría el resultado del año. **COORDINATOR:** el conjunto queda restringido al ``UserProfile.institution`` del usuario. **ADMIN:** sin ``institution`` se exporta el año lectivo indicado; con ``institution`` se valida que coincida con la institución del año.
+         */
+        get: operations["reports_failing_students_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reports/grading-consolidated/": {
         parameters: {
             query?: never;
@@ -10717,6 +10737,57 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PerformanceSummaryRecalculateByInstitutionResponse"];
                 };
+            };
+        };
+    };
+    reports_failing_students_retrieve: {
+        parameters: {
+            query: {
+                /** @description UUID del año lectivo (define cohorte e institución). */
+                academic_year: string;
+                /** @description Filtrar por sede (de la misma institución del año). */
+                campus?: string;
+                /** @description Filtrar por nivel/grado (de la misma institución). */
+                grade_level?: string;
+                /** @description Filtrar por grupo (del mismo año lectivo). */
+                group?: string;
+                /** @description Solo ADMIN: debe ser la misma institución del año lectivo (doble chequeo). */
+                institution?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            /** @description Parámetros inválidos o combinación no permitida. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sin permiso (solo ADMIN/COORDINATOR). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Año lectivo no encontrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
