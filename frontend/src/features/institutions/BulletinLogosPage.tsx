@@ -16,6 +16,7 @@ import { queryKeys } from '@/api/queryKeys'
 import { PageHeader } from '@/components/PageHeader'
 import { useUiStore } from '@/stores/uiStore'
 
+import { InstitutionProfileForm } from './InstitutionProfileForm'
 import {
   fetchInstitution,
   isAcceptedBulletinLogo,
@@ -180,6 +181,10 @@ export function BulletinLogosPage() {
               name: institutionQuery.data.name,
             })}
           </Typography>
+          <InstitutionProfileForm
+            institution={institutionQuery.data}
+            onSaved={onUploaded}
+          />
           <Box
             key={institutionQuery.data.id}
             className="grid grid-cols-1 md:grid-cols-2 gap-4"

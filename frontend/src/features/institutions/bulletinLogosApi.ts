@@ -31,6 +31,30 @@ export async function fetchInstitution(institutionId: string): Promise<Instituti
   return data
 }
 
+export type InstitutionProfileInput = {
+  name: string
+  dane_code: string
+  legal_reference: string
+  nit: string
+  certificate_subtitle: string
+  certificate_authorization: string
+  rector_name: string
+  rector_document_number: string
+  secretary_name: string
+  secretary_document_number: string
+}
+
+export async function updateInstitution(
+  institutionId: string,
+  body: InstitutionProfileInput,
+): Promise<Institution> {
+  const { data } = await apiClient.patch<Institution>(
+    `/api/institutions/${institutionId}/`,
+    body,
+  )
+  return data
+}
+
 export async function uploadBulletinLogo(
   institutionId: string,
   slot: BulletinLogoSlot,
