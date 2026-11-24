@@ -31,6 +31,7 @@ from .models import (
     Enrollment,
     Grade,
     GradeDirector,
+    GradeLevel,
     GradingScale,
     Group,
     PerformanceSummary,
@@ -233,6 +234,86 @@ def _year_definitive_grade(
             continue
         values.append(_effective_period_grade(g))
     return official_average(values, passing_min)
+
+
+def _last_academic_period(academic_year: AcademicYear) -> AcademicPeriod | None:
+    """Closing period of the year: the one with the highest ``number``."""
+    return (
+        AcademicPeriod.objects.filter(academic_year=academic_year)
+        .order_by("-number")
+        .first()
+    )
+
+
+def _next_grade_level(current: GradeLevel) -> GradeLevel | None:
+    """Next grade in the same institution, by ``level_order``."""
+    return (
+        GradeLevel.objects.filter(
+            institution_id=current.institution_id,
+            level_order__gt=current.level_order,
+        )
+        .order_by("level_order", "name")
+        .first()
+    )
+
+
+def _promoted(definitives: list[Decimal | None], passing_min: Decimal) -> bool:
+    """Same year outcome as the certificate: every subject definitive reaches Básico."""
+    if not definitives:
+        return False
+    minimum = passing_min.quantize(Decimal("0.01"))
+    return all(value is not None and value >= minimum for value in definitives)
+
+
+def _promotion_notice(
+    *,
+    student: Student,
+    academic_year: AcademicYear,
+    group: Group,
+    assignments: list[CourseAssignment],
+    selected_periods: list[AcademicPeriod],
+    passing_min: Decimal,
+) -> dict[str, str] | None:
+    """Congratulations when this bulletin includes the closing period and the year is passed.
+
+    The closing period is the highest ``number`` in the year, not a fixed period
+    such as 4. The pass check uses every period of the year, even if the PDF
+    only prints a subset that happens to include the last one.
+    """
+    if not selected_periods or not assignments:
+        return None
+    last = _last_academic_period(academic_year)
+    if last is None or all(period.id != last.id for period in selected_periods):
+        return None
+    next_level = _next_grade_level(group.grade_level)
+    if next_level is None:
+        return None
+    next_grade = next_level.name.strip().upper()
+    if not next_grade:
+        return None
+    periods = list(
+        AcademicPeriod.objects.filter(academic_year=academic_year).order_by("number")
+    )
+    period_order = [period.id for period in periods]
+    grades = Grade.objects.filter(
+        student=student,
+        academic_period_id__in=period_order,
+        course_assignment_id__in=[item.id for item in assignments],
+    )
+    by_assignment: dict[Any, list[Grade]] = defaultdict(list)
+    for grade in grades:
+        by_assignment[grade.course_assignment_id].append(grade)
+    definitives = [
+        _year_definitive_grade(
+            by_assignment.get(item.id, []),
+            period_order,
+            passing_min,
+        )
+        for item in assignments
+    ]
+    if not _promoted(definitives, passing_min):
+        return None
+    return {"next_grade": next_grade}
 
 
 def build_bulletin_context(
@@ -516,6 +597,14 @@ def build_bulletin_context(
     legal_line = " | ".join(b for b in legal_bits if b)
 
     grade_badge = f"{group.grade_level.name} — {group.name}"
+    promotion = _promotion_notice(
+        student=student,
+        academic_year=academic_year,
+        group=group,
+        assignments=assignments,
+        selected_periods=periods,
+        passing_min=passing_min,
+    )
 
     return {
         "institution_label": "(Art. 16 Decreto 1290 de 2009)",
@@ -538,6 +627,7 @@ def build_bulletin_context(
         "disciplinary_text": disciplinary_text,
         "director_name": director_name,
         "director_title": director_title,
+        "promotion": promotion,
     }
 
 

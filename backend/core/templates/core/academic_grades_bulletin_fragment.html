@@ -135,4 +135,11 @@
     </div>
   </div>
 
+  {% if promotion %}
+  <div class="promocion">
+    <div class="promocion-titulo">...FELICITACIONES...</div>
+    <div class="promocion-texto">Has sido promovido al grado: <strong>{{ promotion.next_grade }}</strong></div>
+  </div>
+  {% endif %}
+
 </div>
